@@ -1,6 +1,6 @@
 # Gammu SMSD Web UI
 
-[Polski](README.md) | **English**
+> [Polski](README.md) | **English**
 
 A web panel for an SMS gateway built on [Gammu SMSD](https://docs.gammu.org/smsd/) and a GSM modem, designed for
 Ubuntu Server. Sending and receiving SMS, conversations, a phone book, delivery reports, USSD, rejected calls,
