@@ -494,6 +494,12 @@ Struktura katalogów:
 
 ## Licencje
 
+Copyright © 2026 Krzysiek Janiczek
+
+Gammu SMSD Web UI jest wolnym oprogramowaniem: możesz je rozpowszechniać i modyfikować na warunkach
+[Powszechnej Licencji Publicznej GNU w wersji 3](LICENSE) (GPL-3.0) opublikowanej przez Free Software Foundation.
+Program jest rozpowszechniany bez jakiejkolwiek gwarancji – szczegóły w pliku [LICENSE](LICENSE).
+
 Dołączone biblioteki: [htmx](https://htmx.org) (0BSD), [Pico.css](https://picocss.com) (MIT), czcionki IBM Plex (OFL).
 Schemat bazy `deploy/sql/gammu-mysql-17.sql` na podstawie Gammu (GPL-2.0).
 
