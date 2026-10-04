@@ -1,12 +1,12 @@
-// Licznik znaków i części SMS – szkic logiki SmsText (rozdz. 3.3, zadanie 2.2).
-// Alfabet GSM wg Gammu: podstawowy z „¤”, bez „¹”. Polskie litery (ą, ł, ó…) NIE są w GSM –
-// Gammu zamieniłby je po cichu, dlatego panel wybiera wtedy Unicode (UCS-2).
-(function () {
+// Licznik znaków i części SMS – ta sama logika co src/SmsText.php (rozdz. 3.3, zadanie 2.2).
+// Alfabet GSM wg Gammu: podstawowy z „¤”, bez „¹” i bez znaku nowej strony. Polskie litery (ą, ł, ó…) NIE są w GSM –
+// Gammu zamieniłby je po cichu, dlatego panel wybiera wtedy Unicode (UCS-2). Zgodność: tests/cases/smstext.json.
+(function (root) {
   'use strict';
 
   const GSM_BASIC = '@£$¥èéùìòÇ\nØø\rÅåΔ_ΦΓΛΩΠΨΣΘΞÆæßÉ !"#¤%&\'()*+,-./0123456789:;<=>?¡' +
     'ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ§¿abcdefghijklmnopqrstuvwxyzäöñüà';
-  const GSM_EXT = '^{}\\[~]|€\f';
+  const GSM_EXT = '^{}\\[~]|€';
   const TRANSLIT = {
     'ą': 'a', 'ć': 'c', 'ę': 'e', 'ł': 'l', 'ń': 'n', 'ó': 'o', 'ś': 's', 'ź': 'z', 'ż': 'z',
     'Ą': 'A', 'Ć': 'C', 'Ę': 'E', 'Ł': 'L', 'Ń': 'N', 'Ó': 'O', 'Ś': 'S', 'Ź': 'Z', 'Ż': 'Z',
@@ -15,18 +15,19 @@
   const MAX_PARTS = 10;
 
   function analyze(text) {
-    let gsm = true, gsmUnits = 0;
+    let gsm = true, gsmUnits = 0, ucsUnits = 0, chars = 0;
     const bad = [];
     for (const ch of text) {
+      chars++;
+      ucsUnits += ch.length; // znak spoza BMP (emoji) = para zastępcza = 2 jednostki
       if (GSM_BASIC.includes(ch)) gsmUnits += 1;
       else if (GSM_EXT.includes(ch)) gsmUnits += 2;
       else { gsm = false; if (!bad.includes(ch)) bad.push(ch); }
     }
-    // UCS-2: znak spoza BMP (emoji) zajmuje dwie jednostki – tak jak length w JS
-    const units = gsm ? gsmUnits : text.length;
+    const units = gsm ? gsmUnits : ucsUnits;
     const single = gsm ? 160 : 70, multi = gsm ? 153 : 67;
     const parts = units === 0 ? 0 : (units <= single ? 1 : Math.ceil(units / multi));
-    return { gsm, units, parts, bad, chars: [...text].length, tooLong: parts > MAX_PARTS };
+    return { gsm, units, parts, bad, chars, tooLong: parts > MAX_PARTS };
   }
 
   function translit(text) {
@@ -41,8 +42,14 @@
     return d >= 2 && d <= 4 && (t < 12 || t > 14) ? few : many;
   }
 
-  function describe(text, doTranslit) {
-    const src = doTranslit ? translit(text) : text;
+  // Zmienne personalizacji: licznik liczy najdłuższy wariant (vars = {imie: '…', nazwa: '…'})
+  function personalize(text, vars) {
+    if (!vars) return text;
+    return text.replace(/\{(imie|nazwa)\}/g, (m, k) => (vars[k] !== undefined ? vars[k] : m));
+  }
+
+  function describe(text, doTranslit, vars) {
+    const src = personalize(doTranslit ? translit(text) : text, vars && doTranslit ? mapValues(vars, translit) : vars);
     const a = analyze(src);
     const counter = `${a.chars} ${plural(a.chars, 'znak', 'znaki', 'znaków')} · ${a.parts} SMS · ${a.gsm ? 'GSM-7' : 'Unicode'}`;
     let why = '';
@@ -58,9 +65,15 @@
     return { counter, why, analysis: a };
   }
 
+  function mapValues(obj, fn) {
+    const out = {};
+    for (const k of Object.keys(obj)) out[k] = fn(obj[k]);
+    return out;
+  }
+
   function escapeHtml(s) {
     return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
 
-  window.SmsText = { analyze, translit, describe };
-})();
+  root.SmsText = { analyze, translit, describe, personalize, MAX_PARTS };
+})(typeof window !== 'undefined' ? window : globalThis);

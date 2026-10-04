@@ -96,4 +96,19 @@ final class Blocklist
         Settings::set('blocklist_reload', $code === 0 ? 'ok' : $out);
         return $code === 0 ? 'Gammu przeładowany.' : 'Nie udało się przeładować Gammu: ' . $out;
     }
+
+    /** Blokada z rozmowy, odebranych, kontaktu lub połączeń – komunikat flash. */
+    public static function blockFromPanel(string $phone, string $note = ''): void
+    {
+        [$p, $err] = self::add($phone, $note);
+        if ($err !== null) {
+            flash('err', 'Nie zablokowano.', $err);
+            return;
+        }
+        try {
+            flash('ok', 'Zablokowano ' . Phone::format((string) $p) . '.', self::apply());
+        } catch (Throwable $e) {
+            flash('warn', 'Numer dodany do listy, ale pliku nie zapisano.', $e->getMessage());
+        }
+    }
 }

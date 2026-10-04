@@ -522,3 +522,9 @@ nav.tabs a, .pager nav a { margin: 0; }
 .kv dd { flex-wrap: nowrap; }
 @media (max-width: 640px) { .alert { flex-wrap: wrap; } .alert > div { flex: 1 1 200px; } .alert > a { white-space: normal; margin-left: 2.2rem; } }
 dialog article > footer > button, dialog article > footer > [role="button"] { min-height: 44px; padding: 0 1rem; margin: 0; }
+
+/* ---------- Dodatki etapów 2–5 ---------- */
+.msg .meta.err { color: var(--c-err); }
+.thread-head form.row { gap: 0.25rem; margin: 0; }
+.readonly-note .icon { vertical-align: -0.2em; margin-right: 0.35rem; }
+.flashes { margin-bottom: 1rem; }

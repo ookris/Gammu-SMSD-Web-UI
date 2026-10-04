@@ -15,6 +15,7 @@ final class Settings
         'calls_enabled' => '0',
         'session_hours' => '8',
         'backup_keep' => '30',
+        'cleanup_days' => '0',
     ];
 
     private static ?array $cache = null;
