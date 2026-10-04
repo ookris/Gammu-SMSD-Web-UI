@@ -23,7 +23,7 @@ o możliwości Gammu (USSD, połączenia przychodzące, czarna lista, okna wysy�
 | 9 | [Plan implementacji](09-plan-implementacji.md) | zasady pracy, środowisko deweloperskie z symulatorem Gammu, zadania i pliki dla każdego etapu |
 
 **Makiety interfejsu:** https://claude.ai/artifact/1GcJxMSqGRWsxjPYG9mXG8 – pierwotnie przygotowane dla poprzedniego
-projektu (smstools3), w etapie P uzupełnione o wszystkie ekrany i stany wersji 1 z rozdz. 2 (21 artboardów, decyzja D23) – czekają na akceptację (P.5).
+projektu (smstools3), w etapie P uzupełnione o wszystkie ekrany i stany wersji 1 z rozdz. 2 (21 artboardów, decyzja D23) – **zaakceptowane 2026-10-04**.
 **Prototyp HTML:** katalog `prototype/` – statyczne strony w docelowej technologii, z których powstają widoki panelu.
 
 ## Podjęte decyzje
@@ -80,4 +80,4 @@ Ustalenia z rozdziału 3 sprawdzono w źródłach Gammu **1.42.0** (`smsd/core.c
 |---|---------|
 | O1 | Sprawdzenia specyficzne dla paczki Ubuntu i modemu – lista U1–U10 w [03, rozdz. 3.14](03-integracja-gammu-smsd.md#314-do-weryfikacji-na-ubuntu-etap-0). **Odłożone do dostarczenia modemu.** Nie blokują etapów 1–5: wartości zależne od paczki (ścieżki, nazwa usługi) są w `config.php`, a instalator (etap 6) powstanie po weryfikacji |
 | O2 | ✔ Adres repozytorium: `ookris/Gammu-SMSD-Web-UI` – potwierdzony 2026-10-04 |
-| O3 | Makiety nowych ekranów (Modem/USSD, Połączenia, Zablokowane numery, konfiguracja Gammu) – ✔ dorysowane w etapie P (2026-10-04), do akceptacji |
+| O3 | Makiety nowych ekranów (Modem/USSD, Połączenia, Zablokowane numery, konfiguracja Gammu) – ✔ dorysowane i zaakceptowane w etapie P (2026-10-04) |
