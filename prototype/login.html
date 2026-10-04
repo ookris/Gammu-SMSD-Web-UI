@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Logowanie – SMS Gateway</title>
+<link rel="stylesheet" href="assets/vendor/pico/pico.min.css">
+<link rel="stylesheet" href="assets/app.css">
+<script src="assets/app.js" defer></script>
+</head>
+<body>
+<main class="solo"><div class="solo-box"><div class="brand"><span class="brand-mark"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.5"><path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 13.5997 2.37562 15.1116 3.04346 16.4525C3.22094 16.8088 3.28001 17.2161 3.17712 17.6006L2.58151 19.8267C2.32295 20.793 3.20701 21.677 4.17335 21.4185L6.39939 20.8229C6.78393 20.72 7.19121 20.7791 7.54753 20.9565C8.88837 21.6244 10.4003 22 12 22Z"/><path d="M8 10.5H16"/><path d="M8 14H13.5"/></g></svg></span><span class="brand-name">SMS Gateway</span></div><form class="card" method="post" action="index.html"><h1>Zaloguj się</h1><div class="alert alert-err tight" role="alert"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 7V13"/><path stroke-linejoin="round" d="M12 16H12.0001"/></g></svg><div>Nieprawidłowy login lub hasło. Pozostały 3 próby, potem blokada na 15 minut.</div></div><div class="field"><label for="f1">Login</label><input id="f1" name="f1" type="text" value="admin" autocomplete="username" required></div><div class="field"><label for="f2">Hasło</label><input id="f2" name="f2" type="password" autocomplete="current-password" required></div><label><input type="checkbox"> <span>Zapamiętaj mnie na 30 dni</span></label><button type="submit">Zaloguj</button></form><p>Gammu SMSD · dostęp tylko z sieci lokalnej</p></div></main>
+</body>
+</html>

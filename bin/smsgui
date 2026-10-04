@@ -1,0 +1,145 @@
+#!/usr/bin/env php
+<?php
+// Narzędzie konsolowe panelu (rozdz. 2.16): instalator, usługi systemd, sytuacje awaryjne.
+declare(strict_types=1);
+
+if (PHP_SAPI !== 'cli') {
+    exit(1);
+}
+require __DIR__ . '/../src/bootstrap.php';
+
+$args = array_slice($argv, 1);
+$cmd = array_shift($args) ?? 'help';
+
+/** Opcje --nazwa=wartość i --flaga; pozostałe argumenty po kolei. */
+function cli_args(array $args): array
+{
+    $opts = [];
+    $pos = [];
+    foreach ($args as $a) {
+        if (preg_match('/^--([a-z-]+)(?:=(.*))?$/', $a, $m)) {
+            $opts[$m[1]] = $m[2] ?? true;
+        } else {
+            $pos[] = $a;
+        }
+    }
+    return [$opts, $pos];
+}
+
+function cli_ask(string $prompt, bool $hidden = false): string
+{
+    fwrite(STDOUT, $prompt);
+    $tty = stream_isatty(STDIN);
+    if ($hidden && $tty) {
+        shell_exec('stty -echo');
+    }
+    $line = fgets(STDIN);
+    if ($hidden && $tty) {
+        shell_exec('stty echo');
+        fwrite(STDOUT, PHP_EOL);
+    }
+    return $line === false ? '' : trim($line);
+}
+
+[$opts, $pos] = cli_args($args);
+
+switch ($cmd) {
+    case 'passwd':
+        $current = Db::val('SELECT username FROM users ORDER BY id LIMIT 1');
+        $login = $pos[0] ?? (getenv('SMSGUI_USER') ?: '');
+        if ($login === '') {
+            $login = cli_ask('Login [' . ($current ?? 'admin') . ']: ') ?: ($current ?? 'admin');
+        }
+        $password = getenv('SMSGUI_PASSWORD') ?: '';
+        if ($password === '') {
+            $password = cli_ask('Nowe hasło (co najmniej 10 znaków): ', true);
+            if ($password !== cli_ask('Powtórz hasło: ', true)) {
+                fwrite(STDERR, "Hasła się różnią.\n");
+                exit(1);
+            }
+        }
+        if (mb_strlen($password) < 10) {
+            fwrite(STDERR, "Hasło musi mieć co najmniej 10 znaków.\n");
+            exit(1);
+        }
+        Auth::setCredentials($login, $password);
+        Db::exec('DELETE FROM login_attempts');
+        echo "Ustawiono hasło dla konta $login (blokady logowania wyczyszczone).\n";
+        break;
+
+    case 'setup':
+        $what = $pos[0] ?? '';
+        if ($what === 'db') {
+            Db::pdo();
+            echo 'Baza panelu gotowa, schemat w wersji ' . Db::schemaVersion() . ".\n";
+        } elseif ($what === 'gammu') {
+            exit(Setup::gammu($opts));
+        } else {
+            fwrite(STDERR, "Użycie: smsgui setup db | setup gammu [--device=…] [--phoneid=…] [--pin=…] [--db-password=…]\n");
+            exit(1);
+        }
+        break;
+
+    case 'check':
+        $results = Health::run(true);
+        $quiet = isset($opts['quiet']);
+        $marks = ['ok' => '✔', 'warn' => '⚠', 'err' => '✘'];
+        foreach ($results as $r) {
+            if ($quiet && $r['level'] === 'ok') {
+                continue;
+            }
+            echo $marks[$r['level']] . ' ' . str_replace('`', '', $r['text']) . PHP_EOL;
+            if ($r['level'] !== 'ok' && $r['hint'] !== '') {
+                echo '    → ' . $r['hint'] . PHP_EOL;
+            }
+        }
+        exit(Health::worst($results) === 'err' ? 1 : 0);
+
+    case 'sync':
+        $r = Sync::run(true);
+        echo $r === null ? "Synchronizacja trwa w innym procesie.\n" : Sync::summary($r) . PHP_EOL;
+        break;
+
+    case 'worker':
+        Sync::worker();
+        break;
+
+    case 'hook':
+        if (($pos[0] ?? '') !== 'call') {
+            fwrite(STDERR, "Użycie: smsgui hook call --phone=<PhoneID> [numer]\n");
+            exit(1);
+        }
+        exit(Calls::hook((string) ($opts['phone'] ?? ''), $pos[1] ?? ''));
+
+    case 'send':
+        if (count($pos) < 2) {
+            fwrite(STDERR, "Użycie: smsgui send <numer> <treść> [--wait=N]\n");
+            exit(1);
+        }
+        exit(Outbox::cliSend($pos[0], $pos[1], (int) ($opts['wait'] ?? 0)));
+
+    case 'cleanup':
+        $days = (int) ($opts['days'] ?? 0);
+        if ($days < 1) {
+            fwrite(STDERR, "Użycie: smsgui cleanup --days=N\n");
+            exit(1);
+        }
+        echo Messages::cleanup($days) . PHP_EOL;
+        break;
+
+    default:
+        echo <<<TXT
+        Gammu SMSD Web UI – narzędzie konsolowe
+
+          worker                        proces w tle (synchronizacja co worker_interval s)
+          sync                          jednorazowa synchronizacja
+          hook call --phone=ID [numer]  zapis połączenia przychodzącego (RunOnIncomingCall)
+          passwd [login]                ustawienie loginu i hasła konta
+          check [--quiet]               diagnostyka; kod wyjścia ≠ 0 przy błędzie
+          setup db                      utworzenie / migracja tabel panelu
+          setup gammu [opcje]           zmiany w gammu-smsdrc wymagane przez panel (instalator)
+          send <numer> <treść> [--wait=N]  wysyłka testowa
+          cleanup --days=N              usunięcie wiadomości starszych niż N dni
+
+        TXT;
+}

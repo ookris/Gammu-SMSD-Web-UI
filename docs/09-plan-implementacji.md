@@ -80,6 +80,30 @@ jak Gammu, z informacją o źródle) – na Macu nie ma paczki Gammu.
 
 Prawdziwe wiersze z tabel Gammu (zrzut po testach na modemie) dołączymy do `tests/fixtures/` w etapie 0/6.
 
+## 9.2a. Etap P – Projekt interfejsu (decyzja D23)
+
+Najpierw wygląd i zachowanie ekranów, potem kod. Każdy ekran wersji 1 z mapy w rozdz. 2.0 dostaje makietę,
+a następnie statyczną stronę HTML, z której w etapach 1–5 powstaje widok `views/<ekran>.php`.
+
+| # | Zadanie | Wynik |
+|---|---------|-------|
+| [x] P.1 | Wpisanie etapu do dokumentacji (README, 07, 09) | ta sekcja |
+| [x] P.2 | Makiety ekranów Gammu: Pulpit z kontrolą zdrowia i stanem modemu, Modem i USSD, Połączenia, Zablokowane numery, Konfiguracja Gammu (4 zakładki) + okno potwierdzenia zapisu z różnicami | canvas makiet |
+| [x] P.3 | Makiety pozostałych ekranów: Odebrane, Raport wysyłki, Kontakt (dodaj/edytuj), Grupy, Szablony, Log Gammu, Ustawienia panelu, Zmiana hasła | canvas makiet |
+| [x] P.4 | Makiety stanów: licznik znaków z wyjaśnieniem kodowania, lista błędnych numerów, potwierdzenie wysyłki do wielu, oczekiwanie na USSD, puste listy, komunikaty o błędach, widok na telefonie | canvas makiet |
+| [x] P.5 | Przegląd i akceptacja makiet (zaakceptowane 2026-10-04) | uwagi naniesione |
+| [x] P.6 | Prototyp – podstawa: Pico.css, czcionki IBM Plex, ikony Solar (SVG), `app.css` (zmienne kolorów, jasny/ciemny motyw), układ strony (menu boczne zwijane na telefonie, wskaźnik usługi i modemu, licznik nieprzeczytanych, komunikaty, stopka z atrybucją) | `prototype/assets/`, `prototype/_layout.html` (Pico.css 2.1.1, IBM Plex łacina + łac. rozszerzona) |
+| [x] P.7 | Prototyp – wszystkie ekrany z przykładowymi danymi, linkowane z menu | `prototype/*.html` |
+| [x] P.8 | Prototyp – interakcje: okna `<dialog>`, licznik znaków (szkic `sms-text.js`), przełączanie zakładek; bez JS/CSS inline (CSP) | `prototype/assets/app.js` |
+| [x] P.9 | Przegląd prototypu (komputer, 360 px, oba motywy) i akceptacja – zaakceptowany 2026-10-04; drobne poprawki wyglądu na bieżąco w etapach 1–5 | — |
+
+**Zasady prototypu:**
+- Ten sam kod HTML i CSS, który trafi do aplikacji – klasy i struktura znaczników zgodne z Pico.css,
+  własne style tylko w `app.css`. Pliki bibliotek i ikony z prototypu przechodzą do `public/assets/` i `resources/icons/` w etapie 1.
+- Bez PHP i bez bazy; dane przykładowe wpisane w HTML (realistyczne polskie numery i treści, bez lorem ipsum).
+- Stany dynamiczne (htmx) pokazane jako osobne warianty strony, np. `ussd.html` i `ussd-oczekiwanie.html`.
+- Nagłówek CSP jak w rozdz. 5.4 sprawdzany przy `php -S` (plik `prototype/router.php` dodaje nagłówki).
+
 ## 9.3. Etap 1 – Szkielet
 
 | # | Zadanie | Pliki |
@@ -90,8 +114,8 @@ Prawdziwe wiersze z tabel Gammu (zrzut po testach na modemie) dołączymy do `te
 | [ ] 1.4 | Baza: PDO MariaDB (utf8mb4, `time_zone`, `sql_mode`), migracje przez `schema_version` z blokadą `GET_LOCK`; migracja 1 = wszystkie tabele podstawowe z rozdz. 4.2 (bez tabel rozszerzeń) | `src/Db.php` |
 | [ ] 1.5 | Logowanie: sesja (HttpOnly, SameSite, Secure przy HTTPS), `session_regenerate_id`, blokada 5 prób / 15 min, wygasanie bezczynności, „Zapamiętaj mnie” (ciasteczko podpisane HMAC), wylogowanie, wpis dla fail2ban w logu | `src/Auth.php` |
 | [ ] 1.6 | Front controller: nagłówki bezpieczeństwa (rozdz. 5.4), routing `?p=`, wymuszenie logowania, centralne sprawdzanie CSRF dla POST, strona 404 | `public/index.php` |
-| [ ] 1.7 | Biblioteki i ikony: htmx 2.x i Pico.css 2.x pobrane raz do repozytorium (z licencjami), ok. 30 ikon Solar *linear* jako SVG + `LICENSE`, czcionki IBM Plex | `public/assets/vendor/`, `resources/icons/`, `public/assets/fonts/` |
-| [ ] 1.8 | Układ strony: menu boczne (zwijane na telefonie), licznik nieprzeczytanych, wskaźnik usługi i modemu, komunikaty flash, stopka z atrybucją ikon; jasny/ciemny motyw | `views/layout.php`, `public/assets/app.css`, `public/assets/app.js` |
+| [ ] 1.7 | Biblioteki i ikony: przeniesienie z prototypu (Pico.css, czcionki, ikony Solar + `LICENSE`), dodanie htmx 2.x (z licencją) | `public/assets/vendor/`, `resources/icons/`, `public/assets/fonts/` |
+| [ ] 1.8 | Układ strony przeniesiony z `prototype/_layout.html` do szablonu PHP: menu boczne (zwijane na telefonie), licznik nieprzeczytanych, wskaźnik usługi i modemu, komunikaty flash, stopka z atrybucją ikon; jasny/ciemny motyw | `views/layout.php`, `public/assets/app.css`, `public/assets/app.js` |
 | [ ] 1.9 | Ekrany: logowanie, pusty pulpit, zmiana hasła (i loginu) | `src/pages/`, `views/` |
 | [ ] 1.10 | Odczyt `gammu-smsdrc` (parsowanie: sekcje, parametry bez wielkości liter, komentarze `#`/`;`) – potrzebny już dla `check` | `src/GammuConf.php` (część odczytu) |
 | [ ] 1.11 | Stan usługi (`status_cmd`) | `src/Service.php` (część odczytu) |
