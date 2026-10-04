@@ -72,4 +72,21 @@ final class Service
         $lines = array_slice($lines, -$n);
         return array_map(static fn ($l) => mb_scrub(rtrim($l, "\r"), 'UTF-8'), $lines);
     }
+
+    /** Restart z czekaniem na modem: wynik w sesji, zakładka „Usługa” odpytuje phones do 30 s. */
+    public static function restartAndWatch(string $reason, string $note = ''): string
+    {
+        $started = now_db();
+        [$code, $out] = self::restart();
+        $_SESSION['service_op'] = ['cmd' => (string) cfg('service.restart_cmd'), 'code' => $code, 'out' => $out, 'started' => $started,
+            'reason' => $reason, 'note' => $note];
+        flash($code === 0 ? 'ok' : 'err', $code === 0 ? 'Zrestartowano Gammu.' : 'Restart nie powiódł się.', $note);
+        return url('config', ['tab' => 'service', 'wait' => 1]);
+    }
+
+    /** Czy modem zgłosił się w phones po $since (restart). */
+    public static function modemBack(string $since): ?array
+    {
+        return Db::row('SELECT ID, UpdatedInDB FROM {g}.phones WHERE UpdatedInDB >= ? ORDER BY UpdatedInDB DESC LIMIT 1', [$since]);
+    }
 }

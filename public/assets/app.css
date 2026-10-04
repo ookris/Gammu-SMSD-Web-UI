@@ -528,3 +528,7 @@ dialog article > footer > button, dialog article > footer > [role="button"] { mi
 .thread-head form.row { gap: 0.25rem; margin: 0; }
 .readonly-note .icon { vertical-align: -0.2em; margin-right: 0.35rem; }
 .flashes { margin-bottom: 1rem; }
+a.tile { color: inherit; text-decoration: none; }
+a.tile:hover { border-color: var(--c-accent); }
+.status-line.warn .icon { color: var(--c-warn-dot); }
+.bulkbar select { width: auto; margin: 0; padding-top: 0.25rem; padding-bottom: 0.25rem; }
