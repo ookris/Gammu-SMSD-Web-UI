@@ -34,6 +34,7 @@ if (is_post()) {
 
 $f = ['q' => input('q'), 'status' => input('status'), 'source' => input('source'), 'from' => input('from'), 'to' => input('to'), 'batch' => input('batch'),
     'sent_from' => input('sent_from'), 'changed_from' => input('changed_from')];
+$f = clean_dates($f, ['from', 'to', 'sent_from', 'changed_from']);
 $where = ["direction = 'out'"];
 $params = [];
 if ($f['q'] !== '') {
@@ -54,16 +55,16 @@ if (in_array($f['source'], ['gui', 'external', 'api'], true)) {
     $where[] = 'source = ?';
     $params[] = $f['source'];
 }
-if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $f['from'])) {
+if ($f['from'] !== '') {
     $where[] = 'created_at >= ?';
     $params[] = $f['from'] . ' 00:00:00';
 }
-if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $f['to'])) {
+if ($f['to'] !== '') {
     $where[] = 'created_at <= ?';
     $params[] = $f['to'] . ' 23:59:59';
 }
 foreach (['sent_from' => 'sent_at', 'changed_from' => 'updated_at'] as $k => $col) {
-    if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $f[$k])) {
+    if ($f[$k] !== '') {
         $where[] = "$col >= ?";
         $params[] = $f[$k] . ' 00:00:00';
     }

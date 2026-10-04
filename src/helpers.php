@@ -223,6 +223,25 @@ function alert(string $type, string $title, string $detail = '', string $linkHtm
 
 // ---------- Daty ----------
 
+/** Data RRRR-MM-DD z formularza filtrów: istniejąca (round-trip) i w zakresie DATETIME; inaczej null. */
+function valid_date(string $value): ?string
+{
+    $d = DateTimeImmutable::createFromFormat('!Y-m-d', $value);
+    if ($d === false || $d->format('Y-m-d') !== $value || (int) $d->format('Y') < 1000) {
+        return null;
+    }
+    return $value;
+}
+
+/** Filtry dat: niepoprawne wartości usuwane, żeby widok nie pokazywał nieaktywnego filtra. */
+function clean_dates(array $f, array $keys): array
+{
+    foreach ($keys as $k) {
+        $f[$k] = valid_date((string) ($f[$k] ?? '')) ?? '';
+    }
+    return $f;
+}
+
 /** Data z bazy (czas lokalny) jako znacznik czasu; null dla pustej. */
 function ts(?string $dt): ?int
 {

@@ -299,10 +299,13 @@ final class GammuConf
         return rtrim((string) cfg('backup_dir'), '/');
     }
 
-    /** Odcisk treści pliku – formularze niosą go od otwarcia do zapisu (wykrycie zmian z innej sesji). */
+    /**
+     * Odcisk treści pliku – formularze niosą go od otwarcia do zapisu (wykrycie zmian z innej sesji).
+     * Końce linii ujednolicone: formularz liczy go z tekstu po parserze (LF), zapis – z surowych bajtów pliku (być może CRLF).
+     */
     public static function fingerprint(string $text): string
     {
-        return md5($text);
+        return md5(str_replace("\r\n", "\n", $text));
     }
 
     /**
@@ -312,7 +315,7 @@ final class GammuConf
     public static function save(string $text, string $note, ?string $expected = null): string
     {
         $path = self::path();
-        $fh = @fopen($path, 'c+');
+        $fh = @fopen($path, 'r+'); // bez tworzenia: brakujący plik zostaje brakujący i jest zgłaszany jako nieczytelny
         if ($fh === false) {
             throw new RuntimeException(is_readable($path) ? "Brak prawa zapisu do $path" : "Nie można odczytać $path");
         }
@@ -375,12 +378,19 @@ final class GammuConf
         if ($fh === false) {
             throw new RuntimeException("Nie można utworzyć pliku $path" . (file_exists($path) ? ' (już istnieje)' : ''));
         }
-        try {
-            if (fwrite($fh, $content) !== strlen($content)) {
-                throw new RuntimeException("Nie można zapisać pliku $path");
+        $ok = true;
+        for ($done = 0, $len = strlen($content); $done < $len; $done += $n) {
+            $n = fwrite($fh, substr($content, $done));
+            if ($n === false || $n === 0) {
+                $ok = false;
+                break;
             }
-        } finally {
-            fclose($fh);
+        }
+        $ok = fflush($fh) && $ok;
+        fclose($fh);
+        if (!$ok) {
+            @unlink($path); // niepełna kopia nie może zostać jako „poprawna”
+            throw new RuntimeException("Nie można zapisać pliku $path");
         }
         @chmod($path, $mode);
     }
