@@ -241,7 +241,8 @@ svg.icon-xl { width: 2rem; height: 2rem; }
 .actions { display: flex; gap: 0.625rem; flex-wrap: wrap; align-items: center; }
 
 /* ---------- Przyciski ---------- */
-button, [role="button"], input[type="submit"] { font-weight: 600; font-size: 0.93rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; }
+/* a[role=button] – Pico ustawia mu inline-block z wyższą specyficznością niż samo [role=button] */
+button, [role="button"], a[role="button"], input[type="submit"] { font-weight: 600; font-size: 0.93rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; }
 .actions button, .actions [role="button"], .row button, .row [role="button"] { margin-bottom: 0; width: auto; }
 .btn-sm { padding: 0.3rem 0.75rem; font-size: 0.87rem; }
 button.secondary, [role="button"].secondary { --pico-color: var(--c-text); }
@@ -299,6 +300,7 @@ button.secondary, [role="button"].secondary { --pico-color: var(--c-text); }
 .badge-warn { background: var(--c-warn-bg); color: var(--c-warn); }
 .badge-err { background: var(--c-err-bg); color: var(--c-err); }
 .badge-info { background: var(--c-info-bg); color: var(--c-info); }
+.badge-in { background: var(--c-accent-soft); color: var(--c-accent); }
 
 /* ---------- Komunikaty ---------- */
 .alert { display: flex; gap: 0.875rem; align-items: center; padding: 0.875rem 1.125rem; margin-bottom: 1.5rem; border-radius: 12px; border: 1px solid; font-size: 0.93rem; line-height: 1.5; }
