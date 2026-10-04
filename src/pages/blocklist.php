@@ -1,5 +1,5 @@
 <?php
-// Zablokowane numery (rozdz. 2.14)
+// Zablokowane numery
 if (input('export') !== '') {
     header('Content-Type: text/csv; charset=utf-8');
     header('Content-Disposition: attachment; filename="' . t('blocklist.csv_name') . '-' . date('Y-m-d') . '.csv"');

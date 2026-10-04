@@ -1,5 +1,5 @@
 <?php
-// Odebrane (rozdz. 2.5)
+// Odebrane
 if (is_post()) {
     if (input('block') !== '') {
         Blocklist::blockFromPanel(input('block'), t('inbox.block_note'));

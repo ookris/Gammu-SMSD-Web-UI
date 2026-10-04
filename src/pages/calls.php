@@ -1,5 +1,5 @@
 <?php
-// Połączenia przychodzące (rozdz. 2.13)
+// Połączenia przychodzące
 if (is_post()) {
     if (input('block') !== '') {
         Blocklist::blockFromPanel(input('block'), t('calls.block_note'));

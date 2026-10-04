@@ -1,5 +1,5 @@
 <?php
-// Kontakty – książka telefoniczna (rozdz. 2.7)
+// Kontakty – książka telefoniczna
 if (input('export') !== '') {
     header('Content-Type: text/csv; charset=utf-8');
     header('Content-Disposition: attachment; filename="' . t('contacts.csv_name') . '-' . date('Y-m-d') . '.csv"');

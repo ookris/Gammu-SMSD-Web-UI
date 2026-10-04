@@ -1,5 +1,5 @@
 <?php
-// Modem i USSD (rozdz. 2.12)
+// Modem i USSD
 if (is_post()) {
     if (($close = (int) input('close')) > 0) {
         Ussd::close($close);

@@ -1,5 +1,5 @@
 <?php
-// Kontakt – dodawanie i edycja (rozdz. 2.7)
+// Kontakt – dodawanie i edycja
 $id = (int) input('id');
 $contact = $id > 0 ? Contacts::find($id) : null;
 if ($id > 0 && $contact === null) {

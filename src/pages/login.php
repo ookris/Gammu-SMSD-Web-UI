@@ -1,5 +1,5 @@
 <?php
-// Logowanie (rozdz. 2.1)
+// Logowanie
 $error = null;
 $username = input('username');
 if (Auth::user() !== null) {

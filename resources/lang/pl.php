@@ -1,5 +1,5 @@
 <?php
-// Teksty interfejsu (D10), język domyślny i zapasowy. Te same klucze w en.php (pilnuje tego test I18nTest).
+// Teksty interfejsu po polsku – język domyślny i zapasowy. Te same klucze w en.php (pilnuje tego test I18nTest).
 // Listy (np. formy liczebnika dla tn()) – w kolejności: 1, 2–4, 5+.
 return [
     'app.name' => 'SMS Gateway',
@@ -23,7 +23,7 @@ return [
     'nav.settings' => 'Ustawienia panelu',
     'nav.logout' => 'Wyloguj',
 
-    // Statusy wiadomości (rozdz. 3.6)
+    // Statusy wiadomości
     'status.received' => 'Odebrana',
     'status.scheduled' => 'Zaplanowana',
     'status.queued' => 'W kolejce',
@@ -34,7 +34,7 @@ return [
     'status.failed' => 'Błąd',
     'status.cancelled' => 'Anulowana',
 
-    // Stany sesji USSD (inbox.Status, rozdz. 3.10)
+    // Stany sesji USSD (inbox.Status)
     'ussd.status.queued' => 'Wysyłane',
     'ussd.status.sent' => 'Czeka na odpowiedź',
     'ussd.status.timeout' => 'Przekroczony czas',
@@ -714,7 +714,7 @@ return [
     'health.gammu_schema' => 'Baza `{db}`, schemat w wersji {version}',
     'health.gammu_schema_hint' => 'panel wymaga schematu 17 (Gammu 1.42)',
     'health.gammu_missing' => 'Brak bazy Gammu `{db}` lub tabeli `gammu`',
-    'health.gammu_missing_hint' => 'utwórz tabele z mysql.sql (rozdz. 6.2, krok 2)',
+    'health.gammu_missing_hint' => 'utwórz tabele z mysql.sql z paczki gammu-smsd albo uruchom ponownie deploy/install.sh',
     'health.engine_ok' => 'Tabele Gammu w silniku InnoDB',
     'health.engine_bad' => 'Tabele Gammu bez transakcji (MyISAM): {list} – ryzyko wysłania niepełnego SMS wieloczęściowego',
     'health.engine_hint' => 'ALTER TABLE <tabela> ENGINE=InnoDB dla każdej tabeli bazy Gammu',
@@ -725,7 +725,7 @@ return [
     'health.conf_rw' => '`{file}` czytelny i zapisywalny, `service = {service}`',
     'health.conf_ro' => '`{file}` tylko do odczytu, `service = {service}`',
     'health.conf_db' => ', baza `{db}` ≠ `{expected}`',
-    'health.conf_hint' => 'panel wymaga service = sql i zapisu pliku przez www-data (rozdz. 5.2)',
+    'health.conf_hint' => 'panel wymaga service = sql i zapisu pliku przez www-data (root:www-data, 0660)',
     'health.drd' => '`DeliveryReportDelay = {value}` – zalecane co najmniej 3600 s',
     'health.drd_hint' => 'raport od telefonu wyłączonego dłużej niż ten czas nie zostanie dopasowany; zalecane 172800 (2 dni)',
     'health.include' => 'Ustawiona lista dozwolonych numerów (`IncludeNumbers…`) – czarna lista nie działa',

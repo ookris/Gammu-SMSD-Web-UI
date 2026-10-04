@@ -1,10 +1,10 @@
 <?php
 declare(strict_types=1);
 
-/** Tabele Gammu (rozdz. 3.1–3.5): zapis do outbox, odczyt stanu wiadomości, odczyt inbox i phones. */
+/** Tabele Gammu (schemat 17, Gammu 1.42): zapis do outbox, odczyt stanu wiadomości, odczyt inbox i phones. */
 final class GammuDb
 {
-    /** Wartości kolumn ENUM Gammu – tylko z tej listy (rozdz. 9.1). */
+    /** Wartości kolumn ENUM Gammu – tylko z tej listy (MariaDB w trybie ścisłym odrzuca inne). */
     public const SENT_OK = ['SendingOK', 'SendingOKNoReport', 'DeliveryPending', 'DeliveryUnknown'];
     public const SENT_ERROR = ['SendingError', 'Error'];
 
@@ -77,7 +77,7 @@ final class GammuDb
         return $id;
     }
 
-    /** Anulowanie: usunięcie wiersza, o ile Gammu go właśnie nie wysyła (rozdz. 3.3). */
+    /** Anulowanie: usunięcie wiersza, o ile Gammu go właśnie nie wysyła (SendingTimeOut w przyszłości = wiersz zablokowany przez Gammu). */
     public static function cancel(int $id): bool
     {
         return Db::tx(static function () use ($id): bool {
@@ -119,7 +119,7 @@ final class GammuDb
     }
 
     /**
-     * Status wiadomości z wiersza outbox i części w sentitems (tabela w rozdz. 3.5).
+     * Status wiadomości z wiersza outbox i części w sentitems – status całości wynika z najgorszego statusu części.
      * @return array{status:string,error:?string,status_code:?int,retries:int,modem:?string,sent_at:?string,delivered_at:?string}
      */
     public static function state(?array $outbox, array $parts, int $maxRetries): array
@@ -178,7 +178,7 @@ final class GammuDb
     }
 
     /**
-     * Wiersze inbox gotowe do importu: nieprzetworzone, bez najświeższych (Gammu zapisuje części pojedynczo – rozdz. 3.4).
+     * Wiersze inbox gotowe do importu: nieprzetworzone, bez najświeższych (Gammu zapisuje części pojedynczo, więc najświeższe mogą być jeszcze niekompletne).
      */
     public static function inboxReady(int $limit = 500): array
     {

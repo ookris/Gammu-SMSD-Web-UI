@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-/** Rozmowy (rozdz. 2.4): lista – jeden wiersz na numer, oś czasu rozmowy z wiadomościami i połączeniami. */
+/** Rozmowy: lista – jeden wiersz na numer, oś czasu rozmowy z wiadomościami i połączeniami. */
 final class Threads
 {
     /** Lista rozmów: ostatnia wiadomość na numer (MAX(id) GROUP BY phone) + liczba nieprzeczytanych. */

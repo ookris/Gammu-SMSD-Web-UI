@@ -1,5 +1,5 @@
 <?php
-// Ustawienia panelu (rozdz. 2.15) – zapisywane w bazie; ustawienia systemowe tylko do odczytu
+// Ustawienia panelu – zapisywane w bazie; ustawienia systemowe tylko do odczytu
 $errors = [];
 if (is_post()) {
     $from = input('window_from');

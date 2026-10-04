@@ -1,5 +1,5 @@
 <?php
-// Rozmowy (rozdz. 2.4)
+// Rozmowy
 $raw = input('phone');
 // Nazwa nadawcy (zawiera litery) bez zmian, numer – tylko po poprawnej normalizacji
 $phone = $raw === '' ? '' : (preg_match('/\p{L}/u', $raw) && mb_strlen($raw) <= 32 ? $raw : Phone::normalize($raw));

@@ -19,7 +19,7 @@ final class Ui
         return json_encode(['lang' => lang(), 't' => $texts], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP);
     }
 
-    /** Etykieta statusu wiadomości + linia z opisem (rozdz. 3.6). */
+    /** Etykieta statusu wiadomości + linia z opisem. */
     public static function status(array $m, bool $withSub = true): string
     {
         $s = $m['status'];

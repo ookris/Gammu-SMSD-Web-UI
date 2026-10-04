@@ -48,7 +48,7 @@ if (is_post() && !csrf_valid()) {
     exit;
 }
 
-// Synchronizacja przy odświeżeniu strony – zabezpieczenie, gdy proces w tle nie działa (D14)
+// Synchronizacja przy odświeżeniu strony – zabezpieczenie, gdy proces w tle nie działa
 if (Auth::user() !== null && !is_post()) {
     Sync::onPageLoad();
 }

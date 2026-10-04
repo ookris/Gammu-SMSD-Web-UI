@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 /**
- * Zapis gammu-smsdrc przez okno potwierdzenia (decyzja D4): propozycja zmiany trafia do sesji (hasła nie wychodzą
+ * Zapis gammu-smsdrc przez okno potwierdzenia (panel zapisuje plik bezpośrednio, ale zawsze po potwierdzeniu): propozycja zmiany trafia do sesji (hasła nie wychodzą
  * do przeglądarki), okno pokazuje różnice i walidację, zapis tworzy kopię i opcjonalnie przeładowuje / restartuje Gammu.
  */
 final class ConfigSave

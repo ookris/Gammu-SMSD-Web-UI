@@ -1,4 +1,4 @@
-# Log Gammu SMSD czytany przez panel (grupa www-data). copytruncate – Gammu trzyma plik otwarty (⚠ U5).
+# Log Gammu SMSD czytany przez panel (grupa www-data). copytruncate – Gammu trzyma plik otwarty, a rotacja nie przeładowuje demona.
 /var/log/gammu-smsd/smsd.log {
     weekly
     rotate 8

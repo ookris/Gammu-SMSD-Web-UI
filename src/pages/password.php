@@ -1,5 +1,5 @@
 <?php
-// Zmiana hasła i loginu (rozdz. 2.15)
+// Zmiana hasła i loginu
 $error = null;
 $username = Auth::user()['username'];
 if (is_post()) {

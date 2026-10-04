@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 /**
- * Numery telefonów (rozdz. 3.13): normalizacja do postaci 48601234567, numery skrócone, nadawcy alfanumeryczni,
+ * Numery telefonów: normalizacja do postaci 48601234567, numery skrócone, nadawcy alfanumeryczni,
  * format dla Gammu (+48601234567) i do wyświetlania (+48 601 234 567).
  */
 final class Phone
@@ -126,7 +126,7 @@ final class Phone
         return '+' . $cc . ' ' . $grouped;
     }
 
-    /** Warianty numeru do pliku czarnej listy – format numeru z modemu nie jest pewny (⚠ U9). */
+    /** Warianty numeru do pliku czarnej listy – modem może podawać numer z +48, bez niego albo w formie krajowej. */
     public static function variants(string $phone): array
     {
         if (self::isAlpha($phone) || self::isShort($phone)) {

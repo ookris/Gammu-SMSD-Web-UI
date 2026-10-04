@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-/** Kroki instalatora korzystające z parsera panelu (rozdz. 6.3): `smsgui setup gammu`. */
+/** Kroki instalatora korzystające z parsera panelu: `smsgui setup gammu`. */
 final class Setup
 {
     /**

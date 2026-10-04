@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-/** Usługa Gammu SMSD: stan, przeładowanie, restart (polecenia tylko z config.php – rozdz. 5.1) i odczyt logu. */
+/** Usługa Gammu SMSD: stan, przeładowanie, restart (polecenia tylko z config.php – nie da się ich zmienić z WWW) i odczyt logu. */
 final class Service
 {
     /** Uruchomienie polecenia z konfiguracji; [kod wyjścia, wyjście]. */

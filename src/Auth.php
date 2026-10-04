@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-/** Logowanie do panelu – jedno konto (D1), blokada po 5 próbach, wygasanie sesji, „Zapamiętaj mnie” (rozdz. 2.1, 5.1). */
+/** Logowanie do panelu – jedno konto, blokada po 5 próbach, wygasanie sesji, „Zapamiętaj mnie”. */
 final class Auth
 {
     public const MAX_ATTEMPTS = 5;

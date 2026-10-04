@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-/** USSD na żądanie (rozdz. 2.12, 3.10): wiersz outbox z Class = 127, odpowiedź w inbox z Class = 127. */
+/** USSD na żądanie: wiersz outbox z Class = 127, odpowiedź w inbox z Class = 127. */
 final class Ussd
 {
     public const TIMEOUT = 60;
@@ -73,7 +73,7 @@ final class Ussd
         return $n;
     }
 
-    /** Odpowiedź z inbox (Class = 127): pierwsze oczekujące żądanie tego modemu (rozdz. 3.10). */
+    /** Odpowiedź z inbox (Class = 127): pierwsze oczekujące żądanie tego modemu (odpowiedź nie wskazuje, na które żądanie odpowiada). */
     public static function onResponse(array $row): void
     {
         $modem = (string) $row['RecipientID'];

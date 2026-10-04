@@ -1,8 +1,7 @@
 -- Schemat bazy Gammu SMSD w wersji 17 (Gammu 1.40–1.43, w Ubuntu 26.04: 1.42.0) dla MySQL/MariaDB.
 -- Na podstawie docs/sql/mysql.sql z kodu źródłowego Gammu (https://github.com/gammu/gammu, licencja GPL-2.0).
 -- Dołączony do repozytorium, bo na Macu (środowisko deweloperskie) nie ma paczki Gammu; na serwerze
--- instalator używa skryptu z paczki gammu-smsd (⚠ U4). Tabele od razu w InnoDB (rozdz. 3.2).
--- ⚠ Do porównania z plikiem z paczki przy weryfikacji U4 (etap 6).
+-- instalator używa skryptu z paczki gammu-smsd. Tabele od razu w InnoDB (transakcje przy zapisie wiadomości wieloczęściowych).
 
 CREATE TABLE IF NOT EXISTS `gammu` (
   `Version` integer NOT NULL DEFAULT '0' PRIMARY KEY

@@ -1,5 +1,5 @@
 <?php
-// Raport wysyłki do wielu odbiorców (rozdz. 2.3)
+// Raport wysyłki do wielu odbiorców
 $id = input('id');
 if (!Batch::valid($id) || Db::val('SELECT 1 FROM messages WHERE batch_id = ? LIMIT 1', [$id]) === null) {
     http_response_code(404);

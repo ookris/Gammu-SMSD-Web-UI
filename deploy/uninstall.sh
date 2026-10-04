@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Gammu SMSD Web UI – odinstalowanie (rozdz. 6.7). Gammu SMSD i baza gammu działają dalej.
+# Gammu SMSD Web UI – odinstalowanie. Gammu SMSD i baza gammu działają dalej.
 #   sudo deploy/uninstall.sh            – usuwa panel, zostawia dane (/var/lib/smsgui, baza smsgui)
 #   sudo deploy/uninstall.sh --purge    – także dane panelu, bazę smsgui i konta smsgui / smsgui_hook
 set -euo pipefail

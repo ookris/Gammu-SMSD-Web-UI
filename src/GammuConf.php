@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 /**
- * Parser i edytor /etc/gammu-smsdrc (rozdz. 3.8). Plik INI przetwarzany linia po linii:
+ * Parser i edytor /etc/gammu-smsdrc. Plik INI przetwarzany linia po linii:
  * zmiana parametru dotyka tylko jego linii, komentarze (całe linie z # lub ;) i kolejność zostają.
  * Nazwy sekcji i kluczy bez rozróżniania wielkości liter; # w środku wartości jest częścią wartości.
  */
@@ -188,7 +188,7 @@ final class GammuConf
         array_splice($this->lines, ($lastKv ?? $start) + 1, 0, [$new]);
     }
 
-    // ---------- Maskowanie haseł (rozdz. 3.8, 5.1) ----------
+    // ---------- Maskowanie haseł (nie trafiają do przeglądarki) ----------
 
     /** Tekst z zamaskowanym hasłem do bazy i PIN-em. */
     public static function mask(string $text): string
@@ -223,7 +223,7 @@ final class GammuConf
         return implode("\n", $lines);
     }
 
-    // ---------- Walidacja (rozdz. 2.10b) ----------
+    // ---------- Walidacja ----------
 
     /** Lista [poziom ok|warn|err, tekst HTML-bezpieczny po e()] – $original do wykrycia zmian parametrów zarządzanych. */
     public function validate(?self $original = null): array
@@ -292,7 +292,7 @@ final class GammuConf
         return in_array('err', array_column($validation, 0), true);
     }
 
-    // ---------- Zapis i kopie zapasowe (rozdz. 2.10c, 3.8) ----------
+    // ---------- Zapis i kopie zapasowe ----------
 
     public static function backupDir(): string
     {
@@ -422,7 +422,7 @@ final class GammuConf
         return $out;
     }
 
-    /** Nazwa kopii z formularza – tylko wzorzec, bez ścieżek (rozdz. 5.1). */
+    /** Nazwa kopii z formularza – tylko wzorzec, bez ścieżek (ochrona przed odczytem dowolnego pliku). */
     public static function validBackupName(string $name, string $prefix = 'gammu-smsdrc'): bool
     {
         return (bool) preg_match('/^' . preg_quote($prefix, '/') . '\.\d{8}-\d{6}(-\d+)?$/', $name);

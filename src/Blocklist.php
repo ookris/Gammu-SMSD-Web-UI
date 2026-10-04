@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-/** Czarna lista numerów (rozdz. 2.14, 3.12): tabela blocked_numbers → plik ExcludeNumbersFile dla Gammu. */
+/** Czarna lista numerów: tabela blocked_numbers → plik ExcludeNumbersFile dla Gammu. */
 final class Blocklist
 {
     public static function path(): string

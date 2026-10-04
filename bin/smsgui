@@ -1,6 +1,6 @@
 #!/usr/bin/env php
 <?php
-// Narzędzie konsolowe panelu (rozdz. 2.16): instalator, usługi systemd, sytuacje awaryjne.
+// Narzędzie konsolowe panelu – używa go instalator,, usługi systemd, sytuacje awaryjne.
 declare(strict_types=1);
 
 if (PHP_SAPI !== 'cli') {

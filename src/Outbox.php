@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-/** Tworzenie wiadomości wychodzących (pojedyncze, masowe, planowane), ponawianie i anulowanie (rozdz. 3.3, 3.6). */
+/** Tworzenie wiadomości wychodzących (pojedyncze, masowe, planowane), ponawianie i anulowanie. */
 final class Outbox
 {
     public const PRIORITY_USSD = 20;
@@ -96,7 +96,7 @@ final class Outbox
         return 'cancelled';
     }
 
-    /** Ponowienie wiadomości z błędem / niedoręczonej: nowy wiersz outbox, nowy gammu_id (rozdz. 3.3). */
+    /** Ponowienie wiadomości z błędem / niedoręczonej: nowy wiersz outbox, nowy gammu_id (Gammu nie ponawia wiadomości po przeniesieniu do sentitems). */
     public static function retry(int $id): bool
     {
         $m = Db::row("SELECT * FROM messages WHERE id = ? AND direction = 'out'", [$id]);

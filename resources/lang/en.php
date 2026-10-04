@@ -23,7 +23,7 @@ return [
     'nav.settings' => 'Panel settings',
     'nav.logout' => 'Log out',
 
-    // Message statuses (ch. 3.6)
+    // Message statuses
     'status.received' => 'Received',
     'status.scheduled' => 'Scheduled',
     'status.queued' => 'Queued',
@@ -34,7 +34,7 @@ return [
     'status.failed' => 'Failed',
     'status.cancelled' => 'Cancelled',
 
-    // USSD session states (inbox.Status, ch. 3.10)
+    // USSD session states (inbox.Status)
     'ussd.status.queued' => 'Sending',
     'ussd.status.sent' => 'Waiting for reply',
     'ussd.status.timeout' => 'Timed out',
@@ -714,7 +714,7 @@ return [
     'health.gammu_schema' => 'Database `{db}`, schema version {version}',
     'health.gammu_schema_hint' => 'the panel requires schema 17 (Gammu 1.42)',
     'health.gammu_missing' => 'Gammu database `{db}` or table `gammu` is missing',
-    'health.gammu_missing_hint' => 'create the tables from mysql.sql (ch. 6.2, step 2)',
+    'health.gammu_missing_hint' => 'create the tables from mysql.sql in the gammu-smsd package or run deploy/install.sh again',
     'health.engine_ok' => 'Gammu tables use the InnoDB engine',
     'health.engine_bad' => 'Gammu tables without transactions (MyISAM): {list} – risk of sending an incomplete multipart SMS',
     'health.engine_hint' => 'ALTER TABLE <table> ENGINE=InnoDB for each Gammu table',
@@ -725,7 +725,7 @@ return [
     'health.conf_rw' => '`{file}` readable and writable, `service = {service}`',
     'health.conf_ro' => '`{file}` read-only, `service = {service}`',
     'health.conf_db' => ', database `{db}` ≠ `{expected}`',
-    'health.conf_hint' => 'the panel requires service = sql and the file writable by www-data (ch. 5.2)',
+    'health.conf_hint' => 'the panel requires service = sql and the file writable by www-data (root:www-data, 0660)',
     'health.drd' => '`DeliveryReportDelay = {value}` – at least 3600 s recommended',
     'health.drd_hint' => 'a report from a phone switched off for longer will not be matched; 172800 (2 days) recommended',
     'health.include' => 'An allowlist is set (`IncludeNumbers…`) – the blocklist does not work',

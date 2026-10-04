@@ -1,4 +1,4 @@
-// Licznik znaków i części SMS – ta sama logika co src/SmsText.php (rozdz. 3.3, zadanie 2.2).
+// Licznik znaków i części SMS – ta sama logika co src/SmsText.php; przypadki testowe wspólne z PHP w tests/cases/smstext.json.
 // Alfabet GSM wg Gammu: podstawowy z „¤”, bez „¹” i bez znaku nowej strony. Polskie litery (ą, ł, ó…) NIE są w GSM –
 // Gammu zamieniłby je po cichu, dlatego panel wybiera wtedy Unicode (UCS-2). Zgodność: tests/cases/smstext.json.
 (function (root) {
