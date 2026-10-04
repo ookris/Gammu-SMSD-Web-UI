@@ -24,7 +24,7 @@ o możliwości Gammu (USSD, połączenia przychodzące, czarna lista, okna wysy�
 
 **Makiety interfejsu:** https://claude.ai/artifact/1GcJxMSqGRWsxjPYG9mXG8 – pierwotnie przygotowane dla poprzedniego
 projektu (smstools3), w etapie P uzupełnione o wszystkie ekrany i stany wersji 1 z rozdz. 2 (21 artboardów, decyzja D23) – **zaakceptowane 2026-10-04**.
-**Prototyp HTML:** katalog `prototype/` – statyczne strony w docelowej technologii, z których powstają widoki panelu.
+**Prototyp HTML:** katalog [`prototype/`](../prototype/README.md) – 27 statycznych stron w docelowej technologii (zgodnych z CSP), z których powstają widoki panelu. Uruchomienie: `php -S 127.0.0.1:8081 -t prototype prototype/router.php`.
 
 ## Podjęte decyzje
 

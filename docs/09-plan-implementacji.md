@@ -92,9 +92,9 @@ a następnie statyczną stronę HTML, z której w etapach 1–5 powstaje widok `
 | [x] P.3 | Makiety pozostałych ekranów: Odebrane, Raport wysyłki, Kontakt (dodaj/edytuj), Grupy, Szablony, Log Gammu, Ustawienia panelu, Zmiana hasła | canvas makiet |
 | [x] P.4 | Makiety stanów: licznik znaków z wyjaśnieniem kodowania, lista błędnych numerów, potwierdzenie wysyłki do wielu, oczekiwanie na USSD, puste listy, komunikaty o błędach, widok na telefonie | canvas makiet |
 | [x] P.5 | Przegląd i akceptacja makiet (zaakceptowane 2026-10-04) | uwagi naniesione |
-| [ ] P.6 | Prototyp – podstawa: Pico.css, czcionki IBM Plex, ikony Solar (SVG), `app.css` (zmienne kolorów, jasny/ciemny motyw), układ strony (menu boczne zwijane na telefonie, wskaźnik usługi i modemu, licznik nieprzeczytanych, komunikaty, stopka z atrybucją) | `prototype/assets/`, `prototype/_layout.html` |
-| [ ] P.7 | Prototyp – wszystkie ekrany z przykładowymi danymi, linkowane z menu | `prototype/*.html` |
-| [ ] P.8 | Prototyp – interakcje: okna `<dialog>`, licznik znaków (szkic `sms-text.js`), przełączanie zakładek; bez JS/CSS inline (CSP) | `prototype/assets/app.js` |
+| [x] P.6 | Prototyp – podstawa: Pico.css, czcionki IBM Plex, ikony Solar (SVG), `app.css` (zmienne kolorów, jasny/ciemny motyw), układ strony (menu boczne zwijane na telefonie, wskaźnik usługi i modemu, licznik nieprzeczytanych, komunikaty, stopka z atrybucją) | `prototype/assets/`, `prototype/_layout.html` (Pico.css 2.1.1, IBM Plex łacina + łac. rozszerzona) |
+| [x] P.7 | Prototyp – wszystkie ekrany z przykładowymi danymi, linkowane z menu | `prototype/*.html` |
+| [x] P.8 | Prototyp – interakcje: okna `<dialog>`, licznik znaków (szkic `sms-text.js`), przełączanie zakładek; bez JS/CSS inline (CSP) | `prototype/assets/app.js` |
 | [ ] P.9 | Przegląd prototypu (komputer, 360 px, oba motywy) i akceptacja | — |
 
 **Zasady prototypu:**
