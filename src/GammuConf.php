@@ -351,7 +351,9 @@ final class GammuConf
         }
         self::createFile("$dir/$name", $content, 0640);
         $notes = Settings::json('backup_notes');
-        $notes[$name] = mb_substr($note, 0, 200);
+        // Notatka to klucz z msg_key() – zapisywana w całości (ucięty JSON nie dałby się przetłumaczyć);
+        // długość opisu ogranicza wywołujący przed zakodowaniem
+        $notes[$name] = $note;
         // Limit kopii (ustawienie backup_keep)
         $keep = max(1, Settings::int('backup_keep'));
         $all = self::backups($prefix);

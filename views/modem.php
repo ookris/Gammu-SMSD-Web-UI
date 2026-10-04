@@ -24,7 +24,7 @@
 <tbody>
 <?php foreach ($history as $r): ?>
 <tr><td class="nowrap"><?= e(fmt_when($r['created_at'])) ?></td><td><span class="mono"><?= e(Ussd::rootCode($r)) ?></span></td>
-<td><?= $r['response'] !== null ? e(preg_replace('/\s+/u', ' ', tr($r['response']))) : '<span class="muted">' . e($r['status'] === 'timeout' ? t('modem.no_response_in', ['n' => Ussd::TIMEOUT]) : t('ussd.status.' . $r['status'])) . '</span>' ?></td>
+<td><?= $r['response'] !== null ? e(preg_replace('/\s+/u', ' ', $r['status'] === 'failed' ? tr($r['response']) : $r['response'])) : '<span class="muted">' . e($r['status'] === 'timeout' ? t('modem.no_response_in', ['n' => Ussd::TIMEOUT]) : t('ussd.status.' . $r['status'])) . '</span>' ?></td>
 <td><?= view('partials/ussd-badge', ['r' => $r]) ?></td></tr>
 <?php endforeach ?>
 </tbody></table></div>

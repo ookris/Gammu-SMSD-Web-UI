@@ -86,8 +86,20 @@ test('tekst z bazy zapisany jako klucz tłumaczony przy wyświetlaniu', function
         lang('en');
         assert_same('Attempts left: 2, then a 15-minute lockout.', tr($stored));
         assert_same('zwykły tekst', tr('zwykły tekst'));
+        assert_same('@support.example', tr('@support.example'), 'nieznany klucz (np. odpowiedź operatora) bez zmian');
         assert_same('', tr(null));
     } finally {
         lang('pl');
     }
 });
+
+test('notatka kopii z cudzysłowami zapisana w całości i przetłumaczona', function () {
+    reset_db();
+    $changes = 'phoneid ' . str_repeat('"\\', 54) . ' → x'; // 120 znaków, w JSON każdy " i \ się podwaja
+    $note = msg_key('config.note_form', ['changes' => $changes]);
+    assert_true(mb_strlen($note) > 200, 'zakodowana notatka dłuższa niż dawny limit 200 znaków');
+    $name = GammuConf::backup("[smsd]\n", $note);
+    $saved = array_values(array_filter(GammuConf::backups(), static fn ($b) => $b['name'] === $name))[0]['note'];
+    assert_same('formularz: ' . $changes, tr($saved));
+});
+
