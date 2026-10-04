@@ -2,13 +2,13 @@
 // Połączenia przychodzące (rozdz. 2.13)
 if (is_post()) {
     if (input('block') !== '') {
-        Blocklist::blockFromPanel(input('block'), 'z połączeń');
+        Blocklist::blockFromPanel(input('block'), t('calls.block_note'));
         back(url('calls'));
     }
     $ids = ($one = (int) input('remove')) > 0 ? [$one] : input_ids();
     if ($ids !== []) {
         $n = Db::exec('DELETE FROM calls WHERE id IN (' . Db::in($ids) . ')', $ids);
-        flash('ok', 'Usunięto ' . $n . ' ' . plural($n, 'połączenie', 'połączenia', 'połączeń') . '.');
+        flash('ok', tn('calls.deleted', $n));
     }
     back(url('calls'));
 }
@@ -35,6 +35,6 @@ $total = (int) Db::val("SELECT COUNT(*) FROM calls WHERE $w", $params);
 $rows = Db::all("SELECT * FROM calls WHERE $w ORDER BY received_at DESC, id DESC LIMIT " . Ui::PER_PAGE . ' OFFSET ' . ($page - 1) * Ui::PER_PAGE, $params);
 Db::exec('UPDATE calls SET is_read = 1 WHERE is_read = 0');
 Status::forget();
-render('calls', ['title' => 'Połączenia', 'nav' => 'calls', 'rows' => $rows, 'total' => $total, 'page' => $page, 'f' => $f,
+render('calls', ['title' => t('nav.calls'), 'nav' => 'calls', 'rows' => $rows, 'total' => $total, 'page' => $page, 'f' => $f,
     'month' => (int) Db::val('SELECT COUNT(*) FROM calls WHERE received_at >= ?', [date('Y-m-01 00:00:00')]), 'enabled' => Calls::enabledInConf(),
     'blocked' => Blocklist::blockedAmong(array_values(array_filter(array_column($rows, 'phone'))))]);

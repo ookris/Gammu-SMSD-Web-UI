@@ -44,7 +44,7 @@ if (is_post() && !csrf_valid()) {
         echo '<div class="alert alert-err tight" role="alert">' . icon('danger-circle') . '<div>' . e(t('auth.csrf')) . '</div></div>';
         exit;
     }
-    echo view('error', ['code' => 403, 'title' => 'Odmowa dostępu', 'message' => t('auth.csrf')]);
+    echo view('error', ['code' => 403, 'title' => t('error.403'), 'message' => t('auth.csrf')]);
     exit;
 }
 

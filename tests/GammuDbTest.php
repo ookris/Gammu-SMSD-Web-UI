@@ -55,7 +55,8 @@ test('łączenie statusów części (tabela 3.5)', function () {
     assert_same('failed', $st([]));
     $q = GammuDb::state(['Retries' => 1, 'StatusCode' => 500, 'SendingTimeOut' => now_db(300), 'waiting' => 0], [], 2);
     assert_same('queued', $q['status']);
-    assert_contains('próba 2 z 3', (string) $q['error']);
+    assert_contains('próba 2 z 3', tr($q['error']));
+    assert_contains('kod 500: nieznany błąd', tr($q['error']));
     assert_same('scheduled', GammuDb::state(['Retries' => 0, 'StatusCode' => -1, 'SendingTimeOut' => null, 'waiting' => 1], [], 1)['status']);
 });
 
@@ -81,7 +82,7 @@ test('synchronizacja: wysłana → doręczona, ponowienie z nowym gammu_id', fun
     Sync::run();
     $m = Db::row('SELECT status, error FROM messages WHERE id = ?', [$id]);
     assert_same('undelivered', $m['status']);
-    assert_contains('Status 70', (string) $m['error']);
+    assert_same('Status 70: upłynął czas ważności – odbiorca nieosiągalny', tr($m['error']));
     assert_true(Outbox::retry($id));
     $m = Db::row('SELECT status, gammu_id FROM messages WHERE id = ?', [$id]);
     assert_same('queued', $m['status']);

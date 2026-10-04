@@ -6,6 +6,19 @@ final class Ui
 {
     public const PER_PAGE = 50;
 
+    /** Teksty potrzebne w JS (licznik SMS), przekazywane przez <script id="i18n"> w układzie strony. */
+    public const JS_TEXTS = ['sms.counter', 'sms.chars', 'sms.too_long', 'sms.forces', 'sms.translit_gain'];
+
+    /** JSON dla public/assets/app.js: język (reguła liczebnika) i teksty z JS_TEXTS. */
+    public static function jsTexts(): string
+    {
+        $texts = [];
+        foreach (self::JS_TEXTS as $k) {
+            $texts[$k] = lang_entry($k);
+        }
+        return json_encode(['lang' => lang(), 't' => $texts], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP);
+    }
+
     /** Etykieta statusu wiadomości + linia z opisem (rozdz. 3.6). */
     public static function status(array $m, bool $withSub = true): string
     {
@@ -25,10 +38,10 @@ final class Ui
         if ($withSub) {
             $sub = match (true) {
                 $s === 'scheduled' => self::scheduledNote($m),
-                $retrying => (string) $m['error'],
-                $s === 'queued' => 'od ' . fmt_duration(max(0, time() - (int) ts($m['scheduled_at'] ?? $m['created_at']))),
+                $retrying => tr($m['error']),
+                $s === 'queued' => t('ui.queued_for', ['time' => fmt_duration(max(0, time() - (int) ts($m['scheduled_at'] ?? $m['created_at'])))]),
                 $s === 'delivered' => $m['delivered_at'] ? date('H:i:s', (int) ts($m['delivered_at'])) : '',
-                default => (string) ($m['error'] ?? ''),
+                default => tr($m['error'] ?? null),
             };
         }
         return '<span class="badge ' . $class . '">' . e($label) . '</span>' . ($sub !== '' ? '<span class="sub">' . e($sub) . '</span>' : '');
@@ -38,10 +51,10 @@ final class Ui
     {
         $t = ts($m['scheduled_at'] ?? null);
         if ($t !== null && $t > time()) {
-            return ($m['batch_id'] ? 'dławienie: ' : '') . fmt_when($m['scheduled_at']);
+            return $m['batch_id'] ? t('ui.throttled', ['time' => fmt_when($m['scheduled_at'])]) : fmt_when($m['scheduled_at']);
         }
         if ((int) ($m['send_window'] ?? 0) === 1 && ($w = Recipients::window()) !== null) {
-            return 'okno wysyłki: od ' . substr($w[0], 0, 5);
+            return t('ui.window_from', ['time' => substr($w[0], 0, 5)]);
         }
         return '';
     }
@@ -61,13 +74,13 @@ final class Ui
     {
         $from = $total === 0 ? 0 : ($page - 1) * $per + 1;
         $to = min($total, $page * $per);
-        $html = '<div class="pager"><span>' . $from . '–' . $to . ' z ' . number_format($total, 0, ',', ' ')
-            . ($total > $per ? ' · ' . $per . ' na stronę' : '') . '</span><nav aria-label="Strony">';
+        $html = '<div class="pager"><span>' . e(t('ui.pager', ['from' => $from, 'to' => $to, 'total' => fmt_num($total)]))
+            . ($total > $per ? ' · ' . e(t('ui.per_page', ['n' => $per])) : '') . '</span><nav aria-label="' . e(t('ui.pages')) . '">';
         if ($page > 1) {
-            $html .= '<a href="' . e(url($pageName, ['page' => $page - 1] + $params)) . '" role="button" class="secondary outline btn-sm">Poprzednia</a>';
+            $html .= '<a href="' . e(url($pageName, ['page' => $page - 1] + $params)) . '" role="button" class="secondary outline btn-sm">' . e(t('ui.prev')) . '</a>';
         }
         if ($to < $total) {
-            $html .= '<a href="' . e(url($pageName, ['page' => $page + 1] + $params)) . '" role="button" class="secondary outline btn-sm">Następna</a>';
+            $html .= '<a href="' . e(url($pageName, ['page' => $page + 1] + $params)) . '" role="button" class="secondary outline btn-sm">' . e(t('ui.next')) . '</a>';
         }
         return $html . '</nav></div>';
     }
@@ -84,9 +97,9 @@ final class Ui
     }
 
     /** Atrybuty przycisku z oknem potwierdzenia (app.js): data-confirm. */
-    public static function confirm(string $title, string $text = '', string $ok = 'Potwierdź'): string
+    public static function confirm(string $title, string $text = '', string $ok = ''): string
     {
-        return ' data-confirm="' . e($title) . '" data-confirm-text="' . e($text) . '" data-confirm-ok="' . e($ok) . '"';
+        return ' data-confirm="' . e($title) . '" data-confirm-text="' . e($text) . '" data-confirm-ok="' . e($ok !== '' ? $ok : t('common.confirm')) . '"';
     }
 
     /** Fragment treści z zaznaczeniem, że jest dłuższa. */

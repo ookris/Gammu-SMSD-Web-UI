@@ -1,35 +1,35 @@
 <?php /** @var array $rows @var int $total @var int $page @var array $f @var int $month @var bool $enabled @var array $blocked */ ?>
-<header class="page-head"><div><h1>Połączenia</h1><p class="sub">Odrzucone połączenia przychodzące · <?= $month ?> w tym miesiącu</p></div></header>
+<header class="page-head"><div><h1><?= e(t('nav.calls')) ?></h1><p class="sub"><?= e(t('calls.sub', ['n' => $month])) ?></p></div></header>
 <?= flashes_html() ?>
 <?php if ($enabled): ?>
-<?= alert('info', 'Zapisywanie połączeń jest włączone.', 'Gammu odrzuca każde połączenie przychodzące (HangupCalls = yes) – dzwoniący słyszy rozłączenie. Gammu nie potrafi zapisywać połączeń bez ich odrzucania.', '<a href="' . e(url('settings')) . '">Ustawienia panelu</a>', false) ?>
+<?= alert('info', t('calls.enabled'), t('calls.enabled_text'), '<a href="' . e(url('settings')) . '">' . e(t('nav.settings')) . '</a>', false) ?>
 <?php else: ?>
-<?= alert('warn', 'Zapisywanie połączeń jest wyłączone.', 'Włącz „Odrzucaj połączenia przychodzące i zapisuj je w panelu” w ustawieniach – zmiana przejdzie przez okno potwierdzenia zapisu konfiguracji Gammu.', '<a href="' . e(url('settings')) . '">Ustawienia panelu</a>', false) ?>
+<?= alert('warn', t('calls.disabled'), t('calls.disabled_text'), '<a href="' . e(url('settings')) . '">' . e(t('nav.settings')) . '</a>', false) ?>
 <?php endif ?>
 <section class="card flush">
 <form class="toolbar" method="get" action="./"><input type="hidden" name="p" value="calls">
-<div class="field grow"><label for="q">Numer lub kontakt</label><input id="q" name="q" type="search" value="<?= e($f['q']) ?>" placeholder="np. 601 234"></div>
-<div class="field"><label for="from">Od</label><input id="from" name="from" type="date" value="<?= e($f['from']) ?>"></div>
-<div class="field"><label for="to">Do</label><input id="to" name="to" type="date" value="<?= e($f['to']) ?>"></div>
-<button type="submit" class="secondary"><?= icon('filter') ?>Filtruj</button></form>
-<?php if ($rows === []): ?><?= Ui::empty('end-call', array_filter($f) ? 'Brak wyników' : 'Brak zapisanych połączeń', array_filter($f) ? 'Zmień filtry.' : 'Odrzucone połączenia pojawią się tutaj.') ?><?php else: ?>
+<div class="field grow"><label for="q"><?= e(t('calls.search')) ?></label><input id="q" name="q" type="search" value="<?= e($f['q']) ?>" placeholder="<?= e(t('calls.search_ph')) ?>"></div>
+<div class="field"><label for="from"><?= e(t('common.from')) ?></label><input id="from" name="from" type="date" value="<?= e($f['from']) ?>"></div>
+<div class="field"><label for="to"><?= e(t('common.to')) ?></label><input id="to" name="to" type="date" value="<?= e($f['to']) ?>"></div>
+<button type="submit" class="secondary"><?= icon('filter') ?><?= e(t('common.filter')) ?></button></form>
+<?php if ($rows === []): ?><?= Ui::empty('end-call', t(array_filter($f) ? 'common.no_results' : 'calls.empty'), t(array_filter($f) ? 'common.change_filters' : 'calls.empty_text')) ?><?php else: ?>
 <form method="post" action="<?= e(url('calls')) ?>"><?= csrf_field() ?><?= Ui::backField() ?>
-<div class="bulkbar" hidden><strong>Zaznaczono <span data-bulk-count>0</span></strong>
-<button type="submit" class="btn-danger-outline btn-sm"<?= Ui::confirm('Usunąć zaznaczone połączenia?', '', 'Usuń') ?>><?= icon('trash-bin-trash') ?>Usuń</button></div>
+<div class="bulkbar" hidden><strong><?= t('common.selected', ['n' => '<span data-bulk-count>0</span>']) ?></strong>
+<button type="submit" class="btn-danger-outline btn-sm"<?= Ui::confirm(t('calls.delete_selected'), '', t('common.delete')) ?>><?= icon('trash-bin-trash') ?><?= e(t('common.delete')) ?></button></div>
 <div class="table-wrap"><table>
-<thead><tr><th scope="col" class="check"><input type="checkbox" data-check-all aria-label="Zaznacz wszystkie"></th><th scope="col">Data</th><th scope="col">Numer / kontakt</th><th scope="col">Modem</th><th scope="col">Akcje</th></tr></thead>
+<thead><tr><th scope="col" class="check"><input type="checkbox" data-check-all aria-label="<?= e(t('common.select_all')) ?>"></th><th scope="col"><?= e(t('common.date')) ?></th><th scope="col"><?= e(t('calls.col_phone')) ?></th><th scope="col"><?= e(t('inbox.modem')) ?></th><th scope="col"><?= e(t('common.actions')) ?></th></tr></thead>
 <tbody>
 <?php foreach ($rows as $c): $hidden = $c['phone'] === ''; $isBlocked = in_array($c['phone'], $blocked, true); $known = !$hidden && Contacts::name($c['phone']) !== null; ?>
-<tr><td class="check"><input type="checkbox" name="ids[]" value="<?= (int) $c['id'] ?>" aria-label="Zaznacz wiersz"></td>
+<tr><td class="check"><input type="checkbox" name="ids[]" value="<?= (int) $c['id'] ?>" aria-label="<?= e(t('common.select_row')) ?>"></td>
 <td class="nowrap"><?= e(fmt_when($c['received_at'])) ?></td>
-<td><?= $hidden ? '<strong>' . e($c['raw_number'] === 'nieprawidłowy numer' ? 'nieprawidłowy numer' : 'numer ukryty') . '</strong>' : Ui::who($c['phone']) ?><?= $isBlocked ? ' <span class="badge badge-err">zablokowany</span>' : '' ?></td>
+<td><?= $hidden ? '<strong>' . e(t(in_array($c['raw_number'], Calls::INVALID, true) ? 'calls.invalid_number' : 'calls.hidden_number')) . '</strong>' : Ui::who($c['phone']) ?><?= $isBlocked ? ' <span class="badge badge-err">' . e(t('inbox.blocked')) . '</span>' : '' ?></td>
 <td><?= e($c['modem'] ?: '—') ?></td>
 <td><div class="cell-actions">
-<?php if (!$hidden): ?><?= Ui::iconBtnLink(url('compose', ['to' => $c['phone']]), 'plain', 'Wyślij SMS') ?>
-<?php if (!$known): ?><?= Ui::iconBtnLink(url('contact', ['phone' => $c['phone']]), 'user-plus', 'Dodaj do kontaktów') ?><?php endif ?>
-<?php if (!$isBlocked): ?><button type="submit" name="block" value="<?= e($c['phone']) ?>" class="icon-btn danger" aria-label="Zablokuj" title="Zablokuj"<?= Ui::confirm('Zablokować ' . Contacts::display($c['phone']) . '?', 'SMS od tego numeru nie będą trafiać do panelu.', 'Zablokuj') ?>><?= icon('forbidden-circle') ?></button><?php endif ?>
+<?php if (!$hidden): ?><?= Ui::iconBtnLink(url('compose', ['to' => $c['phone']]), 'plain', t('calls.send_sms')) ?>
+<?php if (!$known): ?><?= Ui::iconBtnLink(url('contact', ['phone' => $c['phone']]), 'user-plus', t('threads.add_contact')) ?><?php endif ?>
+<?php if (!$isBlocked): ?><button type="submit" name="block" value="<?= e($c['phone']) ?>" class="icon-btn danger" aria-label="<?= e(t('inbox.block')) ?>" title="<?= e(t('inbox.block')) ?>"<?= Ui::confirm(t('inbox.block_q', ['who' => Contacts::display($c['phone'])]), t('calls.block_text'), t('inbox.block')) ?>><?= icon('forbidden-circle') ?></button><?php endif ?>
 <?php endif ?>
-<button type="submit" name="remove" value="<?= (int) $c['id'] ?>" class="icon-btn danger" aria-label="Usuń" title="Usuń"><?= icon('trash-bin-trash') ?></button>
+<button type="submit" name="remove" value="<?= (int) $c['id'] ?>" class="icon-btn danger" aria-label="<?= e(t('common.delete')) ?>" title="<?= e(t('common.delete')) ?>"><?= icon('trash-bin-trash') ?></button>
 </div></td></tr>
 <?php endforeach ?>
 </tbody></table></div>

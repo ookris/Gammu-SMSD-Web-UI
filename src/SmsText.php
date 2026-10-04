@@ -83,7 +83,7 @@ final class SmsText
     public static function counter(string $text): string
     {
         $a = self::analyze($text);
-        return $a['chars'] . ' ' . plural($a['chars'], 'znak', 'znaki', 'znaków') . ' · ' . $a['parts'] . ' SMS · ' . ($a['gsm'] ? 'GSM-7' : 'Unicode');
+        return t('sms.counter', ['chars' => tn('sms.chars', $a['chars']), 'parts' => $a['parts'], 'coding' => $a['gsm'] ? 'GSM-7' : 'Unicode']);
     }
 
     /**
@@ -95,7 +95,7 @@ final class SmsText
     {
         $a = self::analyze($text);
         if ($a['too_long']) {
-            throw new InvalidArgumentException('Wiadomość ma ' . $a['parts'] . ' części – limit to ' . self::MAX_PARTS);
+            throw new InvalidArgumentException(t('sms.too_long', ['parts' => $a['parts'], 'max' => self::MAX_PARTS]));
         }
         if ($a['parts'] <= 1) {
             return [['text' => $text, 'udh' => '']];
@@ -117,7 +117,7 @@ final class SmsText
         $chunks[] = $current;
         $n = count($chunks);
         if ($n > self::MAX_PARTS) {
-            throw new InvalidArgumentException("Wiadomość ma $n części – limit to " . self::MAX_PARTS);
+            throw new InvalidArgumentException(t('sms.too_long', ['parts' => $n, 'max' => self::MAX_PARTS]));
         }
         $out = [];
         foreach ($chunks as $i => $chunk) {

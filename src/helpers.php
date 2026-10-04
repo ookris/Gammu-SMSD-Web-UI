@@ -38,27 +38,104 @@ function asset(string $path): string
     return 'assets/' . $path . (is_file($file) ? '?v=' . filemtime($file) : '');
 }
 
-/** Tekst interfejsu z resources/lang/pl.php; {zmienne} podstawiane z $vars. */
-function t(string $key, array $vars = []): string
+/** Języki interfejsu (resources/lang/<kod>.php); pierwszy jest domyślny i zapasowy dla brakujących tekstów. */
+const LANGS = ['pl' => 'Polski', 'en' => 'English'];
+
+/** Bieżący język: ustawienie panelu (CLI zawsze po polsku); $set zmienia go (zapis ustawień, testy). */
+function lang(?string $set = null): string
 {
     static $lang = null;
-    $lang ??= require APP_ROOT . '/resources/lang/pl.php';
-    $text = $lang[$key] ?? $key;
-    foreach ($vars as $name => $value) {
-        $text = str_replace('{' . $name . '}', (string) $value, $text);
+    if ($set !== null) {
+        $lang = isset(LANGS[$set]) ? $set : array_key_first(LANGS);
     }
-    return $text;
+    if ($lang === null) {
+        $lang = array_key_first(LANGS);
+        if (PHP_SAPI !== 'cli') {
+            try {
+                $v = (string) Settings::get('lang');
+                $lang = isset(LANGS[$v]) ? $v : $lang;
+            } catch (Throwable) {
+                // baza niedostępna (strona błędu bazy) – język domyślny
+            }
+        }
+    }
+    return $lang;
 }
 
-/** Odmiana liczebników: plural(3, 'znak', 'znaki', 'znaków'). */
-function plural(int $n, string $one, string $few, string $many): string
+/** Wpis pliku języka: tekst lub lista (formy liczebnika, nazwy dni); brakujący – z języka domyślnego. */
+function lang_entry(string $key): string|array|null
 {
+    static $files = [];
+    foreach ([lang(), array_key_first(LANGS)] as $l) {
+        $files[$l] ??= require APP_ROOT . '/resources/lang/' . $l . '.php';
+        if (isset($files[$l][$key])) {
+            return $files[$l][$key];
+        }
+    }
+    return null;
+}
+
+/** Tekst interfejsu; {zmienne} podstawiane z $vars. */
+function t(string $key, array $vars = []): string
+{
+    $text = lang_entry($key);
+    return fill(is_string($text) ? $text : $key, $vars);
+}
+
+/** Tekst z liczebnikiem: wpis to lista form (pl: 1 / 2–4 / 5+, en: 1 / inne), {n} = liczba. */
+function tn(string $key, int $n, array $vars = []): string
+{
+    $forms = lang_entry($key);
+    if (!is_array($forms)) {
+        return $key;
+    }
+    return fill($forms[min(plural_index($n), count($forms) - 1)], ['n' => $n] + $vars);
+}
+
+/** Numer formy liczebnika w bieżącym języku. */
+function plural_index(int $n): int
+{
+    if (lang() !== 'pl') {
+        return $n === 1 ? 0 : 1;
+    }
     if ($n === 1) {
-        return $one;
+        return 0;
     }
     $d = $n % 10;
-    $t = $n % 100;
-    return $d >= 2 && $d <= 4 && ($t < 12 || $t > 14) ? $few : $many;
+    $h = $n % 100;
+    return $d >= 2 && $d <= 4 && ($h < 12 || $h > 14) ? 1 : 2;
+}
+
+function fill(string $text, array $vars): string
+{
+    $map = [];
+    foreach ($vars as $name => $value) {
+        $map['{' . $name . '}'] = (string) $value;
+    }
+    return $map === [] ? $text : strtr($text, $map);
+}
+
+/** Tekst zapisywany w bazie jako klucz z parametrami – tłumaczony dopiero przy wyświetlaniu (tr()). */
+function msg_key(string $key, array $vars = []): string
+{
+    return '@' . $key . ($vars !== [] ? ' ' . json_encode($vars, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : '');
+}
+
+/** Tekst z bazy: klucz z msg_key() tłumaczony (parametry też mogą być kluczami), zwykły tekst bez zmian. */
+function tr(?string $stored): string
+{
+    if ($stored === null || !preg_match('~^@([a-z0-9_]+\.[a-z0-9_.]+)(?: (\{.*\}))?$~s', $stored, $m)) {
+        return (string) $stored;
+    }
+    $vars = isset($m[2]) ? json_decode($m[2], true) : [];
+    $vars = array_map(static fn ($v) => is_string($v) ? tr($v) : $v, is_array($vars) ? $vars : []);
+    return t($m[1], $vars);
+}
+
+/** Liczba z separatorami bieżącego języka. */
+function fmt_num(int|float $n, int $decimals = 0): string
+{
+    return number_format($n, $decimals, t('num.decimal'), t('num.thousands'));
 }
 
 /** Ikona Solar wstawiana inline (zgodnie z CSP, bez <img>). */
@@ -257,6 +334,12 @@ function now_db(int $offset = 0): string
     return date('Y-m-d H:i:s', time() + $offset);
 }
 
+/** Data (i godzina w formacie date(), np. 'H:i') w zapisie bieżącego języka: „02.10.2025 16:45”. */
+function fmt_date(int $t, string $time = ''): string
+{
+    return date(t('date.dmy') . ($time !== '' ? ' ' . $time : ''), $t);
+}
+
 /** „dziś 11:41”, „wczoraj 17:20”, „02.10 16:45”, „02.10.2025 16:45”. */
 function fmt_when(?string $dt): string
 {
@@ -265,12 +348,13 @@ function fmt_when(?string $dt): string
         return '—';
     }
     $day = date('Y-m-d', $t);
+    $time = date('H:i', $t);
     return match (true) {
-        $day === date('Y-m-d') => 'dziś ' . date('H:i', $t),
-        $day === date('Y-m-d', strtotime('-1 day')) => 'wczoraj ' . date('H:i', $t),
-        $day === date('Y-m-d', strtotime('+1 day')) => 'jutro ' . date('H:i', $t),
-        date('Y', $t) === date('Y') => date('d.m H:i', $t),
-        default => date('d.m.Y H:i', $t),
+        $day === date('Y-m-d') => t('date.today_at', ['time' => $time]),
+        $day === date('Y-m-d', strtotime('-1 day')) => t('date.yesterday_at', ['time' => $time]),
+        $day === date('Y-m-d', strtotime('+1 day')) => t('date.tomorrow_at', ['time' => $time]),
+        date('Y', $t) === date('Y') => date(t('date.dm'), $t) . ' ' . $time,
+        default => fmt_date($t, 'H:i'),
     };
 }
 
@@ -284,10 +368,10 @@ function fmt_short(?string $dt): string
     $days = (int) ((strtotime('today') - strtotime(date('Y-m-d', $t))) / 86400);
     return match (true) {
         $days <= 0 => date('H:i', $t),
-        $days === 1 => 'wczoraj',
-        $days < 7 => ['nd.', 'pon.', 'wt.', 'śr.', 'czw.', 'pt.', 'sob.'][(int) date('w', $t)],
-        date('Y', $t) === date('Y') => date('d.m', $t),
-        default => date('d.m.Y', $t),
+        $days === 1 => t('date.yesterday'),
+        $days < 7 => lang_entry('date.weekdays_short')[(int) date('w', $t)],
+        date('Y', $t) === date('Y') => date(t('date.dm'), $t),
+        default => fmt_date($t),
     };
 }
 
@@ -296,13 +380,13 @@ function fmt_ago(?string $dt): string
 {
     $t = ts($dt);
     if ($t === null) {
-        return 'nigdy';
+        return t('date.never');
     }
     $s = max(0, time() - $t);
     return match (true) {
-        $s < 60 => $s . ' s temu',
-        $s < 3600 => intdiv($s, 60) . ' min temu',
-        $s < 86400 => intdiv($s, 3600) . ' godz. temu',
+        $s < 60 => t('date.ago', ['time' => $s . ' s']),
+        $s < 3600 => t('date.ago', ['time' => intdiv($s, 60) . ' min']),
+        $s < 86400 => t('date.ago', ['time' => t('date.hours', ['n' => intdiv($s, 3600)])]),
         default => fmt_when($dt),
     };
 }
@@ -310,42 +394,42 @@ function fmt_ago(?string $dt): string
 /** „40 s”, „3 min”, „2 godz.” – czas trwania. */
 function fmt_duration(int $s): string
 {
+    $h = round($s / 3600, 1);
     return match (true) {
         $s < 60 => $s . ' s',
         $s < 3600 => (int) ceil($s / 60) . ' min',
-        default => round($s / 3600, 1) . ' godz.',
+        default => t('date.hours', ['n' => fmt_num($h, $h === floor($h) ? 0 : 1)]),
     };
 }
 
-/** „Niedziela, 4 października 2026”. */
-function fmt_long_date(int $t): string
+/** „Niedziela, 4 października 2026” (bez roku: „Niedziela, 4 października”). */
+function fmt_long_date(int $t, bool $year = true): string
 {
-    $days = ['Niedziela', 'Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek', 'Sobota'];
-    $months = ['stycznia', 'lutego', 'marca', 'kwietnia', 'maja', 'czerwca', 'lipca', 'sierpnia', 'września',
-        'października', 'listopada', 'grudnia'];
-    return $days[(int) date('w', $t)] . ', ' . date('j', $t) . ' ' . $months[(int) date('n', $t) - 1] . ' ' . date('Y', $t);
+    return t($year ? 'date.long' : 'date.long_no_year', [
+        'weekday' => lang_entry('date.weekdays')[(int) date('w', $t)],
+        'day' => date('j', $t),
+        'month' => lang_entry('date.months')[(int) date('n', $t) - 1],
+        'year' => date('Y', $t),
+    ]);
 }
 
 function fmt_day_heading(string $dt): string
 {
     $t = (int) ts($dt);
     $day = date('Y-m-d', $t);
-    if ($day === date('Y-m-d')) {
-        return 'Dzisiaj';
-    }
-    if ($day === date('Y-m-d', strtotime('-1 day'))) {
-        return 'Wczoraj';
-    }
-    $s = fmt_long_date($t);
-    return date('Y', $t) === date('Y') ? substr($s, 0, strrpos($s, ' ')) : $s;
+    return match (true) {
+        $day === date('Y-m-d') => t('date.today_heading'),
+        $day === date('Y-m-d', strtotime('-1 day')) => t('date.yesterday_heading'),
+        default => fmt_long_date($t, date('Y', $t) !== date('Y')),
+    };
 }
 
 function fmt_bytes(int $b): string
 {
     return match (true) {
         $b < 1024 => $b . ' B',
-        $b < 1048576 => number_format($b / 1024, 1, ',', ' ') . ' kB',
-        default => number_format($b / 1048576, 1, ',', ' ') . ' MB',
+        $b < 1048576 => fmt_num($b / 1024, 1) . ' kB',
+        default => fmt_num($b / 1048576, 1) . ' MB',
     };
 }
 

@@ -4,6 +4,9 @@ declare(strict_types=1);
 /** Połączenia przychodzące (rozdz. 2.13, 3.11): zapis z hooka RunOnIncomingCall, lista, liczniki. */
 final class Calls
 {
+    /** raw_number dla numeru, którego nie da się zapisać; wiersze sprzed tłumaczenia mają tekst po polsku. */
+    public const INVALID = ['@calls.invalid_number', 'nieprawidłowy numer'];
+
     /** Numer z sieci GSM: cyfry, +, *, #; pusty = numer zastrzeżony. */
     public static function validNumber(string $n): bool
     {
@@ -19,7 +22,7 @@ final class Calls
         $number = trim($number);
         $valid = self::validNumber($number);
         $phone = $valid && $number !== '' ? (Phone::fromGammu($number) ?: '') : '';
-        $raw = $valid ? $number : 'nieprawidłowy numer';
+        $raw = $valid ? $number : self::INVALID[0];
         $modem = preg_match('/^[A-Za-z0-9_.-]{0,64}$/', $phoneId) ? $phoneId : '';
         try {
             $pdo = self::hookConnection();
@@ -56,7 +59,7 @@ final class Calls
     /** Włączenie/wyłączenie w gammu-smsdrc: HangupCalls + RunOnIncomingCall (zmiana przez okno potwierdzenia). */
     public static function confChange(bool $enable): GammuConf
     {
-        $conf = GammuConf::load(true) ?? throw new RuntimeException('Nie można odczytać ' . GammuConf::path());
+        $conf = GammuConf::load(true) ?? throw new RuntimeException(t('file.cannot_read', ['path' => GammuConf::path()]));
         $phone = $conf->get('smsd', 'phoneid') ?: 'GSM1';
         $copy = GammuConf::parse($conf->text());
         $copy->set('smsd', 'hangupcalls', $enable ? 'yes' : null);

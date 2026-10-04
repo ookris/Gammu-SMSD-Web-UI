@@ -74,13 +74,13 @@ final class Service
     }
 
     /** Restart z czekaniem na modem: wynik w sesji, zakładka „Usługa” odpytuje phones do 30 s. */
-    public static function restartAndWatch(string $reason, string $note = ''): string
+    public static function restartAndWatch(string $note = ''): string
     {
         $started = now_db();
         [$code, $out] = self::restart();
         $_SESSION['service_op'] = ['cmd' => (string) cfg('service.restart_cmd'), 'code' => $code, 'out' => $out, 'started' => $started,
-            'reason' => $reason, 'note' => $note];
-        flash($code === 0 ? 'ok' : 'err', $code === 0 ? 'Zrestartowano Gammu.' : 'Restart nie powiódł się.', $note);
+            'wait' => true, 'note' => $note];
+        flash($code === 0 ? 'ok' : 'err', t($code === 0 ? 'config.restarted' : 'config.restart_failed'), $note);
         return url('config', ['tab' => 'service', 'wait' => 1]);
     }
 

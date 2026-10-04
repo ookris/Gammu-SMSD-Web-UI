@@ -10,4 +10,4 @@ if (is_post()) {
         redirect(url('password'));
     }
 }
-render('password', ['title' => 'Zmiana hasła', 'nav' => 'password', 'error' => $error, 'username' => $username]);
+render('password', ['title' => t('password.title'), 'nav' => 'password', 'error' => $error, 'username' => $username]);

@@ -26,25 +26,25 @@ if (is_post()) {
     }
     if ($action === 'reload') {
         [$code, $out] = Service::reload();
-        $_SESSION['service_op'] = ['cmd' => (string) cfg('service.reload_cmd'), 'code' => $code, 'out' => $out, 'started' => now_db(), 'reason' => 'przeładowanie'];
-        flash($code === 0 ? 'ok' : 'err', $code === 0 ? 'Przeładowano konfigurację Gammu.' : 'Przeładowanie nie powiodło się.', $out);
+        $_SESSION['service_op'] = ['cmd' => (string) cfg('service.reload_cmd'), 'code' => $code, 'out' => $out, 'started' => now_db(), 'wait' => false];
+        flash($code === 0 ? 'ok' : 'err', t($code === 0 ? 'config.reloaded' : 'config.reload_failed'), $out);
         redirect(url('config', ['tab' => 'service']));
     }
     if ($action === 'restart') {
-        redirect(Service::restartAndWatch('restart z panelu'));
+        redirect(Service::restartAndWatch());
     }
     if ($conf === null) {
-        flash('err', 'Nie można odczytać ' . $path . '.');
+        flash('err', t('config.unreadable', ['path' => $path]));
         redirect(url('config', ['tab' => $tab]));
     }
     if ($action === 'form') {
         [$new, $changes, $fieldErrors] = GammuConfForm::apply($conf, $_POST);
         if ($fieldErrors === []) {
             if ($changes === []) {
-                flash('info', 'Brak zmian do zapisania.');
+                flash('info', t('config.no_changes'));
                 redirect(url('config'));
             }
-            ConfigSave::propose($new->text(), 'formularz: ' . implode(', ', $changes), 'form', input('base'));
+            ConfigSave::propose($new->text(), msg_key('config.note_form', ['changes' => mb_substr(implode(', ', $changes), 0, 120)]), 'form', input('base'));
         }
     }
     if ($action === 'editor' || $action === 'validate') {
@@ -55,7 +55,7 @@ if (is_post()) {
             $full .= "\n";
         }
         if ($action === 'editor') {
-            ConfigSave::propose($full, 'edytor pliku', 'editor', input('base'));
+            ConfigSave::propose($full, msg_key('config.note_editor'), 'editor', input('base'));
         }
         $editorValidation = GammuConf::parse($full)->validate($conf);
         $editorBase = input('base');
@@ -64,14 +64,14 @@ if (is_post()) {
         $name = input('name');
         $text = GammuConf::readBackup($name);
         if ($text === null) {
-            flash('err', 'Nie znaleziono kopii.');
+            flash('err', t('config.backup_not_found'));
             redirect(url('config', ['tab' => 'backups']));
         }
-        ConfigSave::propose($text, 'przywrócenie kopii ' . $name, 'backups', input('base'));
+        ConfigSave::propose($text, msg_key('config.note_restore', ['name' => $name]), 'backups', input('base'));
     }
 }
 
-$data = ['base' => $conf ? GammuConf::fingerprint($conf->text()) : '', 'title' => 'Konfiguracja Gammu', 'nav' => 'config', 'tab' => $tab, 'conf' => $conf, 'path' => $path,
+$data = ['base' => $conf ? GammuConf::fingerprint($conf->text()) : '', 'title' => t('nav.config'), 'nav' => 'config', 'tab' => $tab, 'conf' => $conf, 'path' => $path,
     'mtime' => is_file($path) ? filemtime($path) : null, 'backups' => GammuConf::backups(),
     'pending' => input('confirm') !== '' ? ConfigSave::pending() : null, 'fieldErrors' => $fieldErrors];
 

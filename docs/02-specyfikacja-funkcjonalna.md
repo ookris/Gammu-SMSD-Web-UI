@@ -383,4 +383,5 @@ Ustawienie „usuwaj wiadomości starsze niż N dni” (domyślnie wyłączone),
 obejmuje też połączenia, historię USSD i zaimportowane wiersze w tabelach Gammu.
 
 ### 2.17.9. Wersja angielska interfejsu
-Przełącznik języka w ustawieniach.
+Przełącznik języka w ustawieniach panelu (polski / angielski), jeden dla wszystkich użytkowników. Zrobione
+wcześniej niż reszta rozszerzeń (2026-10-04); narzędzie wiersza poleceń zostaje po polsku do kolejnego etapu.

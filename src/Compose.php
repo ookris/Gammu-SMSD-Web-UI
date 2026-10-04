@@ -44,7 +44,7 @@ final class Compose
         if ($in['send_at'] !== '') {
             $t = strtotime($in['send_at']);
             if ($t === false) {
-                $errors[] = 'Nieprawidłowa data wysyłki.';
+                $errors[] = t('compose.err_date');
             } elseif ($t > time() + 60) {
                 $sendAt = $t;
             }
@@ -57,24 +57,23 @@ final class Compose
         $delayed = $start > time() + 60;
 
         if (trim($in['text']) === '') {
-            $errors[] = 'Wpisz treść wiadomości.';
+            $errors[] = t('compose.err_text');
         }
         if ($count === 0 && $r['invalid'] === []) {
-            $errors[] = 'Wybierz co najmniej jednego odbiorcę.';
+            $errors[] = t('compose.err_recipients');
         }
         if ($r['invalid'] !== []) {
-            $errors[] = 'Popraw lub usuń błędne numery (' . count($r['invalid']) . ').';
+            $errors[] = t('compose.err_invalid', ['n' => count($r['invalid'])]);
         }
         if ($count > (int) cfg('max_recipients', 500)) {
-            $errors[] = 'Za dużo odbiorców: ' . $count . ' – limit to ' . cfg('max_recipients', 500) . '.';
+            $errors[] = t('compose.err_too_many', ['n' => $count, 'max' => cfg('max_recipients', 500)]);
         }
         if ($a['too_long']) {
-            $errors[] = 'Za długa wiadomość: ' . $a['parts'] . ' części, limit to ' . SmsText::MAX_PARTS . '.';
+            $errors[] = t('sms.too_long', ['parts' => $a['parts'], 'max' => SmsText::MAX_PARTS]);
         }
         $warnings = [];
         if ($r['blocked'] !== []) {
-            $warnings[] = count($r['blocked']) . ' ' . plural(count($r['blocked']), 'odbiorca jest', 'odbiorców jest', 'odbiorców jest')
-                . ' na czarnej liście: ' . implode(', ', array_map([Phone::class, 'format'], array_slice($r['blocked'], 0, 5))) . ' – możesz wysłać mimo to.';
+            $warnings[] = tn('compose.warn_blocked', count($r['blocked']), ['list' => implode(', ', array_map([Phone::class, 'format'], array_slice($r['blocked'], 0, 5)))]);
         }
         $varsMissing = Recipients::usesVars($in['text']) ? $r['outside'] : 0;
 
@@ -97,7 +96,7 @@ final class Compose
     /** „teraz”, „dziś 14:30”, „jutro 8:00”. */
     public static function startLabel(array $plan): string
     {
-        return $plan['delayed'] ? fmt_when(date('Y-m-d H:i:s', $plan['start'])) : 'teraz';
+        return $plan['delayed'] ? fmt_when(date('Y-m-d H:i:s', $plan['start'])) : t('compose.now');
     }
 
     /** Wysyłka wg planu; [batch_id lub null, id pierwszej wiadomości]. */
@@ -142,15 +141,15 @@ final class Compose
         $parts = [];
         if ($in['groups'] !== []) {
             $names = Db::col('SELECT name FROM `groups` WHERE id IN (' . Db::in($in['groups']) . ') ORDER BY name', $in['groups']);
-            $parts[] = (count($names) === 1 ? 'Grupa „' : 'Grupy „') . implode('”, „', $names) . '”';
+            $parts[] = tn('compose.label_group', count($names), ['names' => implode(t('compose.label_group_sep'), $names)]);
         }
         if ($in['contacts'] !== []) {
             $n = count($in['contacts']);
-            $parts[] = $n . ' ' . plural($n, 'kontakt', 'kontakty', 'kontaktów');
+            $parts[] = tn('compose.label_contacts', $n);
         }
         $manual = count(Recipients::splitManual($in['numbers']));
         if ($manual > 0) {
-            $parts[] = $manual . ' ' . plural($manual, 'numer', 'numery', 'numerów');
+            $parts[] = tn('compose.label_numbers', $manual);
         }
         return implode(' + ', $parts);
     }

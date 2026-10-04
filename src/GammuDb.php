@@ -8,47 +8,27 @@ final class GammuDb
     public const SENT_OK = ['SendingOK', 'SendingOKNoReport', 'DeliveryPending', 'DeliveryUnknown'];
     public const SENT_ERROR = ['SendingError', 'Error'];
 
-    /** Opisy kodów +CMS ERROR (sentitems/outbox.StatusCode). */
-    public const CMS_ERRORS = [
-        8 => 'operator zablokował numer', 10 => 'połączenie zablokowane', 21 => 'wiadomość odrzucona przez sieć',
-        27 => 'nieznany odbiorca', 28 => 'nieznany abonent', 29 => 'usługa odrzucona', 30 => 'nieznany abonent',
-        38 => 'awaria sieci', 41 => 'awaria tymczasowa', 42 => 'przeciążenie sieci', 47 => 'brak zasobów sieci',
-        50 => 'usługa niedostępna', 69 => 'funkcja nieobsługiwana', 96 => 'błędne dane wiadomości', 111 => 'błąd protokołu',
-        300 => 'awaria modemu', 301 => 'usługa SMS zarezerwowana', 302 => 'operacja niedozwolona', 304 => 'błędne parametry PDU',
-        310 => 'brak karty SIM', 311 => 'wymagany PIN', 313 => 'awaria karty SIM', 322 => 'pamięć pełna',
-        330 => 'nieznany numer centrum SMS', 331 => 'brak sieci', 332 => 'przekroczony czas sieci', 500 => 'nieznany błąd',
-    ];
-
-    /** Opisy TP-Status z raportu doręczenia (sentitems.StatusError). */
-    public const TP_STATUS = [
-        0 => 'doręczona', 1 => 'przekazana, brak potwierdzenia', 2 => 'zastąpiona przez centrum SMS',
-        32 => 'przeciążenie – sieć ponawia', 33 => 'telefon odbiorcy zajęty – sieć ponawia', 34 => 'brak odpowiedzi – sieć ponawia',
-        64 => 'błąd procedury zdalnej', 65 => 'niezgodny odbiorca', 66 => 'połączenie odrzucone przez odbiorcę',
-        67 => 'numer nieosiągalny', 68 => 'brak jakości usługi', 69 => 'brak współpracy sieci',
-        70 => 'upłynął czas ważności – odbiorca nieosiągalny', 71 => 'usunięta przez nadawcę', 72 => 'usunięta przez centrum SMS',
-        73 => 'wiadomość nie istnieje', 96 => 'przeciążenie sieci', 97 => 'telefon odbiorcy zajęty', 98 => 'brak odpowiedzi odbiorcy',
-        99 => 'usługa odrzucona',
-    ];
-
+    /** Opis kodu +CMS ERROR (outbox/sentitems.StatusCode) jako klucz msg_key() – opisy w plikach języków (gammu.cms.N). */
     public static function cmsError(?int $code): string
     {
         if ($code === null || $code < 0) {
             return '';
         }
-        return 'kod ' . $code . ': ' . (self::CMS_ERRORS[$code] ?? 'szczegóły w logu Gammu');
+        return msg_key('gammu.cms', ['code' => $code, 'desc' => lang_entry("gammu.cms.$code") !== null ? "@gammu.cms.$code" : '@gammu.cms_unknown']);
     }
 
+    /** Opis TP-Status z raportu doręczenia (sentitems.StatusError) jako klucz msg_key() – opisy w gammu.tp.N. */
     public static function tpStatus(?int $code): string
     {
         if ($code === null || $code < 0) {
             return '';
         }
-        $desc = self::TP_STATUS[$code] ?? match (true) {
-            $code < 32 => 'doręczona',
-            $code < 64 => 'błąd tymczasowy – sieć ponawia',
-            default => 'błąd trwały',
+        $desc = lang_entry("gammu.tp.$code") !== null ? "@gammu.tp.$code" : match (true) {
+            $code < 32 => '@gammu.tp_ok',
+            $code < 64 => '@gammu.tp_temp',
+            default => '@gammu.tp_perm',
         };
-        return "Status $code: $desc";
+        return msg_key('gammu.tp', ['code' => $code, 'desc' => $desc]);
     }
 
     /** MaxRetries z gammu-smsdrc (domyślnie 1, czyli 2 próby). */
@@ -152,15 +132,18 @@ final class GammuDb
                 $code = (int) $outbox['StatusCode'];
                 $s['status_code'] = $code >= 0 ? $code : null;
                 $next = ts($outbox['SendingTimeOut']);
-                $s['error'] = 'próba ' . ($retries + 1) . ' z ' . ($maxRetries + 1)
-                    . ($next !== null && $next > time() ? ', kolejna o ' . date('H:i', $next) : '')
-                    . ($code >= 0 ? ' · ' . self::cmsError($code) : '');
+                $try = ['try' => $retries + 1, 'max' => $maxRetries + 1];
+                $s['error'] = $next !== null && $next > time() ? msg_key('gammu.retry_next', $try + ['time' => date('H:i', $next)])
+                    : msg_key('gammu.retry', $try);
+                if ($code >= 0) {
+                    $s['error'] = msg_key('gammu.with_cause', ['text' => $s['error'], 'cause' => self::cmsError($code)]);
+                }
             }
             $s['status'] = $retries === 0 && (int) $outbox['waiting'] === 1 ? 'scheduled' : 'queued';
             return $s;
         }
         if ($parts === []) {
-            return ['status' => 'failed', 'error' => 'wiadomość usunięta z kolejki Gammu'] + $s;
+            return ['status' => 'failed', 'error' => msg_key('gammu.removed')] + $s;
         }
         $statuses = array_column($parts, 'Status');
         $s['modem'] = $parts[0]['SenderID'] ?: null;
@@ -169,7 +152,7 @@ final class GammuDb
             if (in_array($p['Status'], self::SENT_ERROR, true)) {
                 $code = (int) $p['StatusCode'];
                 $s['status_code'] = $code >= 0 ? $code : null;
-                return ['status' => 'failed', 'error' => $p['Status'] . ($code >= 0 ? ' – ' . self::cmsError($code) : '')] + $s;
+                return ['status' => 'failed', 'error' => $code >= 0 ? msg_key('gammu.failed_cause', ['status' => $p['Status'], 'cause' => self::cmsError($code)]) : $p['Status']] + $s;
             }
         }
         foreach ($parts as $p) {
@@ -185,11 +168,11 @@ final class GammuDb
         $s['status'] = 'sent';
         if (in_array('DeliveryPending', $statuses, true)) {
             $p = array_values(array_filter($parts, static fn ($x) => $x['Status'] === 'DeliveryPending'))[0];
-            $s['error'] = 'raport: ' . self::tpStatus((int) $p['StatusError']);
+            $s['error'] = msg_key('gammu.report', ['status' => self::tpStatus((int) $p['StatusError'])]);
         } elseif (in_array('DeliveryUnknown', $statuses, true)) {
-            $s['error'] = 'raport doręczenia: stan nieznany';
+            $s['error'] = msg_key('gammu.report_unknown');
         } elseif (in_array('SendingOKNoReport', $statuses, true)) {
-            $s['error'] = 'bez raportu doręczenia';
+            $s['error'] = msg_key('gammu.no_report');
         }
         return $s;
     }

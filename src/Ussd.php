@@ -11,11 +11,11 @@ final class Ussd
     {
         $code = str_replace(' ', '', $code);
         if (!preg_match('/^[0-9*#+]{1,20}$/', $code)) {
-            return [null, 'Kod USSD może zawierać tylko cyfry, * i # (np. *101#).'];
+            return [null, t('modem.err_code')];
         }
         Sync::run(true); // świeży stan żądań i import odpowiedzi czekających w inbox
         if (self::pending($modem) !== null) {
-            return [null, 'Poprzednie żądanie USSD jeszcze czeka na odpowiedź – jedno żądanie na modem.'];
+            return [null, t('modem.err_pending')];
         }
         $id = Db::tx(static function () use ($code, $modem, $parentId, $purpose): int {
             $gid = GammuDb::insertOutbox([
@@ -60,7 +60,7 @@ final class Ussd
                 }
                 $sent = Db::row('SELECT Status, SendingDateTime, SenderID FROM {g}.sentitems WHERE ID = ? ORDER BY SequencePosition LIMIT 1', [$gid]);
                 if ($sent === null || in_array($sent['Status'], GammuDb::SENT_ERROR, true)) {
-                    Db::update('ussd_requests', ['status' => 'failed', 'response' => $sent === null ? 'żądanie usunięte z kolejki Gammu' : 'modem nie wysłał kodu'], 'id = ?', [$r['id']]);
+                    Db::update('ussd_requests', ['status' => 'failed', 'response' => msg_key($sent === null ? 'ussd.removed' : 'ussd.not_sent')], 'id = ?', [$r['id']]);
                 } else {
                     Db::update('ussd_requests', ['status' => 'sent', 'sent_at' => $sent['SendingDateTime'], 'modem' => $sent['SenderID'] ?: $r['modem']], 'id = ?', [$r['id']]);
                 }

@@ -35,7 +35,7 @@ final class Phone
         $national = (int) cfg('national_number_length', 9);
         $cc = (string) cfg('default_country_code', '48');
         if ($digits === '') {
-            return [null, 'pusty numer'];
+            return [null, t('phone.empty')];
         }
         $international = false;
         if (str_starts_with($digits, '+')) {
@@ -46,7 +46,7 @@ final class Phone
             $international = true;
         }
         if (!ctype_digit($digits)) {
-            return [null, 'to nie jest numer'];
+            return [null, t('phone.not_number')];
         }
         $len = strlen($digits);
         if (!$international && $len === $national) {
@@ -54,19 +54,19 @@ final class Phone
         } elseif (!$international && $len < $national) {
             // Numer skrócony (np. 8080) wpisuje się bez separatorów – „601 23” to raczej ucięty numer
             if ($digits !== $raw || $len < 3) {
-                return [null, "za krótki (wymagane $national cyfr)"];
+                return [null, t('phone.too_short_national', ['n' => $national])];
             }
             return [$digits, null];
         }
         $len = strlen($digits);
         if ($len < 3) {
-            return [null, 'za krótki'];
+            return [null, t('phone.too_short')];
         }
         if ($len > 15) {
-            return [null, 'za długi (najwyżej 15 cyfr)'];
+            return [null, t('phone.too_long')];
         }
         if ($international && $len <= $national) {
-            return [null, 'za krótki numer międzynarodowy'];
+            return [null, t('phone.too_short_intl')];
         }
         return [$digits, null];
     }

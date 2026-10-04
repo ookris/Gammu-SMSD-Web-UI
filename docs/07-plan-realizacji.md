@@ -14,7 +14,7 @@ Szczegółowe zadania i pliki dla każdego etapu: [09-plan-implementacji.md](09-
 | **5. Konfiguracja i modem** ✔ (symulator) | formularz i edytor `gammu-smsdrc`, okno potwierdzenia z różnicami, kopie, przeładowanie/restart usługi, log, ustawienia panelu, pulpit z kontrolą zdrowia; **ekran Modem, USSD na żądanie, czarna lista, połączenia** | zmiana parametru z panelu → potwierdzenie → plik zmieniony tylko w tej linii → przeładowanie → Gammu działa; `*101#` zwraca odpowiedź; zablokowany numer nie trafia do „Odebranych”; połączenie widoczne na liście |
 | **6. Wdrożenie (wersja 1)** | `install.sh` (Gammu, MariaDB, kreator modemu), nginx, usługi systemd, logrotate, README | instalacja na czystej maszynie wirtualnej Ubuntu jednym skryptem |
 | **7. Rozszerzenia A** | przekazywanie SMS i połączeń (e-mail, webhook), powiadomienia administracyjne, HTTP API | przekazanie odebranego SMS na e-mail i webhook; wysyłka przez `curl` z tokenem |
-| **8. Rozszerzenia B** | autoodpowiedzi (także na połączenie), cykliczne saldo, kilka modemów, statystyki, czyszczenie historii, wersja angielska | wg specyfikacji 2.17 |
+| **8. Rozszerzenia B** | autoodpowiedzi (także na połączenie), cykliczne saldo, kilka modemów, statystyki, czyszczenie historii (wersja angielska – zrobiona wcześniej, 2026-10-04) | wg specyfikacji 2.17 |
 
 ## 7.1. Testy
 
