@@ -52,12 +52,12 @@ info "Aplikacja: $APP"
 
 # ---------- 2. Pakiety ----------
 say "Pakiety systemowe"
-export DEBIAN_FRONTEND=noninteractive
+export DEBIAN_FRONTEND=noninteractive NEEDRESTART_SUSPEND=1   # needrestart: bez skanowania procesów po instalacji
 apt-get update -qq
 apt-get install -y -qq gammu gammu-smsd mariadb-server nginx php-fpm php-cli php-mysql php-mbstring openssl >/dev/null
 PHPV=$(php -r 'echo PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION;')
 php -r 'exit(version_compare(PHP_VERSION, "8.5.0", ">=") ? 0 : 1);' || die "Wymagane PHP 8.5 lub nowsze (jest $PHPV)"
-GAMMUV=$(gammu --version 2>/dev/null | head -1 | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?' | head -1 || true)
+GAMMUV=$(dpkg-query -W -f='${Version}' gammu-smsd 2>/dev/null || true)
 info "PHP $PHPV, Gammu ${GAMMUV:-?}"
 FPM_SOCK=$(ls /run/php/php"$PHPV"-fpm.sock 2>/dev/null || ls /run/php/php*-fpm.sock 2>/dev/null | head -1 || echo "/run/php/php$PHPV-fpm.sock")
 systemctl enable --now mariadb >/dev/null 2>&1 || true
@@ -127,7 +127,7 @@ else
 fi
 chown root:www-data "$CONFIG" && chmod 0640 "$CONFIG"
 install -m 0440 "$APP/deploy/sudoers-smsgui" /etc/sudoers.d/smsgui
-visudo -cq || die "Błąd w /etc/sudoers.d/smsgui"
+visudo -cq >/dev/null || die "Błąd w /etc/sudoers.d/smsgui"
 
 # Usługa Gammu: nazwa, użytkownik, przeładowanie (⚠ U1)
 GAMMU_USER=$(systemctl show -p User --value gammu-smsd 2>/dev/null || true); GAMMU_USER=${GAMMU_USER:-root}
@@ -247,7 +247,8 @@ if [ "$(mariadb -N smsgui -e 'SELECT COUNT(*) FROM users')" = 0 ]; then
         ask SMSGUI_PASSWORD "Hasło (co najmniej 10 znaków)" "" hidden
         [ -r /dev/tty ] || break
     done
-    SMSGUI_USER="$SMSGUI_USER" SMSGUI_PASSWORD="$SMSGUI_PASSWORD" sudo -E -u www-data php "$APP/bin/smsgui" passwd "$SMSGUI_USER"
+    # runuser zamiast sudo -E: sudo-rs (Ubuntu 26.04) nie przekazuje całego środowiska
+    SMSGUI_USER="$SMSGUI_USER" SMSGUI_PASSWORD="$SMSGUI_PASSWORD" runuser -u www-data -- php "$APP/bin/smsgui" passwd "$SMSGUI_USER"
 fi
 
 say "Diagnostyka"
