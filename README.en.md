@@ -9,7 +9,7 @@ a blocklist, and Gammu configuration and diagnostics – all from the browser, w
 One-command installation: the script installs and configures Gammu SMSD, MariaDB, nginx and PHP, helps you choose
 the modem and finishes with a health check.
 
-> **Project status:** pre-1.0 (`dev` branch). The panel is feature-complete and tested on the Gammu simulator and on
+> **Project status:** version 1.0.0-beta.1. The panel is feature-complete and tested on the Gammu simulator and on
 > a clean Ubuntu Server 26.04.1 (installation, diagnostics, panel, automated tests). Tests with a real modem
 > (sending, receiving, USSD, delivery reports) are in progress.
 >
@@ -157,16 +157,10 @@ Versions tested on Ubuntu 26.04.1: Gammu 1.42.0, MariaDB 11.8.6, nginx 1.28.3, P
 curl -fsSL https://raw.githubusercontent.com/ookris/Gammu-SMSD-Web-UI/main/deploy/install.sh | sudo bash
 ```
 
-Until the 1.0 release the current code is on the `dev` branch:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/ookris/Gammu-SMSD-Web-UI/dev/deploy/install.sh | sudo SMSGUI_BRANCH=dev bash
-```
-
 You can also clone the repository first and run the script from it:
 
 ```bash
-sudo git clone -b dev https://github.com/ookris/Gammu-SMSD-Web-UI.git /opt/smsgui
+sudo git clone https://github.com/ookris/Gammu-SMSD-Web-UI.git /opt/smsgui
 sudo /opt/smsgui/deploy/install.sh
 ```
 
