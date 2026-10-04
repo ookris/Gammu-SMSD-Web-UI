@@ -1,0 +1,2 @@
+# Gammu SMSD Web UI: panel (www-data) może tylko przeładować i zrestartować usługę Gammu (rozdz. 5.2)
+www-data ALL=(root) NOPASSWD: /usr/bin/systemctl reload gammu-smsd, /usr/bin/systemctl restart gammu-smsd

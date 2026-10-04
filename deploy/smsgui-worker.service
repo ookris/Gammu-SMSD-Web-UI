@@ -1,0 +1,17 @@
+[Unit]
+Description=Gammu SMSD Web UI – synchronizacja z bazą Gammu
+After=mariadb.service
+Wants=mariadb.service
+
+[Service]
+User=www-data
+Group=www-data
+ExecStart=/usr/bin/php __ROOT__/bin/smsgui worker
+# Proces kończy się sam po 1 h lub po aktualizacji plików – systemd uruchamia go ponownie
+Restart=always
+RestartSec=5
+NoNewPrivileges=false
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
