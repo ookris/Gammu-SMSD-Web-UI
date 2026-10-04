@@ -13,10 +13,16 @@ i kończy diagnostyką.
 > Gammu oraz na czystym Ubuntu Server 26.04.1 (instalacja, diagnostyka, panel, testy automatyczne). Testy z prawdziwym
 > modemem (wysyłka, odbiór, USSD, raporty doręczenia) są w toku.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="screenshots/dashboard-dark.png">
+  <img src="screenshots/dashboard.png" alt="Pulpit panelu">
+</picture>
+
 ## Spis treści
 
 - [Jak to działa](#jak-to-działa)
 - [Możliwości](#możliwości)
+- [Zrzuty ekranu](#zrzuty-ekranu)
 - [Technologie](#technologie)
 - [Wymagania](#wymagania)
 - [Instalacja](#instalacja)
@@ -89,6 +95,29 @@ wiadomości zapisanych w bazie, a przy kodowaniu GSM po cichu zamienia polskie z
 
 **Planowane (po wersji 1.0):** przekazywanie SMS i połączeń na e-mail i webhook, HTTP API, autoodpowiedzi,
 cykliczne sprawdzanie salda, powiadomienia administracyjne, statystyki, obsługa kilku modemów.
+
+## Zrzuty ekranu
+
+Jasny i ciemny motyw przełączają się według ustawień systemu. Kliknij miniaturę, żeby zobaczyć pełny rozmiar.
+
+<table>
+  <tr>
+    <td width="50%"><a href="screenshots/threads.png"><img src="screenshots/threads.png" alt="Rozmowy"></a><br><sub>Rozmowy</sub></td>
+    <td width="50%"><a href="screenshots/threads-dark.png"><img src="screenshots/threads-dark.png" alt="Rozmowy – ciemny motyw"></a><br><sub>Rozmowy – ciemny motyw</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><a href="screenshots/compose.png"><img src="screenshots/compose.png" alt="Nowa wiadomość do grup i kontaktów"></a><br><sub>Nowa wiadomość do grup i kontaktów</sub></td>
+    <td width="50%"><a href="screenshots/sent.png"><img src="screenshots/sent.png" alt="Wysłane – statusy i raporty doręczenia"></a><br><sub>Wysłane – statusy i raporty doręczenia</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><a href="screenshots/contacts.png"><img src="screenshots/contacts.png" alt="Kontakty i grupy"></a><br><sub>Kontakty i grupy</sub></td>
+    <td width="50%"><a href="screenshots/modem.png"><img src="screenshots/modem.png" alt="Modem i USSD"></a><br><sub>Modem i USSD</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><a href="screenshots/config.png"><img src="screenshots/config.png" alt="Konfiguracja Gammu"></a><br><sub>Konfiguracja Gammu</sub></td>
+    <td width="50%"><a href="screenshots/log.png"><img src="screenshots/log.png" alt="Log Gammu"></a><br><sub>Log Gammu</sub></td>
+  </tr>
+</table>
 
 ## Technologie
 
