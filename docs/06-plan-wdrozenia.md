@@ -170,13 +170,23 @@ Hook połączeń (`/etc/smsgui/hook.cnf` z hasłem `smsgui_hook`) instalator prz
 ## 6.3. Skrypt `install.sh`
 
 Wykonuje kroki 1–7 automatycznie i jest **idempotentny** – można go uruchomić ponownie (aktualizacja,
-podłączenie modemu później, naprawa uprawnień). Kolejność:
+podłączenie modemu później, naprawa uprawnień). Na początku pyta o tryb (`SMSGUI_MODE`):
+
+- **`full`** (domyślny) – instaluje brakujące pakiety i konfiguruje całość;
+- **`app`** – nie instaluje pakietów (np. PHP z innego repozytorium): sprawdza, czy są potrzebne programy
+  (PHP ≥ 8.5 z `pdo_mysql` i `mbstring`, PHP-FPM, MariaDB z dostępem root przez gniazdo, Gammu i usługa
+  `gammu-smsd`, nginx, OpenSSL; przy pobieraniu także `git`), przy braku przerywa z poleceniem `apt install`
+  do wykonania; dalsze kroki jak w `full`.
+
+Kolejność:
 
 1. **Pobranie aplikacji** – uruchomiony przez `curl … | sudo bash` (bez repozytorium obok) instaluje `git`,
    klonuje repozytorium do `/opt/smsgui` (albo robi `git pull`, jeśli już tam jest) i uruchamia pobraną
    wersję siebie. Pytania czyta wtedy z terminala (`/dev/tty`), nie z potoku. Uruchomiony z repozytorium
    (`sudo ./deploy/install.sh`) – używa katalogu, w którym leży.
-2. **Pakiety** – `apt-get update`, instalacja Gammu, MariaDB, nginx i PHP; sprawdzenie PHP ≥ 8.5
+2. **Pakiety** – lista wymaganych pakietów z oznaczeniem zainstalowanych (✔) i brakujących (→); instaluje tylko
+   brakujące (już zainstalowanych nie aktualizuje) z paskiem postępu, pełne wyjście `apt-get` zapisuje
+   w `/var/log/smsgui-install.log` (przy błędzie pokazuje jego koniec). Sprawdzenie PHP ≥ 8.5
    i wersji Gammu (≥ 1.42, schemat 17).
 3. **Baza** (krok 2) – tworzy bazy i konta tylko, jeśli ich nie ma; hasła zapisuje do plików konfiguracyjnych;
    tabele Gammu tworzy z `mysql.sql` z paczki i zamienia na InnoDB (także w istniejącej bazie, po potwierdzeniu).
@@ -200,7 +210,7 @@ podłączenie modemu później, naprawa uprawnień). Kolejność:
 8. Podsumowanie z adresem panelu (nazwa hosta i adres IP).
 
 Pytania mają wartości domyślne (Enter je akceptuje). Bez pytań – zmienne środowiskowe:
-`SMSGUI_MODEM` (ścieżka lub `skip`), `SMSGUI_PIN`, `SMSGUI_PHONEID` (domyślnie `GSM1`), `SMSGUI_HOST`,
+`SMSGUI_MODE` (`full`/`app`), `SMSGUI_MODEM` (ścieżka lub `skip`), `SMSGUI_PIN`, `SMSGUI_PHONEID` (domyślnie `GSM1`), `SMSGUI_HOST`,
 `SMSGUI_HTTPS` (`none`/`self-signed`), `SMSGUI_USER`, `SMSGUI_PASSWORD`, `SMSGUI_TEST_NUMBER`;
 pobieranie: `SMSGUI_DIR` (domyślnie `/opt/smsgui`), `SMSGUI_REPO`, `SMSGUI_BRANCH` (domyślnie `main`).
 

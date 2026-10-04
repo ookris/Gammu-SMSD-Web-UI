@@ -37,8 +37,8 @@ Skrypt tylko czyta (hasła i PIN maskuje). Przed instalacją pokaże głównie w
 sudo /opt/smsgui/deploy/install.sh 2>&1 | tee ~/install.txt
 ```
 
-Bez modemu: na pytanie o port odpowiedz `skip` (albo uruchom z `SMSGUI_MODEM=skip`). Pozostałe pytania:
-nazwa modemu (Enter = `GSM1`), host panelu, HTTPS (`none` lub `self-signed`), login i hasło administratora.
+Pierwsze pytanie to tryb – na czystej maszynie `full` (Enter). Bez modemu: na pytanie o port odpowiedz `skip`
+(albo uruchom z `SMSGUI_MODEM=skip`). Pozostałe pytania: nazwa modemu (Enter = `GSM1`), host panelu, HTTPS (`none` lub `self-signed`), login i hasło administratora.
 Po podłączeniu modemu uruchom instalator jeszcze raz – wtedy wykryje port i zapyta o PIN.
 
 ## 10.4. Diagnostyka po instalacji i panel

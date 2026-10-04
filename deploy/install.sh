@@ -5,7 +5,8 @@
 #   curl -fsSL https://raw.githubusercontent.com/ookris/Gammu-SMSD-Web-UI/main/deploy/install.sh | sudo bash
 #   sudo ./deploy/install.sh                       (z pobranego repozytorium)
 #
-# Bez pytań – zmienne: SMSGUI_MODEM (ścieżka lub skip), SMSGUI_PIN, SMSGUI_PHONEID, SMSGUI_HOST, SMSGUI_HTTPS (none/self-signed),
+# Tryb: SMSGUI_MODE=full (domyślnie – instaluje brakujące pakiety) albo app (pakiety instalujesz sam, skrypt tylko je sprawdza).
+# Bez pytań – zmienne: SMSGUI_MODE, SMSGUI_MODEM (ścieżka lub skip), SMSGUI_PIN, SMSGUI_PHONEID, SMSGUI_HOST, SMSGUI_HTTPS (none/self-signed),
 # SMSGUI_USER, SMSGUI_PASSWORD, SMSGUI_TEST_NUMBER; pobieranie: SMSGUI_DIR, SMSGUI_REPO, SMSGUI_BRANCH.
 #
 # ⚠ Część wartości zależy od paczki Ubuntu (U1–U10, rozdz. 3.14) – skrypt je wykrywa zamiast zakładać.
@@ -18,6 +19,8 @@ DATA=/var/lib/smsgui
 ETC=/etc/smsgui
 CONF=/etc/gammu-smsdrc
 GAMMU_LOG=/var/log/gammu-smsd/smsd.log
+INSTALL_LOG=/var/log/smsgui-install.log   # pełne wyjście apt-get
+PACKAGES=(gammu gammu-smsd mariadb-server nginx php-fpm php-cli php-mysql php-mbstring openssl)
 
 say()  { printf '\n\033[1m==> %s\033[0m\n' "$*"; }
 info() { printf '    %s\n' "$*"; }
@@ -36,16 +39,58 @@ ask() {
 }
 # 32 znaki hex z openssl – bez potoku tr | head, który przy set -o pipefail kończy skrypt sygnałem SIGPIPE
 randpw() { openssl rand -hex 16; }
+have() { command -v "$1" >/dev/null 2>&1; }
+
+# Instalacja brakujących pakietów: lista ✔/→, pasek postępu z APT::Status-Fd, pełne wyjście w $INSTALL_LOG
+pkg_installed() { dpkg-query -W -f='${Status}' "$1" 2>/dev/null | grep -q 'ok installed'; }
+apt_progress() {
+    local kind id pct desc
+    while IFS=: read -r kind id pct desc; do
+        case $kind in dlstatus|pmstatus) printf '\r\033[K    [%3s%%] %s' "${pct%%.*}" "${desc:0:70}" ;; esac
+    done
+    printf '\r\033[K'
+}
+apt_fail() { printf '\n'; tail -n 15 "$INSTALL_LOG" | sed 's/^/    /'; die "$1 nie powiodło się – pełny zapis: $INSTALL_LOG"; }
+apt_ensure() {
+    local p missing=()
+    for p in "$@"; do
+        if pkg_installed "$p"; then info "✔ $p $(dpkg-query -W -f='${Version}' "$p")"; else info "→ $p – do instalacji"; missing+=("$p"); fi
+    done
+    if [ ${#missing[@]} -eq 0 ]; then info "Wszystkie pakiety są już zainstalowane"; return; fi
+    printf '\n===== %s: apt-get install %s\n' "$(date '+%F %T')" "${missing[*]}" >>"$INSTALL_LOG"
+    info "Odświeżanie listy pakietów…"
+    apt-get update >>"$INSTALL_LOG" 2>&1 || apt_fail "apt-get update"
+    info "Instalacja brakujących pakietów z zależnościami – kilka minut (gdy apt jest zajęty automatycznymi aktualizacjami, instalator czeka)"
+    if ! apt-get install -y -o DPkg::Lock::Timeout=600 -o APT::Status-Fd=3 "${missing[@]}" 3>&1 >>"$INSTALL_LOG" 2>&1 | apt_progress; then
+        apt_fail "apt-get install"
+    fi
+    info "✔ Zainstalowano: ${missing[*]}"
+}
+# Tryb app: zamiast pakietów sprawdzane są programy (PHP może pochodzić z innego repozytorium). need "opis" pakiet polecenie…
+need() {
+    local label=$1 pkg=$2; shift 2
+    if "$@" >/dev/null 2>&1; then info "✔ $label"; else info "✘ $label  (paczka Ubuntu: $pkg)"; MISSING+=("$pkg"); fi
+}
 
 [ "$(id -u)" -eq 0 ] || die "Uruchom jako root: sudo $0"
 # Przed pierwszym apt-get (także tym przy „curl | bash”); exec niżej dziedziczy środowisko
 export DEBIAN_FRONTEND=noninteractive NEEDRESTART_SUSPEND=1   # needrestart: bez skanowania procesów po instalacji
 
+if [ -z "${SMSGUI_MODE:-}" ]; then
+    say "Tryb instalacji"
+    info "full – instaluje brakujące pakiety (Gammu SMSD, MariaDB, nginx, PHP) i konfiguruje całość"
+    info "app  – nie instaluje pakietów: sprawdza, czy są, i konfiguruje panel (pakiety instalujesz sam)"
+    ask SMSGUI_MODE "Tryb (full / app)" "full"
+fi
+case $SMSGUI_MODE in full|app) ;; *) die "Nieznany tryb: $SMSGUI_MODE (full albo app)" ;; esac
+export SMSGUI_MODE   # exec niżej nie pyta ponownie
+
 # ---------- 1. Pobranie aplikacji ----------
 SELF_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd || echo /nonexistent)"
 if [ ! -f "$SELF_DIR/../src/bootstrap.php" ]; then
     say "Pobieranie aplikacji do $DIR"
-    apt-get update -qq && apt-get install -y -qq git ca-certificates openssl >/dev/null
+    if [ "$SMSGUI_MODE" = full ]; then apt_ensure git ca-certificates openssl
+    else have git || die "Brak git – zainstaluj: sudo apt install git (albo tryb full)"; fi
     if [ -d "$DIR/.git" ]; then git -C "$DIR" pull --ff-only; else git clone --branch "$BRANCH" "$REPO" "$DIR"; fi
     exec bash "$DIR/deploy/install.sh" "$@"
 fi
@@ -53,9 +98,25 @@ APP="$(cd "$SELF_DIR/.." && pwd)"
 info "Aplikacja: $APP"
 
 # ---------- 2. Pakiety ----------
-say "Pakiety systemowe"
-apt-get update -qq
-apt-get install -y -qq gammu gammu-smsd mariadb-server nginx php-fpm php-cli php-mysql php-mbstring openssl >/dev/null
+if [ "$SMSGUI_MODE" = full ]; then
+    say "Pakiety systemowe"
+    apt_ensure "${PACKAGES[@]}"
+else
+    say "Wymagane programy (tryb app – bez instalacji pakietów)"
+    MISSING=()
+    need "PHP (CLI) ≥ 8.5" php-cli php -r 'exit(version_compare(PHP_VERSION, "8.5.0", ">=") ? 0 : 1);'
+    need "PHP: pdo_mysql" php-mysql php -r 'exit(extension_loaded("pdo_mysql") ? 0 : 1);'
+    need "PHP: mbstring" php-mbstring php -r 'exit(extension_loaded("mbstring") ? 0 : 1);'
+    need "PHP-FPM" php-fpm compgen -G '/usr/sbin/php-fpm*'
+    need "MariaDB (dostęp root przez gniazdo)" mariadb-server mariadb -e 'SELECT 1'
+    need "Gammu" gammu have gammu
+    need "Gammu SMSD (usługa gammu-smsd)" gammu-smsd systemctl cat gammu-smsd
+    need "nginx" nginx have nginx
+    need "OpenSSL" openssl have openssl
+    if [ ${#MISSING[@]} -gt 0 ]; then
+        die "Brakuje wymaganych programów. Zainstaluj: sudo apt install $(printf '%s\n' "${MISSING[@]}" | sort -u | paste -sd' ' -) – albo uruchom instalator w trybie full"
+    fi
+fi
 PHPV=$(php -r 'echo PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION;')
 php -r 'exit(version_compare(PHP_VERSION, "8.5.0", ">=") ? 0 : 1);' || die "Wymagane PHP 8.5 lub nowsze (jest $PHPV)"
 GAMMUV=$(dpkg-query -W -f='${Version}' gammu-smsd 2>/dev/null || true)
