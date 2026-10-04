@@ -17,6 +17,7 @@ app_config(array_replace_recursive($base, [
     'session_path' => "$tmp/sessions",
     'gammu_conf' => "$tmp/gammu-smsdrc",
     'blocklist_file' => "$tmp/exclude-numbers.txt",
+    'hook' => ['cnf' => "$tmp/hook.cnf"], // brak pliku = baza testowa, nigdy produkcyjne /etc/smsgui/hook.cnf
     'service' => ['status_cmd' => 'echo active', 'reload_cmd' => 'true', 'restart_cmd' => 'true'],
     'default_country_code' => '48',
     'national_number_length' => 9,

@@ -21,6 +21,7 @@ o możliwości Gammu (USSD, połączenia przychodzące, czarna lista, okna wysy�
 | 7 | [Plan realizacji i testów](07-plan-realizacji.md) | etapy prac, kryteria odbioru, testy |
 | 8 | [Pomysły i propozycje](08-pomysly.md) | propozycje funkcji i ich status (przyjęte / odrzucone) |
 | 9 | [Plan implementacji](09-plan-implementacji.md) | zasady pracy, środowisko deweloperskie z symulatorem Gammu, zadania i pliki dla każdego etapu |
+| 10 | [Test na serwerze Ubuntu](10-test-na-ubuntu.md) | kolejność testu instalatora, diagnostyka `collect-info.sh`, testy automatyczne na serwerze, kroki z modemem |
 
 **Makiety interfejsu:** https://claude.ai/artifact/1GcJxMSqGRWsxjPYG9mXG8 – pierwotnie przygotowane dla poprzedniego
 projektu (smstools3), w etapie P uzupełnione o wszystkie ekrany i stany wersji 1 z rozdz. 2 (21 artboardów, decyzja D23) – **zaakceptowane 2026-10-04**.

@@ -266,7 +266,7 @@ do dokumentacji.
 | [x] 6.3 | `deploy/install.sh` wg rozdz. 6.3: pobieranie przez `curl … \| sudo bash`, pakiety, bazy i konta (hasła losowe), schemat Gammu + InnoDB, kreator modemu (`gammu identify` na portach, PIN sprawdzany raz), `gammu-smsdrc` przez `bin/smsgui setup gammu`, proces w tle, nginx, konto, `check`, testowy SMS (`bin/smsgui send --wait`) |
 | [x] 6.4 | `deploy/uninstall.sh` (z `--purge`) |
 | [x] 6.5 | Instrukcja instalacji, aktualizacji i odinstalowania w README |
-| [ ] 6.6 | Test instalacji na czystej maszynie wirtualnej (Multipass na Macu): Ubuntu 26.04; tam też `php tests/run.php` |
+| [ ] 6.6 | Test instalacji na czystym serwerze Ubuntu 26.04 (maszyna wirtualna, nie Multipass) wg [rozdz. 10](10-test-na-ubuntu.md): `deploy/collect-info.sh` przed i po instalacji, panel w przeglądarce, `tests/run.php` na bazach testowych |
 | [ ] 6.7 | Lista kontrolna z rozdz. 7.1 na prawdziwym modemie |
 | [ ] 6.8 | Wydanie: scalenie `dev` → `main`, tag `v1.0` |
 
