@@ -60,7 +60,8 @@ final class Calls
         $phone = $conf->get('smsd', 'phoneid') ?: 'GSM1';
         $copy = GammuConf::parse($conf->text());
         $copy->set('smsd', 'hangupcalls', $enable ? 'yes' : null);
-        $copy->set('smsd', 'runonincomingcall', $enable ? cfg('hook.command') . ' --phone=' . $phone : null);
+        // Gammu uruchamia polecenie przez sh -c – PhoneID z edytowalnej konfiguracji musi być zacytowany
+        $copy->set('smsd', 'runonincomingcall', $enable ? cfg('hook.command') . ' --phone=' . escapeshellarg($phone) : null);
         return $copy;
     }
 

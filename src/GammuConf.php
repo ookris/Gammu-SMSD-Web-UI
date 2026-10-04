@@ -299,22 +299,32 @@ final class GammuConf
         return rtrim((string) cfg('backup_dir'), '/');
     }
 
-    /** Zapis „w miejscu” z blokadą – www-data nie może tworzyć plików w /etc. Najpierw kopia zapasowa. */
-    public static function save(string $text, string $note): string
+    /** Odcisk treści pliku – formularze niosą go od otwarcia do zapisu (wykrycie zmian z innej sesji). */
+    public static function fingerprint(string $text): string
+    {
+        return md5($text);
+    }
+
+    /**
+     * Zapis „w miejscu” z blokadą – www-data nie może tworzyć plików w /etc. Pod blokadą: ponowny odczyt, porównanie
+     * z oczekiwanym odciskiem ($expected), kopia zapasowa, zapis. Inna zmiana w międzyczasie → ConfStaleException.
+     */
+    public static function save(string $text, string $note, ?string $expected = null): string
     {
         $path = self::path();
-        $current = @file_get_contents($path);
-        if ($current === false) {
-            throw new RuntimeException("Nie można odczytać $path");
-        }
-        $backup = self::backup($current, $note);
-        $fh = @fopen($path, 'c');
+        $fh = @fopen($path, 'c+');
         if ($fh === false) {
-            throw new RuntimeException("Brak prawa zapisu do $path");
+            throw new RuntimeException(is_readable($path) ? "Brak prawa zapisu do $path" : "Nie można odczytać $path");
         }
         try {
             flock($fh, LOCK_EX);
+            $current = (string) stream_get_contents($fh);
+            if ($expected !== null && !hash_equals($expected, self::fingerprint($current))) {
+                throw new ConfStaleException("$path zmienił się od otwarcia formularza");
+            }
+            $backup = self::backup($current, $note);
             ftruncate($fh, 0);
+            rewind($fh);
             fwrite($fh, $text);
             fflush($fh);
             flock($fh, LOCK_UN);
@@ -336,10 +346,7 @@ final class GammuConf
         for ($i = 1; is_file("$dir/$name"); $i++) {
             $name = $prefix . '.' . date('Ymd-His') . '-' . $i;
         }
-        if (@file_put_contents("$dir/$name", $content) === false) {
-            throw new RuntimeException("Nie można zapisać kopii $dir/$name");
-        }
-        @chmod("$dir/$name", 0640);
+        self::createFile("$dir/$name", $content, 0640);
         $notes = Settings::json('backup_notes');
         $notes[$name] = mb_substr($note, 0, 200);
         // Limit kopii (ustawienie backup_keep)
@@ -351,6 +358,31 @@ final class GammuConf
         }
         Settings::set('backup_notes', $notes);
         return $name;
+    }
+
+    /**
+     * Nowy plik tworzony od razu z prawami $mode (umask na czas otwarcia) i wyłącznie, gdy jeszcze nie istnieje –
+     * kopie zawierają hasło do bazy i PIN, nie mogą choćby na chwilę być czytelne dla innych ani nadpisać istniejącej kopii.
+     */
+    public static function createFile(string $path, string $content, int $mode = 0600): void
+    {
+        $old = umask(0777 & ~$mode);
+        try {
+            $fh = @fopen($path, 'x');
+        } finally {
+            umask($old);
+        }
+        if ($fh === false) {
+            throw new RuntimeException("Nie można utworzyć pliku $path" . (file_exists($path) ? ' (już istnieje)' : ''));
+        }
+        try {
+            if (fwrite($fh, $content) !== strlen($content)) {
+                throw new RuntimeException("Nie można zapisać pliku $path");
+            }
+        } finally {
+            fclose($fh);
+        }
+        @chmod($path, $mode);
     }
 
     /** Kopie od najnowszej: [name, time, size, note]. */

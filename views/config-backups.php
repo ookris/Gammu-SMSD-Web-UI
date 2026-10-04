@@ -16,7 +16,7 @@
 <tbody>
 <?php foreach ($backups as $b): ?>
 <tr><td><span class="mono"><?= e($b['name']) ?></span><span class="sub"><?= e(date('d.m.Y H:i', $b['time'])) ?></span></td><td><?= e(fmt_bytes($b['size'])) ?></td><td><?= e($b['note'] ?: '—') ?></td>
-<td><form class="cell-actions" method="post" action="<?= e(url('config', ['tab' => 'backups'])) ?>"><?= csrf_field() ?><input type="hidden" name="name" value="<?= e($b['name']) ?>">
+<td><form class="cell-actions" method="post" action="<?= e(url('config', ['tab' => 'backups'])) ?>"><?= csrf_field() ?><input type="hidden" name="name" value="<?= e($b['name']) ?>"><input type="hidden" name="base" value="<?= e($base) ?>">
 <a href="<?= e(url('config', ['tab' => 'backups', 'view' => $b['name']])) ?>" role="button" class="secondary outline btn-sm">Podgląd</a>
 <a href="<?= e(url('config', ['tab' => 'backups', 'compare' => $b['name']])) ?>" role="button" class="secondary outline btn-sm">Porównaj z bieżącą</a>
 <button type="submit" name="action" value="restore" class="btn-warn btn-sm">Przywróć</button></form></td></tr>

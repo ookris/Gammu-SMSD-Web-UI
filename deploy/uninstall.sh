@@ -14,11 +14,12 @@ rm -f /etc/nginx/sites-enabled/smsgui /etc/nginx/sites-available/smsgui
 nginx -t -q 2>/dev/null && systemctl reload nginx || true
 rm -f /etc/sudoers.d/smsgui /etc/logrotate.d/gammu-smsd-smsgui /etc/fail2ban/filter.d/smsgui.conf /etc/fail2ban/jail.d/smsgui.conf
 
-# Wyłączenie hooka połączeń i czarnej listy w gammu-smsdrc (kopia przed zmianą)
-if [ -f /etc/gammu-smsdrc ] && grep -qiE '^\s*(runonincomingcall|excludenumbersfile|hangupcalls)\s*=' /etc/gammu-smsdrc; then
-    cp /etc/gammu-smsdrc "/etc/gammu-smsdrc.smsgui-$(date +%Y%m%d-%H%M%S)"
-    sed -i -E '/^\s*(runonincomingcall|excludenumbersfile|hangupcalls)\s*=/Id' /etc/gammu-smsdrc
-    systemctl restart gammu-smsd || true
+# Usunięcie z gammu-smsdrc tylko ustawień dodanych przez panel (hook połączeń, czarna lista panelu) – parserem panelu,
+# z kopią 0600; wartości ustawione przez kogoś innego zostają
+if [ -f /etc/gammu-smsdrc ]; then
+    BEFORE=$(md5sum /etc/gammu-smsdrc)
+    php "$APP/bin/smsgui" setup unhook || echo "Nie udało się zmienić /etc/gammu-smsdrc – sprawdź go ręcznie" >&2
+    [ "$BEFORE" = "$(md5sum /etc/gammu-smsdrc)" ] || systemctl restart gammu-smsd || true
 fi
 
 if [ $PURGE -eq 1 ]; then

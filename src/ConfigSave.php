@@ -7,11 +7,20 @@ declare(strict_types=1);
  */
 final class ConfigSave
 {
-    public static function propose(string $newText, string $note, string $tab): never
+    /**
+     * $base – odcisk pliku z chwili otwarcia formularza (pole „base”); null dla zmian liczonych z bieżącej treści
+     * (włączenie czarnej listy, połączeń).
+     */
+    public static function propose(string $newText, string $note, string $tab, ?string $base = null): never
     {
         $current = GammuConf::load(true) ?? throw new RuntimeException('Nie można odczytać ' . GammuConf::path());
+        $now = GammuConf::fingerprint($current->text());
+        if ($base !== null && !hash_equals($now, $base)) {
+            flash('err', 'Plik został zmieniony od otwarcia formularza.', 'Nic nie zapisano – sprawdź bieżącą treść i wprowadź zmianę ponownie.');
+            redirect(url('config', ['tab' => $tab === 'form' ? null : $tab]));
+        }
         $_SESSION['conf_pending'] = [
-            'token' => bin2hex(random_bytes(8)), 'text' => $newText, 'note' => $note, 'tab' => $tab, 'base' => md5($current->text()),
+            'token' => bin2hex(random_bytes(8)), 'text' => $newText, 'note' => $note, 'tab' => $tab, 'base' => $base ?? $now,
         ];
         redirect(url('config', ['tab' => $tab, 'confirm' => 1]));
     }
@@ -29,7 +38,7 @@ final class ConfigSave
         return $p + [
             'diff' => Diff::context($diff), 'changed' => Diff::changed($diff),
             'validation' => array_values(array_filter($validation, static fn ($v) => $v[0] !== 'ok')),
-            'blocked' => GammuConf::hasErrors($validation), 'stale' => md5($current->text()) !== $p['base'],
+            'blocked' => GammuConf::hasErrors($validation), 'stale' => !hash_equals(GammuConf::fingerprint($current->text()), $p['base']),
         ];
     }
 
@@ -51,7 +60,10 @@ final class ConfigSave
             return url('config', ['tab' => $p['tab']]);
         }
         try {
-            $backup = GammuConf::save($p['text'], $p['note']);
+            $backup = GammuConf::save($p['text'], $p['note'], $p['base']);
+        } catch (ConfStaleException) {
+            flash('err', 'Plik został w międzyczasie zmieniony.', 'Nic nie zapisano – sprawdź bieżącą treść i zapisz ponownie.');
+            return url('config', ['tab' => $p['tab']]);
         } catch (Throwable $e) {
             flash('err', 'Nie udało się zapisać pliku.', $e->getMessage());
             return url('config', ['tab' => $p['tab']]);

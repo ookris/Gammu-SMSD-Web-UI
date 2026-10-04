@@ -34,15 +34,19 @@ używać nowości z 8.4 i 8.5, gdy realnie upraszczają kod (np. `array_find()`,
 - `utf8mb4` w połączeniu (`charset=utf8mb4` w DSN) – inaczej emoji zamieniają się w `?`.
 - Kolumny Gammu `Status`/`Coding` to `ENUM` – wartości tylko z listy (stałe w `GammuDb`).
 
-### Odstępstwa kodu od opisu (do przeglądu)
-- `t()` obejmuje menu, statusy, komunikaty logowania i stany USSD; pozostałe teksty widoków są po polsku w `views/` –
-  wersja angielska (etap 8) wymaga przeniesienia ich do `resources/lang/`.
-- Podział na części jest w `SmsText::split()` (bez osobnego `SmsSplit.php`); dodatkowe klasy: `Compose` (plan wysyłki
-  i podgląd htmx), `Threads`, `Batch`, `Templates`, `ConfigSave` (okno potwierdzenia zapisu, zmiana w sesji – hasła nie
-  trafiają do przeglądarki), `Status`, `Settings`, `Setup`, `Ui`.
-- Numer skrócony (krótszy niż krajowy) musi być wpisany bez separatorów – „8080” jest poprawny, „601 23” to ucięty numer.
+### Ustalenia z przeglądu kodu (2026-10-04)
+- **Zaakceptowane:** numer skrócony (krótszy niż krajowy) wpisuje się bez separatorów – „8080” jest poprawny, „601 23”
+  to ucięty numer; kolumny `modem_status.signal_pct`/`battery_pct`, `ussd_requests.parent_id`/`sent_at`; podział na części
+  w `SmsText::split()` (bez osobnego `SmsSplit.php`). Dodatkowe klasy: `Compose`, `Threads`, `Batch`, `Templates`,
+  `ConfigSave`, `Status`, `Settings`, `Setup`, `Ui`.
+- **Następny etap – tłumaczenie całego interfejsu:** dziś `t()` obejmuje menu, statusy, komunikaty logowania i stany USSD;
+  wszystkie pozostałe teksty z `views/` i komunikaty stron trafią do `resources/lang/pl.php` + `en.php`.
 - Anulowanie: `SendingTimeOut <= NOW()` (świeżo dodany wiersz ma `SendingTimeOut = NOW()`; blokada Gammu ustawia czas w przyszłości).
 - Proces w tle zapisuje `worker_seen_at` – kontrola zdrowia odróżnia go od synchronizacji przy odświeżeniu strony.
+- Poprawki po przeglądzie: wysyłka do wielu w jednej transakcji (`Db::tx` zagnieżdżone dołącza do zewnętrznej) i z jednorazowym
+  tokenem formularza; wylogowanie tylko przez POST; zapis `gammu-smsdrc` z odciskiem pliku z chwili otwarcia formularza,
+  sprawdzanym pod blokadą `LOCK_EX`; kopie konfiguracji tworzone od razu z prawami 0600/0640; deinstalator usuwa z
+  `gammu-smsdrc` tylko ustawienia panelu (`smsgui setup unhook`); instalator obsługuje demona Gammu na zwykłym koncie.
 
 ### Konwencje kodu
 - Każde wyjście przez `e()`; SQL tylko z parametrami.

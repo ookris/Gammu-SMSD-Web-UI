@@ -17,7 +17,11 @@ if (is_post()) {
         $copy->set('smsd', 'excludenumbersfile', Blocklist::path());
         ConfigSave::propose($copy->text(), 'włączenie czarnej listy (ExcludeNumbersFile)', 'form');
     }
-    if (isset($_FILES['csv']) && $_FILES['csv']['error'] === UPLOAD_ERR_OK) {
+    if (isset($_FILES['csv']) && ($_FILES['csv']['error'] !== UPLOAD_ERR_OK || $_FILES['csv']['size'] > 5 * 1024 * 1024)) {
+        flash('err', 'Nie udało się wczytać pliku.', $_FILES['csv']['error'] === UPLOAD_ERR_NO_FILE ? 'Wybierz plik CSV.' : 'Plik jest za duży albo przesłał się niepełny (najwyżej 5 MB).');
+        redirect(url('blocklist'));
+    }
+    if (isset($_FILES['csv'])) {
         $n = 0;
         foreach (Contacts::csvRows((string) file_get_contents($_FILES['csv']['tmp_name'])) as $i => $r) {
             if ($i === 0 && in_array(mb_strtolower($r[0] ?? ''), ['numer', 'number'], true)) {

@@ -46,23 +46,74 @@ final class Setup
             echo "gammu-smsdrc: bez zmian.\n";
             return 0;
         }
-        if ($exists) {
-            $backup = $path . '.smsgui-' . date('Ymd-His');
-            if (!@copy($path, $backup)) {
-                fwrite(STDERR, "Nie można utworzyć kopii $backup\n");
-                return 1;
-            }
-            echo "Kopia: $backup\n";
+        if ($exists && self::backup($path, $old) === null) {
+            return 1;
         }
         if (@file_put_contents($path, $new, LOCK_EX) === false) {
             fwrite(STDERR, "Nie można zapisać $path\n");
             return 1;
         }
+        self::printChanges($old, $new);
+        return 0;
+    }
+
+    /**
+     * Deinstalacja: usuwa z gammu-smsdrc tylko ustawienia należące do panelu – hook `smsgui hook call` (wtedy też
+     * HangupCalls, które włączył razem z nim) i ExcludeNumbersFile wskazujący plik panelu. Cudze wartości zostają.
+     */
+    public static function unhook(): int
+    {
+        $path = GammuConf::path();
+        $old = @file_get_contents($path);
+        if ($old === false) {
+            echo "Brak $path – nic do zmiany.\n";
+            return 0;
+        }
+        $conf = GammuConf::parse($old);
+        $hook = (string) $conf->get('smsd', 'runonincomingcall');
+        if ($hook !== '' && (str_starts_with($hook, (string) cfg('hook.command')) || preg_match('~bin/smsgui[\'"]? hook call~', $hook))) {
+            $conf->set('smsd', 'runonincomingcall', null);
+            $conf->set('smsd', 'hangupcalls', null);
+        }
+        if ($conf->get('smsd', 'excludenumbersfile') === Blocklist::path()) {
+            $conf->set('smsd', 'excludenumbersfile', null);
+        }
+        $new = $conf->text();
+        if ($new === $old) {
+            echo "gammu-smsdrc: brak ustawień panelu.\n";
+            return 0;
+        }
+        if (self::backup($path, $old) === null || @file_put_contents($path, $new, LOCK_EX) === false) {
+            fwrite(STDERR, "Nie można zapisać $path\n");
+            return 1;
+        }
+        self::printChanges($old, $new);
+        return 0;
+    }
+
+    /** Kopia /etc/gammu-smsdrc.smsgui-RRRRMMDD-GGMMSS – od razu 0600, bez nadpisywania istniejącej. */
+    private static function backup(string $path, string $content): ?string
+    {
+        $name = $path . '.smsgui-' . date('Ymd-His');
+        for ($i = 1; file_exists($name); $i++) {
+            $name = $path . '.smsgui-' . date('Ymd-His') . '-' . $i;
+        }
+        try {
+            GammuConf::createFile($name, $content, 0600);
+        } catch (RuntimeException $e) {
+            fwrite(STDERR, $e->getMessage() . "\n");
+            return null;
+        }
+        echo "Kopia: $name\n";
+        return $name;
+    }
+
+    private static function printChanges(string $old, string $new): void
+    {
         foreach (Diff::lines(GammuConf::mask($old), GammuConf::mask($new)) as [$op, $line]) {
             if ($op !== ' ') {
                 echo "$op $line\n";
             }
         }
-        return 0;
     }
 }

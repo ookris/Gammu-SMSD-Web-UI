@@ -1,7 +1,12 @@
 <?php
 // Rozmowy (rozdz. 2.4)
-$phone = input('phone');
-$phone = $phone === '' ? '' : (Phone::isAlpha($phone) ? $phone : (Phone::normalize($phone) ?? $phone));
+$raw = input('phone');
+// Nazwa nadawcy (zawiera litery) bez zmian, numer – tylko po poprawnej normalizacji
+$phone = $raw === '' ? '' : (preg_match('/\p{L}/u', $raw) && mb_strlen($raw) <= 32 ? $raw : Phone::normalize($raw));
+if ($phone === null) {
+    flash('err', 'Nieprawidłowy numer: ' . $raw . '.', (string) Phone::error($raw));
+    redirect(url('threads'));
+}
 
 if (is_post() && $phone !== '') {
     if (isset($_POST['block'])) {

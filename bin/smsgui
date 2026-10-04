@@ -74,8 +74,10 @@ switch ($cmd) {
             echo 'Baza panelu gotowa, schemat w wersji ' . Db::schemaVersion() . ".\n";
         } elseif ($what === 'gammu') {
             exit(Setup::gammu($opts));
+        } elseif ($what === 'unhook') {
+            exit(Setup::unhook());
         } else {
-            fwrite(STDERR, "Użycie: smsgui setup db | setup gammu [--device=…] [--phoneid=…] [--pin=…] [--db-password=…]\n");
+            fwrite(STDERR, "Użycie: smsgui setup db | setup gammu [--device=…] [--phoneid=…] [--pin=…] [--db-password=…] | setup unhook\n");
             exit(1);
         }
         break;
@@ -138,6 +140,7 @@ switch ($cmd) {
           check [--quiet]               diagnostyka; kod wyjścia ≠ 0 przy błędzie
           setup db                      utworzenie / migracja tabel panelu
           setup gammu [opcje]           zmiany w gammu-smsdrc wymagane przez panel (instalator)
+          setup unhook                  usunięcie z gammu-smsdrc ustawień dodanych przez panel (deinstalator)
           send <numer> <treść> [--wait=N]  wysyłka testowa
           cleanup --days=N              usunięcie wiadomości starszych niż N dni
 

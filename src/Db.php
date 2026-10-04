@@ -103,10 +103,16 @@ final class Db
         return $values === [] ? 'NULL' : implode(',', array_fill(0, count($values), '?'));
     }
 
-    /** Transakcja: wynik funkcji albo wycofanie i wyjątek dalej. */
+    /**
+     * Transakcja: wynik funkcji albo wycofanie i wyjątek dalej. Wywołanie wewnątrz trwającej transakcji dołącza do niej
+     * (np. wysyłka do wielu obejmuje wszystkie Outbox::create() jedną transakcją).
+     */
     public static function tx(callable $fn): mixed
     {
         $pdo = self::pdo();
+        if ($pdo->inTransaction()) {
+            return $fn();
+        }
         $pdo->beginTransaction();
         try {
             $result = $fn();

@@ -12,6 +12,7 @@ if (input('fragment') === 'modemwait') {
 }
 
 $fieldErrors = [];
+$editorBase = null;
 $editorText = null;
 $editorValidation = null;
 if (is_post()) {
@@ -43,7 +44,7 @@ if (is_post()) {
                 flash('info', 'Brak zmian do zapisania.');
                 redirect(url('config'));
             }
-            ConfigSave::propose($new->text(), 'formularz: ' . implode(', ', $changes), 'form');
+            ConfigSave::propose($new->text(), 'formularz: ' . implode(', ', $changes), 'form', input('base'));
         }
     }
     if ($action === 'editor' || $action === 'validate') {
@@ -54,9 +55,10 @@ if (is_post()) {
             $full .= "\n";
         }
         if ($action === 'editor') {
-            ConfigSave::propose($full, 'edytor pliku', 'editor');
+            ConfigSave::propose($full, 'edytor pliku', 'editor', input('base'));
         }
         $editorValidation = GammuConf::parse($full)->validate($conf);
+        $editorBase = input('base');
     }
     if ($action === 'restore') {
         $name = input('name');
@@ -65,11 +67,11 @@ if (is_post()) {
             flash('err', 'Nie znaleziono kopii.');
             redirect(url('config', ['tab' => 'backups']));
         }
-        ConfigSave::propose($text, 'przywrócenie kopii ' . $name, 'backups');
+        ConfigSave::propose($text, 'przywrócenie kopii ' . $name, 'backups', input('base'));
     }
 }
 
-$data = ['title' => 'Konfiguracja Gammu', 'nav' => 'config', 'tab' => $tab, 'conf' => $conf, 'path' => $path,
+$data = ['base' => $conf ? GammuConf::fingerprint($conf->text()) : '', 'title' => 'Konfiguracja Gammu', 'nav' => 'config', 'tab' => $tab, 'conf' => $conf, 'path' => $path,
     'mtime' => is_file($path) ? filemtime($path) : null, 'backups' => GammuConf::backups(),
     'pending' => input('confirm') !== '' ? ConfigSave::pending() : null, 'fieldErrors' => $fieldErrors];
 
@@ -78,6 +80,7 @@ if ($tab === 'form') {
     $data['ports'] = GammuConfForm::ports();
 } elseif ($tab === 'editor' && $conf !== null) {
     $data['editorText'] = $editorText ?? GammuConf::mask($conf->text());
+    $data['base'] = $editorBase ?? $data['base'];
     $data['validation'] = $editorValidation ?? $conf->validate();
 } elseif ($tab === 'backups') {
     $name = input('view') ?: input('compare');

@@ -27,5 +27,5 @@ $link = static function (string $page, string $iconName, string $label, int $cou
 <?= $link('log', 'code-square', t('nav.log')) ?>
 <?= $link('settings', 'settings', t('nav.settings')) ?>
 <div class="side-status" role="status"><strong><span class="dot dot-<?= e($status['level']) ?>"></span><?= e($status['title']) ?></strong><span class="line2"><?= e($status['line2']) ?></span><span class="line3"><?= e($status['line3']) ?></span></div>
-<div class="side-user"><a href="<?= e(url('password')) ?>"<?= $nav === 'password' ? ' aria-current="page"' : '' ?>><?= icon('user') ?><span><?= e($user['username'] ?? '') ?></span></a><a class="logout" href="<?= e(url('logout', ['_csrf' => csrf_token()])) ?>" aria-label="<?= e(t('nav.logout')) ?>" title="<?= e(t('nav.logout')) ?>"><?= icon('logout-2') ?></a></div>
+<div class="side-user"><a href="<?= e(url('password')) ?>"<?= $nav === 'password' ? ' aria-current="page"' : '' ?>><?= icon('user') ?><span><?= e($user['username'] ?? '') ?></span></a><form class="logout-form" method="post" action="<?= e(url('logout')) ?>"><?= csrf_field() ?><button type="submit" class="logout" aria-label="<?= e(t('nav.logout')) ?>" title="<?= e(t('nav.logout')) ?>"><?= icon('logout-2') ?></button></form></div>
 <p class="side-credit">Ikony: <a href="https://icon-sets.iconify.design/solar/">Solar Icon Set</a> (480 Design), CC BY 4.0</p>

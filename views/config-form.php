@@ -1,5 +1,5 @@
 <?php /** @var GammuConf $conf @var array $values @var array $ports @var array $fieldErrors */ ?>
-<form method="post" action="<?= e(url('config')) ?>" id="conf-form"><?= csrf_field() ?>
+<form method="post" action="<?= e(url('config')) ?>" id="conf-form"><?= csrf_field() ?><input type="hidden" name="base" value="<?= e(is_post() && input('base') !== '' ? input('base') : $base) ?>">
 <div class="stack">
 <?php foreach (GammuConfForm::cards() as $title => $fields): ?>
 <section class="card"><header><h2><?= e($title) ?></h2></header>
