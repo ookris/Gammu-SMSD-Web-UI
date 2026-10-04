@@ -20,7 +20,7 @@ final class Templates
         $name = trim($name);
         $body = SmsText::normalize(trim($body));
         if ($name === '' || $body === '') {
-            return [null, 'Podaj nazwę i treść szablonu.'];
+            return [null, t('templates.required')];
         }
         $data = ['name' => mb_substr($name, 0, 190), 'body' => $body, 'updated_at' => now_db()];
         if ($id === null) {

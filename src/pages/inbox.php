@@ -2,7 +2,7 @@
 // Odebrane (rozdz. 2.5)
 if (is_post()) {
     if (input('block') !== '') {
-        Blocklist::blockFromPanel(input('block'), 'z odebranych');
+        Blocklist::blockFromPanel(input('block'), t('inbox.block_note'));
         back(url('inbox'));
     }
     $ids = input_ids();
@@ -14,7 +14,7 @@ if (is_post()) {
         default => 0,
     };
     if ($n > 0) {
-        flash('ok', match (input('action')) { 'delete' => 'Usunięto ' . $n . ' ' . plural($n, 'wiadomość', 'wiadomości', 'wiadomości') . '.', default => 'Zapisano.' });
+        flash('ok', input('action') === 'delete' ? tn('inbox.deleted', $n) : t('common.saved'));
     }
     back(url('inbox'));
 }
@@ -45,5 +45,5 @@ $total = (int) Db::val("SELECT COUNT(*) FROM messages WHERE $w", $params);
 $rows = Db::all("SELECT * FROM messages WHERE $w ORDER BY id DESC LIMIT " . Ui::PER_PAGE . ' OFFSET ' . ($page - 1) * Ui::PER_PAGE, $params);
 $stats = Db::row("SELECT COUNT(*) AS n, SUM(is_read = 0) AS unread FROM messages WHERE direction = 'in'");
 
-render('inbox', ['title' => 'Odebrane', 'nav' => 'inbox', 'rows' => $rows, 'total' => $total, 'page' => $page, 'f' => $f, 'stats' => $stats,
+render('inbox', ['title' => t('nav.inbox'), 'nav' => 'inbox', 'rows' => $rows, 'total' => $total, 'page' => $page, 'f' => $f, 'stats' => $stats,
     'blocked' => Blocklist::blockedAmong(array_column($rows, 'phone'))]);

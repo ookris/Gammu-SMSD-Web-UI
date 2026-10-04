@@ -9,11 +9,10 @@ if (!Batch::valid($id) || Db::val('SELECT 1 FROM messages WHERE batch_id = ? LIM
 if (is_post()) {
     if (isset($_POST['retry_failed'])) {
         $n = Batch::retryFailed($id);
-        flash('ok', 'Ponowiono ' . $n . ' ' . plural($n, 'wiadomość', 'wiadomości', 'wiadomości') . '.');
+        flash('ok', tn('batch.retried', $n));
     } elseif (isset($_POST['cancel_rest'])) {
         [$ok, $busy] = Batch::cancelRemaining($id);
-        flash($busy ? 'warn' : 'ok', 'Anulowano ' . $ok . ' ' . plural($ok, 'wiadomość', 'wiadomości', 'wiadomości') . '.',
-            $busy ? $busy . ' jest już wysyłana przez Gammu.' : '');
+        flash($busy ? 'warn' : 'ok', tn('batch.cancelled', $ok), $busy ? tn('batch.busy', $busy) : '');
     }
     redirect(url('batch', ['id' => $id]));
 }
@@ -22,4 +21,4 @@ if (input('fragment') === 'progress') {
     echo view('batch-progress', $data);
     exit;
 }
-render('batch', $data + ['title' => 'Raport wysyłki', 'nav' => 'sent', 'rows' => Batch::recipients($id)]);
+render('batch', $data + ['title' => t('batch.title'), 'nav' => 'sent', 'rows' => Batch::recipients($id)]);

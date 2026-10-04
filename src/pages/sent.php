@@ -21,12 +21,10 @@ if (is_post()) {
     if ($action === 'delete') {
         $ok = Messages::delete($ids, 'out');
     }
-    $word = static fn (int $n) => $n . ' ' . plural($n, 'wiadomość', 'wiadomości', 'wiadomości');
     match ($action) {
-        'cancel' => $busy > 0 ? flash('warn', 'Anulowano: ' . $word($ok) . '.', $word($busy) . ' jest już wysyłana przez Gammu – nie da się jej zatrzymać.')
-            : flash('ok', 'Anulowano: ' . $word($ok) . '.'),
-        'retry' => flash($ok > 0 ? 'ok' : 'warn', $ok > 0 ? 'Ponowiono: ' . $word($ok) . '.' : 'Nic nie ponowiono.', $ok > 0 ? 'Wiadomości wróciły do kolejki Gammu.' : 'Ponowić można wiadomości z błędem lub niedoręczone.'),
-        'delete' => flash('ok', 'Usunięto z historii: ' . $word($ok) . '.', $ok < count($ids) ? 'Wiadomości w kolejce najpierw anuluj.' : ''),
+        'cancel' => flash($busy > 0 ? 'warn' : 'ok', tn('sent.cancelled', $ok), $busy > 0 ? tn('sent.busy', $busy) : ''),
+        'retry' => $ok > 0 ? flash('ok', tn('sent.retried', $ok), t('sent.retried_text')) : flash('warn', t('sent.nothing_retried'), t('sent.nothing_retried_text')),
+        'delete' => flash('ok', tn('sent.deleted', $ok), $ok < count($ids) ? t('sent.cancel_first') : ''),
         default => null,
     };
     back(url('sent'));
@@ -79,5 +77,5 @@ $total = (int) Db::val("SELECT COUNT(*) FROM messages WHERE $w", $params);
 $rows = Db::all("SELECT * FROM messages WHERE $w ORDER BY id DESC LIMIT " . Ui::PER_PAGE . ' OFFSET ' . ($page - 1) * Ui::PER_PAGE, $params);
 $last = Batch::last();
 
-render('sent', ['title' => 'Wysłane', 'nav' => 'sent', 'rows' => $rows, 'total' => $total, 'page' => $page, 'f' => $f,
+render('sent', ['title' => t('nav.sent'), 'nav' => 'sent', 'rows' => $rows, 'total' => $total, 'page' => $page, 'f' => $f,
     'last' => $last, 'lastMeta' => $last ? Batch::meta($last) : null, 'lastStats' => $last ? Batch::stats($last) : null]);

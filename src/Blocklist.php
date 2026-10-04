@@ -27,19 +27,19 @@ final class Blocklist
         $path = self::path();
         $dir = dirname($path);
         if (!is_dir($dir) && !@mkdir($dir, 0750, true)) {
-            throw new RuntimeException("Brak katalogu $dir");
+            throw new RuntimeException(t('file.no_dir', ['dir' => $dir]));
         }
         if (is_file($path)) {
             $old = (string) @file_get_contents($path);
             if ($old === self::fileContent()) {
                 return;
             }
-            GammuConf::backup($old, 'czarna lista', 'exclude-numbers.txt');
+            GammuConf::backup($old, t('blocklist.backup_note'), 'exclude-numbers.txt');
         }
         $tmp = $path . '.tmp' . getmypid();
         if (@file_put_contents($tmp, self::fileContent()) === false || !@rename($tmp, $path)) {
             @unlink($tmp);
-            throw new RuntimeException("Nie można zapisać pliku czarnej listy $path");
+            throw new RuntimeException(t('file.cannot_write', ['path' => $path]));
         }
         @chmod($path, 0644);
         Settings::set('blocklist_written_at', now_db());
@@ -76,7 +76,7 @@ final class Blocklist
     {
         $phone = Phone::normalizeSender($input);
         if ($phone === null) {
-            return [null, 'To nie jest numer ani nazwa nadawcy: ' . $input];
+            return [null, t('blocklist.not_sender', ['input' => $input])];
         }
         if (self::isBlocked($phone)) {
             return [$phone, null];
@@ -90,11 +90,11 @@ final class Blocklist
     {
         self::write();
         if (!self::enabledInConf()) {
-            return 'Lista zapisana. Włącz ją w konfiguracji Gammu, żeby zaczęła działać.';
+            return t('blocklist.saved_disabled');
         }
         [$code, $out] = Service::reload();
         Settings::set('blocklist_reload', $code === 0 ? 'ok' : $out);
-        return $code === 0 ? 'Gammu przeładowany.' : 'Nie udało się przeładować Gammu: ' . $out;
+        return $code === 0 ? t('blocklist.reloaded') . '.' : t('blocklist.reload_failed', ['out' => $out]);
     }
 
     /** Blokada z rozmowy, odebranych, kontaktu lub połączeń – komunikat flash. */
@@ -102,13 +102,13 @@ final class Blocklist
     {
         [$p, $err] = self::add($phone, $note);
         if ($err !== null) {
-            flash('err', 'Nie zablokowano.', $err);
+            flash('err', t('blocklist.not_blocked'), $err);
             return;
         }
         try {
-            flash('ok', 'Zablokowano ' . Phone::format((string) $p) . '.', self::apply());
+            flash('ok', t('blocklist.blocked', ['who' => Phone::format((string) $p)]), self::apply());
         } catch (Throwable $e) {
-            flash('warn', 'Numer dodany do listy, ale pliku nie zapisano.', $e->getMessage());
+            flash('warn', t('blocklist.not_written'), $e->getMessage());
         }
     }
 }
