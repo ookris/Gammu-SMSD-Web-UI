@@ -138,3 +138,60 @@ test('filtry dat: tylko istniejące daty, odrzucone czyszczone', function () {
     }
     assert_same(['from' => '', 'to' => '2026-10-04'], clean_dates(['from' => '2026-99-99', 'to' => '2026-10-04'], ['from', 'to']));
 });
+
+/** Atrapa systemu plików: plik da się utworzyć, ale zapis zwraca 0 bajtów (pełny dysk). */
+final class FailingWriteStream
+{
+    public static array $files = [];
+    public $context;
+    private string $path = '';
+
+    public function stream_open(string $path, string $mode): bool
+    {
+        if (isset(self::$files[$path])) {
+            return false;
+        }
+        self::$files[$path] = '';
+        $this->path = $path;
+        return true;
+    }
+
+    public function stream_write(string $data): int
+    {
+        trigger_error('fwrite(): write failed, no space left on device', E_USER_WARNING); // jak prawdziwy błąd I/O
+        return 0;
+    }
+
+    public function stream_flush(): bool
+    {
+        return true;
+    }
+
+    public function stream_close(): void
+    {
+    }
+
+    public function unlink(string $path): bool
+    {
+        unset(self::$files[$path]);
+        return true;
+    }
+
+    public function url_stat(string $path, int $flags): array|false
+    {
+        return isset(self::$files[$path]) ? ['mode' => 0100600, 'size' => 0] : false;
+    }
+}
+
+test('nieudany zapis kopii: wyjątek i usunięty niepełny plik (także gdy ostrzeżenia są wyjątkami)', function () {
+    stream_wrapper_register('failfs', FailingWriteStream::class);
+    try {
+        GammuConf::createFile('failfs://kopia', 'password = tajne');
+        throw new AssertionFailed('brak wyjątku');
+    } catch (RuntimeException $e) {
+        assert_contains('Nie można zapisać', $e->getMessage());
+    } finally {
+        stream_wrapper_unregister('failfs');
+    }
+    assert_same([], FailingWriteStream::$files);
+});

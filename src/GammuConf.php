@@ -378,18 +378,26 @@ final class GammuConf
         if ($fh === false) {
             throw new RuntimeException("Nie można utworzyć pliku $path" . (file_exists($path) ? ' (już istnieje)' : ''));
         }
-        $ok = true;
-        for ($done = 0, $len = strlen($content); $done < $len; $done += $n) {
-            $n = fwrite($fh, substr($content, $done));
-            if ($n === false || $n === 0) {
-                $ok = false;
-                break;
+        // Obsługa błędów zamienia ostrzeżenia I/O w wyjątki – stąd @ (liczą się zwracane wartości) i sprzątanie w finally
+        $ok = false;
+        try {
+            for ($done = 0, $len = strlen($content); $done < $len; $done += $n) {
+                $n = @fwrite($fh, substr($content, $done));
+                if ($n === false || $n === 0) {
+                    throw new RuntimeException("Nie można zapisać pliku $path");
+                }
+            }
+            if (!@fflush($fh)) {
+                throw new RuntimeException("Nie można zapisać pliku $path");
+            }
+            $ok = true;
+        } finally {
+            $closed = @fclose($fh);
+            if (!$ok || !$closed) {
+                @unlink($path); // niepełna kopia nie może zostać jako „poprawna”
             }
         }
-        $ok = fflush($fh) && $ok;
-        fclose($fh);
-        if (!$ok) {
-            @unlink($path); // niepełna kopia nie może zostać jako „poprawna”
+        if (!$closed) {
             throw new RuntimeException("Nie można zapisać pliku $path");
         }
         @chmod($path, $mode);
