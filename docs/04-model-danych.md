@@ -113,12 +113,13 @@ Indeksy: `(phone, received_at)`, `(processed)`.
 | id | INT PK | |
 | modem | VARCHAR(64) | |
 | code | VARCHAR(64) | np. `*101#` lub odpowiedź w menu (`1`) |
+| parent_id | INT | żądanie, na którego menu (`Status = 3`) odpowiada ten kod |
 | gammu_id | INT UNSIGNED | `outbox.ID` żądania |
 | status | ENUM('queued','sent','answered','timeout','failed') | |
 | response | TEXT | odpowiedź operatora |
 | session_status | TINYINT | `inbox.Status` odpowiedzi (1–7) |
 | purpose | ENUM('manual','balance') | na żądanie / cykliczne saldo (R) |
-| created_at, answered_at | DATETIME | |
+| created_at, sent_at, answered_at | DATETIME | `sent_at` = `sentitems.SendingDateTime` – od niego liczy się 60 s na odpowiedź |
 
 ### `blocked_numbers`
 | Kolumna | Typ | Uwagi |
@@ -135,7 +136,7 @@ Plik `ExcludeNumbersFile` jest generowany z tej tabeli ([03, rozdz. 3.12](03-int
 |---------|-----|-------|
 | modem | VARCHAR(64) PK | PhoneID |
 | imei, imsi | VARCHAR(35) | |
-| signal, battery | TINYINT | % (–1 = brak danych) |
+| signal_pct, battery_pct | TINYINT | % (–1 = brak danych); nazwy z `_pct`, bo `SIGNAL` to słowo zastrzeżone w MariaDB/MySQL |
 | net_code, net_name | VARCHAR(35) | |
 | sent, received | INT | liczniki od startu Gammu |
 | client | VARCHAR(255) | wersja Gammu |

@@ -1,0 +1,11 @@
+# Log Gammu SMSD czytany przez panel (grupa www-data). copytruncate – Gammu trzyma plik otwarty (⚠ U5).
+/var/log/gammu-smsd/smsd.log {
+    weekly
+    rotate 8
+    compress
+    delaycompress
+    missingok
+    notifempty
+    copytruncate
+    create 0640 root www-data
+}

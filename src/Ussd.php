@@ -13,7 +13,7 @@ final class Ussd
         if (!preg_match('/^[0-9*#+]{1,20}$/', $code)) {
             return [null, 'Kod USSD może zawierać tylko cyfry, * i # (np. *101#).'];
         }
-        self::sync();
+        Sync::run(true); // świeży stan żądań i import odpowiedzi czekających w inbox
         if (self::pending($modem) !== null) {
             return [null, 'Poprzednie żądanie USSD jeszcze czeka na odpowiedź – jedno żądanie na modem.'];
         }

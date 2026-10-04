@@ -34,6 +34,16 @@ używać nowości z 8.4 i 8.5, gdy realnie upraszczają kod (np. `array_find()`,
 - `utf8mb4` w połączeniu (`charset=utf8mb4` w DSN) – inaczej emoji zamieniają się w `?`.
 - Kolumny Gammu `Status`/`Coding` to `ENUM` – wartości tylko z listy (stałe w `GammuDb`).
 
+### Odstępstwa kodu od opisu (do przeglądu)
+- `t()` obejmuje menu, statusy, komunikaty logowania i stany USSD; pozostałe teksty widoków są po polsku w `views/` –
+  wersja angielska (etap 8) wymaga przeniesienia ich do `resources/lang/`.
+- Podział na części jest w `SmsText::split()` (bez osobnego `SmsSplit.php`); dodatkowe klasy: `Compose` (plan wysyłki
+  i podgląd htmx), `Threads`, `Batch`, `Templates`, `ConfigSave` (okno potwierdzenia zapisu, zmiana w sesji – hasła nie
+  trafiają do przeglądarki), `Status`, `Settings`, `Setup`, `Ui`.
+- Numer skrócony (krótszy niż krajowy) musi być wpisany bez separatorów – „8080” jest poprawny, „601 23” to ucięty numer.
+- Anulowanie: `SendingTimeOut <= NOW()` (świeżo dodany wiersz ma `SendingTimeOut = NOW()`; blokada Gammu ustawia czas w przyszłości).
+- Proces w tle zapisuje `worker_seen_at` – kontrola zdrowia odróżnia go od synchronizacji przy odświeżeniu strony.
+
 ### Konwencje kodu
 - Każde wyjście przez `e()`; SQL tylko z parametrami.
 - Strona = plik `src/pages/<nazwa>.php` + widok `views/<nazwa>.php`. Ta sama strona zwraca
@@ -108,20 +118,22 @@ a następnie statyczną stronę HTML, z której w etapach 1–5 powstaje widok `
 
 | # | Zadanie | Pliki |
 |---|---------|-------|
-| [ ] 1.1 | Struktura katalogów, `.gitignore` (`config/config.php`, `var/`), konfiguracja domyślna (wszystkie klucze z rozdz. 1.6) | `config/config.example.php` |
-| [ ] 1.2 | Bootstrap: autoloader `src/*.php`, wczytanie i nałożenie konfiguracji, strefa czasowa, obsługa błędów → log aplikacji | `src/bootstrap.php` |
-| [ ] 1.3 | Funkcje pomocnicze: `e()`, `url()`, `t()`, `icon()`, `csrf_field()`/`csrf_check()`, `flash()`, `render()`, `redirect()`, `is_htmx()` | `src/helpers.php`, `resources/lang/pl.php` |
-| [ ] 1.4 | Baza: PDO MariaDB (utf8mb4, `time_zone`, `sql_mode`), migracje przez `schema_version` z blokadą `GET_LOCK`; migracja 1 = wszystkie tabele podstawowe z rozdz. 4.2 (bez tabel rozszerzeń) | `src/Db.php` |
-| [ ] 1.5 | Logowanie: sesja (HttpOnly, SameSite, Secure przy HTTPS), `session_regenerate_id`, blokada 5 prób / 15 min, wygasanie bezczynności, „Zapamiętaj mnie” (ciasteczko podpisane HMAC), wylogowanie, wpis dla fail2ban w logu | `src/Auth.php` |
-| [ ] 1.6 | Front controller: nagłówki bezpieczeństwa (rozdz. 5.4), routing `?p=`, wymuszenie logowania, centralne sprawdzanie CSRF dla POST, strona 404 | `public/index.php` |
-| [ ] 1.7 | Biblioteki i ikony: przeniesienie z prototypu (Pico.css, czcionki, ikony Solar + `LICENSE`), dodanie htmx 2.x (z licencją) | `public/assets/vendor/`, `resources/icons/`, `public/assets/fonts/` |
-| [ ] 1.8 | Układ strony przeniesiony z `prototype/_layout.html` do szablonu PHP: menu boczne (zwijane na telefonie), licznik nieprzeczytanych, wskaźnik usługi i modemu, komunikaty flash, stopka z atrybucją ikon; jasny/ciemny motyw | `views/layout.php`, `public/assets/app.css`, `public/assets/app.js` |
-| [ ] 1.9 | Ekrany: logowanie, pusty pulpit, zmiana hasła (i loginu) | `src/pages/`, `views/` |
-| [ ] 1.10 | Odczyt `gammu-smsdrc` (parsowanie: sekcje, parametry bez wielkości liter, komentarze `#`/`;`) – potrzebny już dla `check` | `src/GammuConf.php` (część odczytu) |
-| [ ] 1.11 | Stan usługi (`status_cmd`) | `src/Service.php` (część odczytu) |
-| [ ] 1.12 | CLI: `passwd [login]`, `setup db`, `check [--quiet]` – lista ✔/✘: PHP i rozszerzenia, konfiguracja, połączenie z bazą, baza `gammu` i `Version = 17`, silnik InnoDB, strefa czasowa bazy, odczyt/zapis `gammu-smsdrc`, `service = sql`, log czytelny, stan usługi; kod wyjścia ≠ 0 przy błędzie; sprawdzenia w `src/Health.php` | `bin/smsgui`, `src/Health.php` |
-| [ ] 1.13 | Runner testów bez zależności (`test()`, `assert_same()`, raport, kod wyjścia), baza testowa tworzona i czyszczona przez runner + testy `Db` (migracje na pustej bazie, ponowne uruchomienie), `Auth` (blokada), `GammuConf` (odczyt) | `tests/run.php`, `tests/*Test.php` |
-| [ ] 1.14 | Symulator: polecenia `init`, `status`, `reload`, `restart`; skrypt `deploy/sql/gammu-mysql-17.sql` | `tests/sim/gammu-sim.php` |
+| [x] 1.1 | Struktura katalogów, `.gitignore` (`config/config.php`, `var/`), konfiguracja domyślna (wszystkie klucze z rozdz. 1.6) | `config/config.example.php` |
+| [x] 1.2 | Bootstrap: autoloader `src/*.php`, wczytanie i nałożenie konfiguracji, strefa czasowa, obsługa błędów → log aplikacji | `src/bootstrap.php` |
+| [x] 1.3 | Funkcje pomocnicze: `e()`, `url()`, `t()`, `icon()`, `csrf_field()`/`csrf_check()`, `flash()`, `render()`, `redirect()`, `is_htmx()` | `src/helpers.php`, `resources/lang/pl.php` |
+| [x] 1.4 | Baza: PDO MariaDB (utf8mb4, `time_zone`, `sql_mode`), migracje przez `schema_version` z blokadą `GET_LOCK`; migracja 1 = wszystkie tabele podstawowe z rozdz. 4.2 (bez tabel rozszerzeń) | `src/Db.php` |
+| [x] 1.5 | Logowanie: sesja (HttpOnly, SameSite, Secure przy HTTPS), `session_regenerate_id`, blokada 5 prób / 15 min, wygasanie bezczynności, „Zapamiętaj mnie” (ciasteczko podpisane HMAC), wylogowanie, wpis dla fail2ban w logu | `src/Auth.php` |
+| [x] 1.6 | Front controller: nagłówki bezpieczeństwa (rozdz. 5.4), routing `?p=`, wymuszenie logowania, centralne sprawdzanie CSRF dla POST, strona 404 | `public/index.php` |
+| [x] 1.7 | Biblioteki i ikony: przeniesienie z prototypu (Pico.css, czcionki, ikony Solar + `LICENSE`), dodanie htmx 2.x (z licencją) | `public/assets/vendor/`, `resources/icons/`, `public/assets/fonts/` |
+| [x] 1.8 | Układ strony przeniesiony z `prototype/_layout.html` do szablonu PHP: menu boczne (zwijane na telefonie), licznik nieprzeczytanych, wskaźnik usługi i modemu, komunikaty flash, stopka z atrybucją ikon; jasny/ciemny motyw | `views/layout.php`, `public/assets/app.css`, `public/assets/app.js` |
+| [x] 1.9 | Ekrany: logowanie, pusty pulpit, zmiana hasła (i loginu) | `src/pages/`, `views/` |
+| [x] 1.10 | Odczyt `gammu-smsdrc` (parsowanie: sekcje, parametry bez wielkości liter, komentarze `#`/`;`) – potrzebny już dla `check` | `src/GammuConf.php` (część odczytu) |
+| [x] 1.11 | Stan usługi (`status_cmd`) | `src/Service.php` (część odczytu) |
+| [x] 1.12 | CLI: `passwd [login]`, `setup db`, `check [--quiet]` – lista ✔/✘: PHP i rozszerzenia, konfiguracja, połączenie z bazą, baza `gammu` i `Version = 17`, silnik InnoDB, strefa czasowa bazy, odczyt/zapis `gammu-smsdrc`, `service = sql`, log czytelny, stan usługi; kod wyjścia ≠ 0 przy błędzie; sprawdzenia w `src/Health.php` | `bin/smsgui`, `src/Health.php` |
+| [x] 1.13 | Runner testów bez zależności (`test()`, `assert_same()`, raport, kod wyjścia), baza testowa tworzona i czyszczona przez runner + testy `Db` (migracje na pustej bazie, ponowne uruchomienie), `Auth` (blokada), `GammuConf` (odczyt) | `tests/run.php`, `tests/*Test.php` |
+| [x] 1.14 | Symulator: polecenia `init`, `status`, `reload`, `restart`; skrypt `deploy/sql/gammu-mysql-17.sql` | `tests/sim/gammu-sim.php` |
+
+**Stan (2026-10-04):** wykonany, kryteria odbioru sprawdzone na symulatorze (lokalnie MySQL 9.7 zamiast MariaDB – kod pisany pod MariaDB).
 
 **Odbiór:** logowanie działa (także blokada po 5 próbach i wylogowanie); POST bez tokenu CSRF → 403;
 `php bin/smsgui check` na środowisku dev pokazuje same ✔, a po zamianie tabeli `gammu.outbox` na MyISAM – ✘ z podpowiedzią;
@@ -131,20 +143,22 @@ układ działa na komputerze i przy 360 px; konsola przeglądarki bez błędów 
 
 | # | Zadanie | Pliki |
 |---|---------|-------|
-| [ ] 2.1 | `SmsText`: alfabet GSM wg Gammu (podstawowy + rozszerzony, z `¤`, bez `¹`), wybór GSM/UCS2, liczenie jednostek i części (160/153, 70/67, emoji = 2), transliteracja, lista znaków wymuszających Unicode | `src/SmsText.php` |
-| [ ] 2.2 | Ta sama logika w JS dla licznika na żywo + **wspólny plik przypadków testowych** dla PHP i JS (`node tests/js/run.mjs` lub strona `tests/js/index.html`) | `public/assets/sms-text.js`, `tests/cases/smstext.json` |
-| [ ] 2.3 | `SmsSplit`: podział na części bez rozdzielania znaków rozszerzonych i par zastępczych, UDH `050003RRNNPP`, licznik referencyjny w `settings`, limit 10 części | `src/SmsSplit.php` |
-| [ ] 2.4 | `Phone`: normalizacja, numery skrócone, nadawcy alfanumeryczni, format dla Gammu (`+`), formatowanie do wyświetlania | `src/Phone.php` |
-| [ ] 2.5 | `GammuDb` – zapis: `outbox` + `outbox_multipart` (kolumny z rozdz. 3.3), zwrot `ID`; odczyt stanu wiadomości (`outbox`, `sentitems`) i łączenie statusów części | `src/GammuDb.php` |
-| [ ] 2.6 | `GammuDb` – odczyt `inbox`: okno 2 s, grupowanie części po UDH, sklejanie tekstu, niekompletne, 8bit, flash, `Class = 127` odkładane dla USSD | `src/GammuDb.php` |
-| [ ] 2.7 | `Outbox::send()` – jeden odbiorca: rekord w `messages` + wiersze Gammu w jednej transakcji → `queued` (lub `scheduled`) | `src/Outbox.php` |
-| [ ] 2.8 | Synchronizacja (rozdz. 3.7, kroki 1–3 i 7 bez automatyzacji): blokada `GET_LOCK`, statusy wysłanych, wiadomości zewnętrzne, import `inbox` z trybami `keep`/`delete`, osobna transakcja na wiadomość, wynik w `settings` | `src/Sync.php` |
-| [ ] 2.9 | `bin/smsgui worker` (pętla, zakończenie po 1 h lub zmianie plików) i `sync`; synchronizacja przy odświeżeniu strony (nie częściej niż co 10 s) | `bin/smsgui`, `public/index.php` |
-| [ ] 2.10 | Symulator: `run` (wysyłka, ponowienia, `phones`), `receive`, `external` | `tests/sim/gammu-sim.php` |
-| [ ] 2.11 | Ekran **Nowa wiadomość** (jeden odbiorca): licznik z wyjaśnieniem kodowania, „Zamień polskie znaki”, raport, flash, walidacja | `src/pages/compose.php`, `views/compose.php` |
-| [ ] 2.12 | Ekran **Odebrane**: tabela, filtry (tekst, daty, nieprzeczytane), stronicowanie 50, oznacz przeczytane/nieprzeczytane, usuń | `src/pages/inbox.php` |
-| [ ] 2.13 | Ekran **Wysłane**: tabela, statusy z etykietami (także „ponawiana”), filtry (status, tekst, daty, źródło), usuń, kopiuj | `src/pages/sent.php` |
-| [ ] 2.14 | Testy: `SmsText` (wszystkie przypadki z rozdz. 7.1), `SmsSplit`, `Phone` (tabela 3.13), `GammuDb` na bazie testowej (zapis wieloczęściowy, statusy części, grupowanie odebranych, zewnętrzne, keep/delete) | `tests/` |
+| [x] 2.1 | `SmsText`: alfabet GSM wg Gammu (podstawowy + rozszerzony, z `¤`, bez `¹`), wybór GSM/UCS2, liczenie jednostek i części (160/153, 70/67, emoji = 2), transliteracja, lista znaków wymuszających Unicode | `src/SmsText.php` |
+| [x] 2.2 | Ta sama logika w JS dla licznika na żywo + **wspólny plik przypadków testowych** dla PHP i JS (`node tests/js/run.mjs` lub strona `tests/js/index.html`) | `public/assets/sms-text.js`, `tests/cases/smstext.json` |
+| [x] 2.3 | `SmsSplit` (w kodzie: `SmsText::split()`): podział na części bez rozdzielania znaków rozszerzonych i par zastępczych, UDH `050003RRNNPP`, licznik referencyjny w `settings`, limit 10 części | `src/SmsSplit.php` |
+| [x] 2.4 | `Phone`: normalizacja, numery skrócone, nadawcy alfanumeryczni, format dla Gammu (`+`), formatowanie do wyświetlania | `src/Phone.php` |
+| [x] 2.5 | `GammuDb` – zapis: `outbox` + `outbox_multipart` (kolumny z rozdz. 3.3), zwrot `ID`; odczyt stanu wiadomości (`outbox`, `sentitems`) i łączenie statusów części | `src/GammuDb.php` |
+| [x] 2.6 | `GammuDb` – odczyt `inbox`: okno 2 s, grupowanie części po UDH, sklejanie tekstu, niekompletne, 8bit, flash, `Class = 127` odkładane dla USSD | `src/GammuDb.php` |
+| [x] 2.7 | `Outbox::send()` – jeden odbiorca: rekord w `messages` + wiersze Gammu w jednej transakcji → `queued` (lub `scheduled`) | `src/Outbox.php` |
+| [x] 2.8 | Synchronizacja (rozdz. 3.7, kroki 1–3 i 7 bez automatyzacji): blokada `GET_LOCK`, statusy wysłanych, wiadomości zewnętrzne, import `inbox` z trybami `keep`/`delete`, osobna transakcja na wiadomość, wynik w `settings` | `src/Sync.php` |
+| [x] 2.9 | `bin/smsgui worker` (pętla, zakończenie po 1 h lub zmianie plików) i `sync`; synchronizacja przy odświeżeniu strony (nie częściej niż co 10 s) | `bin/smsgui`, `public/index.php` |
+| [x] 2.10 | Symulator: `run` (wysyłka, ponowienia, `phones`), `receive`, `external` | `tests/sim/gammu-sim.php` |
+| [x] 2.11 | Ekran **Nowa wiadomość** (jeden odbiorca): licznik z wyjaśnieniem kodowania, „Zamień polskie znaki”, raport, flash, walidacja | `src/pages/compose.php`, `views/compose.php` |
+| [x] 2.12 | Ekran **Odebrane**: tabela, filtry (tekst, daty, nieprzeczytane), stronicowanie 50, oznacz przeczytane/nieprzeczytane, usuń | `src/pages/inbox.php` |
+| [x] 2.13 | Ekran **Wysłane**: tabela, statusy z etykietami (także „ponawiana”), filtry (status, tekst, daty, źródło), usuń, kopiuj | `src/pages/sent.php` |
+| [x] 2.14 | Testy: `SmsText` (wszystkie przypadki z rozdz. 7.1), `SmsSplit`, `Phone` (tabela 3.13), `GammuDb` na bazie testowej (zapis wieloczęściowy, statusy części, grupowanie odebranych, zewnętrzne, keep/delete) | `tests/` |
+
+**Stan (2026-10-04):** wykonany, kryteria odbioru sprawdzone na symulatorze – czeka na przegląd.
 
 **Odbiór (symulator):** SMS z panelu → `W kolejce` → `Wysłana` w ciągu kilku sekund; 500 znaków z polskimi znakami →
 8 wierszy (1 w `outbox` + 7 w `outbox_multipart`) z poprawnym UDH; numer `…000` → `ponawiana` → `Błąd` z opisem;
@@ -155,15 +169,17 @@ układ działa na komputerze i przy 360 px; konsola przeglądarki bez błędów 
 
 | # | Zadanie |
 |---|---------|
-| [ ] 3.1 | Statusy z raportów doręczenia (`DeliveryOK`/`Failed`/`Pending`/`Unknown` dla wszystkich części), opisy kodów `StatusError` i `StatusCode`, okno 7 dni |
-| [ ] 3.2 | Lista rozmów (`MAX(id) GROUP BY phone`), wyszukiwarka, licznik nieprzeczytanych |
-| [ ] 3.3 | Widok rozmowy: dymki, statusy, oznaczanie jako przeczytane, nadawcy alfanumeryczni bez pola odpowiedzi, usuń rozmowę |
-| [ ] 3.4 | Odpowiedź przez htmx bez przeładowania; odświeżanie fragmentu co 10 s tylko gdy coś się zmieniło (`updated_at`), bez utraty wpisywanego tekstu |
-| [ ] 3.5 | Licznik nieprzeczytanych w menu (htmx co 15 s), wskaźnik stanu usługi i modemu |
-| [ ] 3.6 | Ponów (nowy wiersz `outbox`, nowy `gammu_id`), Anuluj (`DELETE … WHERE SendingTimeOut < NOW()`, komunikat „jest już wysyłana”) |
-| [ ] 3.7 | Wysyłka planowana (`SendingDateTime`) i opcja „Wyślij priorytetowo”; priorytety wg rozdz. 3.6 |
-| [ ] 3.8 | Symulator: raporty doręczenia (kod 0, `…999` – `DeliveryFailed`), raporty dla każdej części |
-| [ ] 3.9 | Testy: łączenie statusów części, anulowanie (wolny / zablokowany wiersz), ponowienie, przejścia statusów |
+| [x] 3.1 | Statusy z raportów doręczenia (`DeliveryOK`/`Failed`/`Pending`/`Unknown` dla wszystkich części), opisy kodów `StatusError` i `StatusCode`, okno 7 dni |
+| [x] 3.2 | Lista rozmów (`MAX(id) GROUP BY phone`), wyszukiwarka, licznik nieprzeczytanych |
+| [x] 3.3 | Widok rozmowy: dymki, statusy, oznaczanie jako przeczytane, nadawcy alfanumeryczni bez pola odpowiedzi, usuń rozmowę |
+| [x] 3.4 | Odpowiedź przez htmx bez przeładowania; odświeżanie fragmentu co 10 s tylko gdy coś się zmieniło (`updated_at`), bez utraty wpisywanego tekstu |
+| [x] 3.5 | Licznik nieprzeczytanych w menu (htmx co 15 s), wskaźnik stanu usługi i modemu |
+| [x] 3.6 | Ponów (nowy wiersz `outbox`, nowy `gammu_id`), Anuluj (`DELETE … WHERE SendingTimeOut < NOW()`, komunikat „jest już wysyłana”) |
+| [x] 3.7 | Wysyłka planowana (`SendingDateTime`) i opcja „Wyślij priorytetowo”; priorytety wg rozdz. 3.6 |
+| [x] 3.8 | Symulator: raporty doręczenia (kod 0, `…999` – `DeliveryFailed`), raporty dla każdej części |
+| [x] 3.9 | Testy: łączenie statusów części, anulowanie (wolny / zablokowany wiersz), ponowienie, przejścia statusów |
+
+**Stan (2026-10-04):** wykonany, kryteria odbioru sprawdzone na symulatorze – czeka na przegląd.
 
 **Odbiór:** pełny cykl na symulatorze: zaplanuj → `Zaplanowana` → `W kolejce` → `Wysłana` → `Doręczona`;
 numer `…999` → `Niedoręczona` → Ponów; rozmowa odświeża się sama, gdy symulator „odbierze” odpowiedź;
@@ -173,18 +189,20 @@ pojedynczy SMS z priorytetem wychodzi przed kolejką 20 wiadomości.
 
 | # | Zadanie |
 |---|---------|
-| [ ] 4.1 | Kontakty: lista, wyszukiwanie podczas pisania (htmx), filtr po grupie, stronicowanie, dodaj/edytuj/usuń, ekran kontaktu z ostatnimi wiadomościami |
-| [ ] 4.2 | Grupy: lista z liczbą członków, dodaj/zmień nazwę/usuń, „Pokaż członków”, „Wyślij do grupy” |
-| [ ] 4.3 | Akcje zbiorcze na kontaktach: dodaj do / usuń z grupy, usuń, wyślij SMS do zaznaczonych |
-| [ ] 4.4 | Nazwa kontaktu zamiast numeru w całym panelu (funkcja pomocnicza z pamięcią podręczną na żądanie) |
-| [ ] 4.5 | Nowa wiadomość – wybór odbiorców: grupy + kontakty + numery ręcznie, suma bez duplikatów, licznik, lista błędnych numerów, `max_recipients`; otwieranie z gotowym wyborem |
-| [ ] 4.6 | Szablony: CRUD + wybór na ekranie nowej wiadomości |
-| [ ] 4.7 | Personalizacja `{nazwa}`, `{imie}`: podgląd, licznik wg najdłuższego wariantu, ostrzeżenie dla odbiorców spoza książki |
-| [ ] 4.8 | Dławienie: rozłożenie `SendingDateTime` wg N SMS/min, szacowany czas wysyłki |
-| [ ] 4.9 | Okno wysyłki: `SendAfter`/`SendBefore` dla wysyłek do wielu, informacja o opóźnieniu, „Wyślij od razu”, walidacja okna (bez przejścia przez północ); okno potwierdzenia przy > 1 odbiorcy |
-| [ ] 4.10 | Raport wysyłki (`batch_id`): liczniki, pasek postępu (htmx), „Ponów nieudane”, „Anuluj pozostałe” |
-| [ ] 4.11 | Import CSV z podglądem i eksport CSV z BOM |
-| [ ] 4.12 | Testy: łączenie odbiorców i duplikaty, personalizacja, rozkład dławienia, okno wysyłki, parsowanie CSV |
+| [x] 4.1 | Kontakty: lista, wyszukiwanie podczas pisania (htmx), filtr po grupie, stronicowanie, dodaj/edytuj/usuń, ekran kontaktu z ostatnimi wiadomościami |
+| [x] 4.2 | Grupy: lista z liczbą członków, dodaj/zmień nazwę/usuń, „Pokaż członków”, „Wyślij do grupy” |
+| [x] 4.3 | Akcje zbiorcze na kontaktach: dodaj do / usuń z grupy, usuń, wyślij SMS do zaznaczonych |
+| [x] 4.4 | Nazwa kontaktu zamiast numeru w całym panelu (funkcja pomocnicza z pamięcią podręczną na żądanie) |
+| [x] 4.5 | Nowa wiadomość – wybór odbiorców: grupy + kontakty + numery ręcznie, suma bez duplikatów, licznik, lista błędnych numerów, `max_recipients`; otwieranie z gotowym wyborem |
+| [x] 4.6 | Szablony: CRUD + wybór na ekranie nowej wiadomości |
+| [x] 4.7 | Personalizacja `{nazwa}`, `{imie}`: podgląd, licznik wg najdłuższego wariantu, ostrzeżenie dla odbiorców spoza książki |
+| [x] 4.8 | Dławienie: rozłożenie `SendingDateTime` wg N SMS/min, szacowany czas wysyłki |
+| [x] 4.9 | Okno wysyłki: `SendAfter`/`SendBefore` dla wysyłek do wielu, informacja o opóźnieniu, „Wyślij od razu”, walidacja okna (bez przejścia przez północ); okno potwierdzenia przy > 1 odbiorcy |
+| [x] 4.10 | Raport wysyłki (`batch_id`): liczniki, pasek postępu (htmx), „Ponów nieudane”, „Anuluj pozostałe” |
+| [x] 4.11 | Import CSV z podglądem i eksport CSV z BOM |
+| [x] 4.12 | Testy: łączenie odbiorców i duplikaty, personalizacja, rozkład dławienia, okno wysyłki, parsowanie CSV |
+
+**Stan (2026-10-04):** wykonany, kryteria odbioru sprawdzone na symulatorze – czeka na przegląd.
 
 **Odbiór:** wysyłka do grupy 3+ numerów + 1 duplikat + 1 błędny numer, z `{imie}` i dławieniem 2/min;
 raport wysyłki pokazuje każdy status; wysyłka z oknem kończącym się „za minutę” – część wiadomości czeka;
@@ -194,23 +212,25 @@ import pliku CSV z Excela z polskimi znakami.
 
 | # | Zadanie |
 |---|---------|
-| [ ] 5.1 | `GammuConf` – zapis: zmiana/dodanie/usunięcie parametru, nowa sekcja, nazwy bez wielkości liter, `#` w wartości, zapis w miejscu z blokadą; maskowanie hasła (wyświetlanie, różnice, zachowanie przy zapisie) |
-| [ ] 5.2 | Kopie zapasowe: kopia przed każdym zapisem, limit z ustawień (domyślnie 30), podgląd, porównanie, przywrócenie; walidacja nazw plików |
-| [ ] 5.3 | Różnice linia po linii (prosty algorytm LCS w PHP) do okna potwierdzenia |
-| [ ] 5.4 | Zakładka **Ustawienia** (formularz z rozdz. 2.10a, maskowany PIN, lista wykrytych portów z `/dev/serial/by-id/`) |
-| [ ] 5.5 | Zakładka **Edytor** z walidacją (sekcje, `service = sql`, dane bazy, port, parametry zarządzane przez panel, `RunOn…`) |
-| [ ] 5.6 | Okno potwierdzenia zapisu (D4): ostrzeżenie, różnice, ostrzeżenia walidacji, wybór: przeładuj / restart / nic |
-| [ ] 5.7 | Zakładka **Usługa**: przeładowanie i restart z potwierdzeniem, wynik polecenia, ostatnie 20 linii logu, oczekiwanie na modem w `phones` |
-| [ ] 5.8 | Ekran **Log Gammu**: N ostatnich linii (odczyt od końca pliku), filtr, podświetlanie błędów, auto-odświeżanie |
-| [ ] 5.9 | **Modem**: synchronizacja `phones` → `modem_status`, ekran stanu (odświeżanie co 15 s), wykrywanie niedostępnego modemu |
-| [ ] 5.10 | **USSD**: wysłanie (`Class = 127`, priorytet 20), jedno żądanie na modem, oczekiwanie na odpowiedź (htmx, 60 s), odpowiedź w menu (`Status = 3`), historia, szybkie kody |
-| [ ] 5.11 | **Czarna lista**: tabela, ekran, „Zablokuj” w rozmowie/odebranych/kontakcie, generowanie pliku z wariantami numerów (zapis atomowy + kopia), przeładowanie Gammu, pierwsze włączenie dopisuje `ExcludeNumbersFile` przez okno potwierdzenia |
-| [ ] 5.12 | **Połączenia**: `bin/smsgui hook call` (walidacja, konto `smsgui_hook`), przełącznik w ustawieniach (`HangupCalls`, `RunOnIncomingCall` przez okno potwierdzenia), ekran listy, wpisy w rozmowie, licznik na pulpicie |
-| [ ] 5.13 | **Ustawienia panelu** (tabela `settings`) + podgląd ustawień systemowych z `config.php` (bez haseł) |
-| [ ] 5.14 | **Pulpit**: kafelki, stan usługi, modemu i ostatniej synchronizacji, kontrola zdrowia (pełna lista z rozdz. 2.2, wspólna z `check`), 10 ostatnich wiadomości |
-| [ ] 5.15 | CLI `cleanup [--days=N]` |
-| [ ] 5.16 | Symulator: USSD, `call`, czarna lista w `receive`, `reload` |
-| [ ] 5.17 | Testy `GammuConf` („wczytaj i zapisz” = plik bez zmian, każda operacja zmienia tylko swoją linię, maskowanie), `Blocklist`, hook (walidacja numeru), USSD (dopasowanie odpowiedzi, przekroczenie czasu) |
+| [x] 5.1 | `GammuConf` – zapis: zmiana/dodanie/usunięcie parametru, nowa sekcja, nazwy bez wielkości liter, `#` w wartości, zapis w miejscu z blokadą; maskowanie hasła (wyświetlanie, różnice, zachowanie przy zapisie) |
+| [x] 5.2 | Kopie zapasowe: kopia przed każdym zapisem, limit z ustawień (domyślnie 30), podgląd, porównanie, przywrócenie; walidacja nazw plików |
+| [x] 5.3 | Różnice linia po linii (prosty algorytm LCS w PHP) do okna potwierdzenia |
+| [x] 5.4 | Zakładka **Ustawienia** (formularz z rozdz. 2.10a, maskowany PIN, lista wykrytych portów z `/dev/serial/by-id/`) |
+| [x] 5.5 | Zakładka **Edytor** z walidacją (sekcje, `service = sql`, dane bazy, port, parametry zarządzane przez panel, `RunOn…`) |
+| [x] 5.6 | Okno potwierdzenia zapisu (D4): ostrzeżenie, różnice, ostrzeżenia walidacji, wybór: przeładuj / restart / nic |
+| [x] 5.7 | Zakładka **Usługa**: przeładowanie i restart z potwierdzeniem, wynik polecenia, ostatnie 20 linii logu, oczekiwanie na modem w `phones` |
+| [x] 5.8 | Ekran **Log Gammu**: N ostatnich linii (odczyt od końca pliku), filtr, podświetlanie błędów, auto-odświeżanie |
+| [x] 5.9 | **Modem**: synchronizacja `phones` → `modem_status`, ekran stanu (odświeżanie co 15 s), wykrywanie niedostępnego modemu |
+| [x] 5.10 | **USSD**: wysłanie (`Class = 127`, priorytet 20), jedno żądanie na modem, oczekiwanie na odpowiedź (htmx, 60 s), odpowiedź w menu (`Status = 3`), historia, szybkie kody |
+| [x] 5.11 | **Czarna lista**: tabela, ekran, „Zablokuj” w rozmowie/odebranych/kontakcie, generowanie pliku z wariantami numerów (zapis atomowy + kopia), przeładowanie Gammu, pierwsze włączenie dopisuje `ExcludeNumbersFile` przez okno potwierdzenia |
+| [x] 5.12 | **Połączenia**: `bin/smsgui hook call` (walidacja, konto `smsgui_hook`), przełącznik w ustawieniach (`HangupCalls`, `RunOnIncomingCall` przez okno potwierdzenia), ekran listy, wpisy w rozmowie, licznik na pulpicie |
+| [x] 5.13 | **Ustawienia panelu** (tabela `settings`) + podgląd ustawień systemowych z `config.php` (bez haseł) |
+| [x] 5.14 | **Pulpit**: kafelki, stan usługi, modemu i ostatniej synchronizacji, kontrola zdrowia (pełna lista z rozdz. 2.2, wspólna z `check`), 10 ostatnich wiadomości |
+| [x] 5.15 | CLI `cleanup [--days=N]` |
+| [x] 5.16 | Symulator: USSD, `call`, czarna lista w `receive`, `reload` |
+| [x] 5.17 | Testy `GammuConf` („wczytaj i zapisz” = plik bez zmian, każda operacja zmienia tylko swoją linię, maskowanie), `Blocklist`, hook (walidacja numeru), USSD (dopasowanie odpowiedzi, przekroczenie czasu) |
+
+**Stan (2026-10-04):** wykonany, kryteria odbioru sprawdzone na symulatorze – czeka na przegląd.
 
 **Odbiór:** zmiana `deliveryreportdelay` z formularza → okno z różnicą jednej linii → zapis → plik zmieniony tylko
 w tej linii, kopia na liście → „przeładowanie” symulatora → przywrócenie kopii. `*101#` → odpowiedź w panelu;
@@ -219,16 +239,18 @@ w tej linii, kopia na liście → „przeładowanie” symulatora → przywróce
 
 ## 9.8. Etap 6 – Wdrożenie (wersja 1)
 
+**Stan (2026-10-04):** pliki z 6.2–6.5 napisane, **nieprzetestowane na Ubuntu** – instalator wykrywa wartości zależne od paczki (usługa i jej użytkownik, `ExecReload`, położenie `mysql.sql`, gniazdo PHP-FPM), ale wymaga 6.1 i 6.6.
+
 Warunek wstępny: modem dostarczony, punkty U1–U10 (rozdz. 3.14) sprawdzone na Ubuntu, wyniki wpisane
 do dokumentacji.
 
 | # | Zadanie |
 |---|---------|
 | [ ] 6.1 | Weryfikacja U1–U10, zebranie prawdziwych wierszy z tabel Gammu do `tests/fixtures/`, poprawki, jeśli coś odbiega |
-| [ ] 6.2 | `deploy/nginx-smsgui.conf`, `deploy/sudoers-smsgui`, `deploy/smsgui-worker.service`, `deploy/logrotate-gammu-smsd`, `deploy/fail2ban/` (filtr + jail) |
-| [ ] 6.3 | `deploy/install.sh` wg rozdz. 6.3: pobieranie przez `curl … \| sudo bash`, pakiety, bazy i konta (hasła losowe), schemat Gammu + InnoDB, kreator modemu (`gammu identify` na portach, PIN sprawdzany raz), `gammu-smsdrc` przez `bin/smsgui setup gammu`, proces w tle, nginx, konto, `check`, testowy SMS (`bin/smsgui send --wait`) |
-| [ ] 6.4 | `deploy/uninstall.sh` (z `--purge`) |
-| [ ] 6.5 | Instrukcja instalacji, aktualizacji i odinstalowania w README |
+| [x] 6.2 | `deploy/nginx-smsgui.conf`, `deploy/sudoers-smsgui`, `deploy/smsgui-worker.service`, `deploy/logrotate-gammu-smsd`, `deploy/fail2ban/` (filtr + jail) |
+| [x] 6.3 | `deploy/install.sh` wg rozdz. 6.3: pobieranie przez `curl … \| sudo bash`, pakiety, bazy i konta (hasła losowe), schemat Gammu + InnoDB, kreator modemu (`gammu identify` na portach, PIN sprawdzany raz), `gammu-smsdrc` przez `bin/smsgui setup gammu`, proces w tle, nginx, konto, `check`, testowy SMS (`bin/smsgui send --wait`) |
+| [x] 6.4 | `deploy/uninstall.sh` (z `--purge`) |
+| [x] 6.5 | Instrukcja instalacji, aktualizacji i odinstalowania w README |
 | [ ] 6.6 | Test instalacji na czystej maszynie wirtualnej (Multipass na Macu): Ubuntu 26.04; tam też `php tests/run.php` |
 | [ ] 6.7 | Lista kontrolna z rozdz. 7.1 na prawdziwym modemie |
 | [ ] 6.8 | Wydanie: scalenie `dev` → `main`, tag `v1.0` |
