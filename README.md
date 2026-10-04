@@ -1,5 +1,7 @@
 # Gammu SMSD Web UI
 
+**Polski** | [English](README.en.md)
+
 Panel WWW do bramki SMS opartej na [Gammu SMSD](https://docs.gammu.org/smsd/) i modemie GSM, przeznaczony dla
 Ubuntu Server. Wysyłka i odbiór SMS, rozmowy, książka telefoniczna, raporty doręczenia, USSD, odrzucone połączenia,
 czarna lista oraz konfiguracja i diagnostyka Gammu – wszystko z przeglądarki, bez pracy w konsoli.
