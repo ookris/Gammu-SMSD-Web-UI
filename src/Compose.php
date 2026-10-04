@@ -108,25 +108,30 @@ final class Compose
         $batch = $multi ? bin2hex(random_bytes(8)) : null;
         $times = Recipients::schedule(count($list), $plan['per_min'], $plan['start']);
         $priority = !$multi || $in['priority'] ? Outbox::PRIORITY_SINGLE : Outbox::PRIORITY_BULK;
-        $first = null;
-        foreach ($list as $i => $r) {
-            $id = Outbox::create([
-                'phone' => $r['phone'],
-                'body' => Recipients::personalize($in['text'], $r['name']),
-                'translit' => $in['translit'],
-                'flash' => $in['flash'],
-                'report' => $in['report'],
-                'send_at' => $times[$i] > now_db() ? $times[$i] : null,
-                'priority' => $priority,
-                'window' => $plan['window'],
-                'batch_id' => $batch,
-            ]);
-            $first ??= $id;
-        }
-        if ($batch !== null) {
-            Settings::set('batch_' . $batch, ['text' => $in['text'], 'label' => self::batchLabel($in), 'per_min' => $plan['per_min'],
-                'report' => $in['report'], 'created' => now_db()]);
-        }
+        // Cała wysyłka w jednej transakcji: błąd przy którymkolwiek odbiorcy nie zostawia części wiadomości w kolejce,
+        // a Gammu widzi wysyłkę dopiero w całości
+        $first = Db::tx(static function () use ($list, $in, $plan, $times, $priority, $batch): int {
+            $first = null;
+            foreach ($list as $i => $r) {
+                $id = Outbox::create([
+                    'phone' => $r['phone'],
+                    'body' => Recipients::personalize($in['text'], $r['name']),
+                    'translit' => $in['translit'],
+                    'flash' => $in['flash'],
+                    'report' => $in['report'],
+                    'send_at' => $times[$i] > now_db() ? $times[$i] : null,
+                    'priority' => $priority,
+                    'window' => $plan['window'],
+                    'batch_id' => $batch,
+                ]);
+                $first ??= $id;
+            }
+            if ($batch !== null) {
+                Settings::set('batch_' . $batch, ['text' => $in['text'], 'label' => self::batchLabel($in), 'per_min' => $plan['per_min'],
+                    'report' => $in['report'], 'created' => now_db()]);
+            }
+            return (int) $first;
+        });
         app_log('info', 'wysyłka: ' . count($list) . ' odbiorców' . ($batch ? " (batch $batch)" : ''));
         return [$batch, $first];
     }

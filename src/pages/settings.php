@@ -5,7 +5,9 @@ if (is_post()) {
     $from = input('window_from');
     $to = input('window_to');
     $int = static fn (string $k, int $min, int $max) => is_numeric(input($k)) && (int) input($k) >= $min && (int) input($k) <= $max;
-    if (!preg_match('/^\d\d:\d\d$/', $from) || !preg_match('/^\d\d:\d\d$/', $to) || $from >= $to) {
+    if (!Recipients::validTime($from) || !Recipients::validTime($to)) {
+        $errors['window'] = 'Okno wysyłki: podaj godziny w formacie GG:MM (00:00–23:59).';
+    } elseif ($from >= $to) {
         $errors['window'] = 'Okno wysyłki: godzina „od” musi być wcześniejsza niż „do” – okno nie może przechodzić przez północ (ograniczenie Gammu).';
     }
     foreach (['throttle_per_min' => [0, 60], 'session_hours' => [1, 720], 'backup_keep' => [1, 500], 'cleanup_days' => [0, 3650]] as $k => [$min, $max]) {
@@ -13,9 +15,12 @@ if (is_post()) {
             $errors[$k] = "Podaj liczbę od $min do $max.";
         }
     }
+    // Pary nazwa–kod po indeksach z formularza (puste nazwy nie mogą przesunąć kodów)
     $codes = [];
-    foreach (input_list('ussd_name') as $i => $name) {
-        $code = str_replace(' ', '', (string) ($_POST['ussd_code'][$i] ?? ''));
+    $names = is_array($_POST['ussd_name'] ?? null) ? $_POST['ussd_name'] : [];
+    foreach (is_array($_POST['ussd_code'] ?? null) ? $_POST['ussd_code'] : [] as $i => $code) {
+        $code = str_replace(' ', '', is_string($code) ? $code : '');
+        $name = is_string($names[$i] ?? null) ? trim($names[$i]) : '';
         if ($code === '') {
             continue;
         }
@@ -50,5 +55,6 @@ foreach (['db.dsn', 'db.user', 'gammu_db', 'gammu_conf', 'blocklist_file', 'back
     $val = cfg($k);
     $system[$k] = $val === null ? '(z gammu-smsdrc)' : (is_bool($val) ? ($val ? 'true' : 'false') : (string) $val);
 }
+// Po błędzie walidacji formularz pokazuje kody USSD z żądania – kolejny zapis ich nie wyczyści
 render('settings', ['title' => 'Ustawienia panelu', 'nav' => 'settings', 'v' => $v, 'errors' => $errors,
-    'codes' => is_post() ? [] : Settings::json('ussd_codes'), 'callsEnabled' => Calls::enabledInConf(), 'system' => $system]);
+    'codes' => is_post() ? $codes : Settings::json('ussd_codes'), 'callsEnabled' => Calls::enabledInConf(), 'system' => $system]);

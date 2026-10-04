@@ -32,7 +32,8 @@ if (is_post()) {
     back(url('sent'));
 }
 
-$f = ['q' => input('q'), 'status' => input('status'), 'source' => input('source'), 'from' => input('from'), 'to' => input('to'), 'batch' => input('batch')];
+$f = ['q' => input('q'), 'status' => input('status'), 'source' => input('source'), 'from' => input('from'), 'to' => input('to'), 'batch' => input('batch'),
+    'sent_from' => input('sent_from'), 'changed_from' => input('changed_from')];
 $where = ["direction = 'out'"];
 $params = [];
 if ($f['q'] !== '') {
@@ -40,12 +41,14 @@ if ($f['q'] !== '') {
     $where[] = '(body LIKE ? OR phone LIKE ? OR phone IN (SELECT phone FROM contacts WHERE name LIKE ?))';
     array_push($params, '%' . $f['q'] . '%', '%' . ($digits !== '' ? ltrim($digits, '0') : $f['q']) . '%', '%' . $f['q'] . '%');
 }
-$statuses = ['scheduled', 'queued', 'retrying', 'sent', 'delivered', 'undelivered', 'failed', 'cancelled'];
-if (in_array($f['status'], $statuses, true)) {
-    $where[] = match ($f['status']) { 'retrying' => "status = 'queued' AND retries > 0", 'queued' => "status = 'queued' AND retries = 0", default => 'status = ?' };
-    if (!in_array($f['status'], ['retrying', 'queued'], true)) {
-        $params[] = $f['status'];
-    }
+// Statusy pojedyncze i zbiorcze (te same zbiory co kafelki pulpitu): pending, done, problem
+$groups = ['pending' => "status IN ('scheduled','queued')", 'done' => "status IN ('sent','delivered','undelivered')",
+    'problem' => "status IN ('failed','undelivered')", 'retrying' => "status = 'queued' AND retries > 0", 'queued' => "status = 'queued' AND retries = 0"];
+if (isset($groups[$f['status']])) {
+    $where[] = $groups[$f['status']];
+} elseif (in_array($f['status'], ['scheduled', 'sent', 'delivered', 'undelivered', 'failed', 'cancelled'], true)) {
+    $where[] = 'status = ?';
+    $params[] = $f['status'];
 }
 if (in_array($f['source'], ['gui', 'external', 'api'], true)) {
     $where[] = 'source = ?';
@@ -58,6 +61,12 @@ if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $f['from'])) {
 if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $f['to'])) {
     $where[] = 'created_at <= ?';
     $params[] = $f['to'] . ' 23:59:59';
+}
+foreach (['sent_from' => 'sent_at', 'changed_from' => 'updated_at'] as $k => $col) {
+    if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $f[$k])) {
+        $where[] = "$col >= ?";
+        $params[] = $f[$k] . ' 00:00:00';
+    }
 }
 if (Batch::valid($f['batch'])) {
     $where[] = 'batch_id = ?';

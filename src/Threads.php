@@ -26,12 +26,11 @@ final class Threads
     /** Oś czasu: wiadomości i odrzucone połączenia z numerem, od najstarszych. */
     public static function timeline(string $phone, int $limit = 200): array
     {
-        $msgs = array_reverse(Db::all('SELECT *, COALESCE(received_at, created_at) AS at FROM messages WHERE phone = ? ORDER BY id DESC LIMIT ' . $limit, [$phone]));
-        $from = $msgs[0]['at'] ?? '1970-01-01 00:00:00';
-        $calls = Db::all("SELECT id, received_at AS at, modem, 'call' AS kind FROM calls WHERE phone = ? AND received_at >= ? ORDER BY received_at", [$phone, $from]);
+        $msgs = Db::all('SELECT *, COALESCE(received_at, created_at) AS at FROM messages WHERE phone = ? ORDER BY id DESC LIMIT ' . $limit, [$phone]);
+        $calls = Db::all("SELECT id, received_at AS at, modem, 'call' AS kind FROM calls WHERE phone = ? ORDER BY received_at DESC, id DESC LIMIT " . $limit, [$phone]);
         $items = array_merge(array_map(static fn ($m) => $m + ['kind' => 'msg'], $msgs), $calls);
         usort($items, static fn ($a, $b) => [$a['at'], $a['kind'] === 'msg' ? (int) $a['id'] : 0] <=> [$b['at'], $b['kind'] === 'msg' ? (int) $b['id'] : 0]);
-        return $items;
+        return array_slice($items, -$limit); // najnowsze $limit wpisów obu rodzajów
     }
 
     /** Znacznik wersji rozmowy – auto-odświeżanie pobiera fragment tylko po zmianie. */

@@ -34,15 +34,19 @@ używać nowości z 8.4 i 8.5, gdy realnie upraszczają kod (np. `array_find()`,
 - `utf8mb4` w połączeniu (`charset=utf8mb4` w DSN) – inaczej emoji zamieniają się w `?`.
 - Kolumny Gammu `Status`/`Coding` to `ENUM` – wartości tylko z listy (stałe w `GammuDb`).
 
-### Odstępstwa kodu od opisu (do przeglądu)
-- `t()` obejmuje menu, statusy, komunikaty logowania i stany USSD; pozostałe teksty widoków są po polsku w `views/` –
-  wersja angielska (etap 8) wymaga przeniesienia ich do `resources/lang/`.
-- Podział na części jest w `SmsText::split()` (bez osobnego `SmsSplit.php`); dodatkowe klasy: `Compose` (plan wysyłki
-  i podgląd htmx), `Threads`, `Batch`, `Templates`, `ConfigSave` (okno potwierdzenia zapisu, zmiana w sesji – hasła nie
-  trafiają do przeglądarki), `Status`, `Settings`, `Setup`, `Ui`.
-- Numer skrócony (krótszy niż krajowy) musi być wpisany bez separatorów – „8080” jest poprawny, „601 23” to ucięty numer.
+### Ustalenia z przeglądu kodu (2026-10-04)
+- **Zaakceptowane:** numer skrócony (krótszy niż krajowy) wpisuje się bez separatorów – „8080” jest poprawny, „601 23”
+  to ucięty numer; kolumny `modem_status.signal_pct`/`battery_pct`, `ussd_requests.parent_id`/`sent_at`; podział na części
+  w `SmsText::split()` (bez osobnego `SmsSplit.php`). Dodatkowe klasy: `Compose`, `Threads`, `Batch`, `Templates`,
+  `ConfigSave`, `Status`, `Settings`, `Setup`, `Ui`.
+- **Następny etap – tłumaczenie całego interfejsu:** dziś `t()` obejmuje menu, statusy, komunikaty logowania i stany USSD;
+  wszystkie pozostałe teksty z `views/` i komunikaty stron trafią do `resources/lang/pl.php` + `en.php`.
 - Anulowanie: `SendingTimeOut <= NOW()` (świeżo dodany wiersz ma `SendingTimeOut = NOW()`; blokada Gammu ustawia czas w przyszłości).
 - Proces w tle zapisuje `worker_seen_at` – kontrola zdrowia odróżnia go od synchronizacji przy odświeżeniu strony.
+- Poprawki po przeglądzie: wysyłka do wielu w jednej transakcji (`Db::tx` zagnieżdżone dołącza do zewnętrznej) i z jednorazowym
+  tokenem formularza; wylogowanie tylko przez POST; zapis `gammu-smsdrc` z odciskiem pliku z chwili otwarcia formularza,
+  sprawdzanym pod blokadą `LOCK_EX`; kopie konfiguracji tworzone od razu z prawami 0600/0640; deinstalator usuwa z
+  `gammu-smsdrc` tylko ustawienia panelu (`smsgui setup unhook`); instalator obsługuje demona Gammu na zwykłym koncie.
 
 ### Konwencje kodu
 - Każde wyjście przez `e()`; SQL tylko z parametrami.
@@ -65,8 +69,9 @@ bazy MariaDB: smsgui_dev, gammu_dev (+ smsgui_test, gammu_test dla testów)
 ```
 
 ```bash
-brew install php mariadb && brew services start mariadb
-php tests/sim/gammu-sim.php init       # tworzy var/dev/, bazy dev z mysql.sql (InnoDB), config/config.php
+brew install php mariadb@11.8
+tests/db/mariadb.sh start              # osobna instancja MariaDB 11.8 na porcie 3307 (obok MySQL, jeśli jest)
+SIM_DB_PORT=3307 php tests/sim/gammu-sim.php init   # tworzy var/dev/, bazy dev z mysql.sql (InnoDB), config/config.php
 php bin/smsgui setup db && php bin/smsgui passwd admin
 php tests/sim/gammu-sim.php run        # symulator Gammu SMSD (osobny terminal)
 php bin/smsgui worker                  # proces w tle (osobny terminal)
@@ -133,7 +138,7 @@ a następnie statyczną stronę HTML, z której w etapach 1–5 powstaje widok `
 | [x] 1.13 | Runner testów bez zależności (`test()`, `assert_same()`, raport, kod wyjścia), baza testowa tworzona i czyszczona przez runner + testy `Db` (migracje na pustej bazie, ponowne uruchomienie), `Auth` (blokada), `GammuConf` (odczyt) | `tests/run.php`, `tests/*Test.php` |
 | [x] 1.14 | Symulator: polecenia `init`, `status`, `reload`, `restart`; skrypt `deploy/sql/gammu-mysql-17.sql` | `tests/sim/gammu-sim.php` |
 
-**Stan (2026-10-04):** wykonany, kryteria odbioru sprawdzone na symulatorze (lokalnie MySQL 9.7 zamiast MariaDB – kod pisany pod MariaDB).
+**Stan (2026-10-04):** wykonany, kryteria odbioru sprawdzone na symulatorze – testy i pełny cykl na MariaDB 11.8 (wcześniej także na MySQL 9.7).
 
 **Odbiór:** logowanie działa (także blokada po 5 próbach i wylogowanie); POST bez tokenu CSRF → 403;
 `php bin/smsgui check` na środowisku dev pokazuje same ✔, a po zamianie tabeli `gammu.outbox` na MyISAM – ✘ z podpowiedzią;

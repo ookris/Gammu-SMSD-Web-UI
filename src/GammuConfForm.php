@@ -75,7 +75,8 @@ final class GammuConfForm
                     $errors[$name] = 'Podaj liczbę całkowitą.';
                     continue;
                 }
-                if ($type === 'select' && !array_key_exists($value, $f[4])) {
+                // Wartość spoza listy jest dozwolona, jeśli to niezmieniona wartość z pliku (np. debuglevel = 4)
+                if ($type === 'select' && !array_key_exists($value, $f[4]) && $value !== (string) $old) {
                     $errors[$name] = 'Nieprawidłowa wartość.';
                     continue;
                 }

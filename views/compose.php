@@ -12,6 +12,7 @@ $checked = static fn (bool $c) => $c ? ' checked' : '';
 <form method="post" action="<?= e(url('compose')) ?>" class="split" id="compose-form"
       hx-post="<?= e(url('compose', ['preview' => 1])) ?>" hx-trigger="input delay:600ms, change" hx-target="#compose-side" hx-swap="outerHTML">
 <?= csrf_field() ?>
+<input type="hidden" name="send_token" value="<?= e($sendToken) ?>">
 <div class="stack">
 <section class="card">
 <header><h2>1. Odbiorcy</h2></header>

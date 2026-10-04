@@ -35,7 +35,7 @@ final class Messages
         if ($days < 1 || Settings::get('cleanup_last') === date('Y-m-d')) {
             return;
         }
-        Settings::set('cleanup_last', date('Y-m-d'));
         self::cleanup($days);
+        Settings::set('cleanup_last', date('Y-m-d')); // po błędzie kolejny przebieg spróbuje ponownie
     }
 }

@@ -14,19 +14,25 @@ $opt = static fn (string $v, string $cur) => '<option value="' . e($v) . '"' . (
 <?php endif ?>
 <section class="card flush">
 <form class="toolbar" method="get" action="./">
-<input type="hidden" name="p" value="sent"><?php if ($f['batch'] !== ''): ?><input type="hidden" name="batch" value="<?= e($f['batch']) ?>"><?php endif ?>
+<input type="hidden" name="p" value="sent"><?php foreach (['batch', 'sent_from', 'changed_from'] as $k): if ($f[$k] !== ''): ?><input type="hidden" name="<?= $k ?>" value="<?= e($f[$k]) ?>"><?php endif; endforeach ?>
 <div class="field grow"><label for="q">Szukaj</label><input id="q" name="q" type="search" value="<?= e($f['q']) ?>" placeholder="odbiorca, numer lub treść"></div>
 <div class="field"><label for="status">Status</label><select id="status" name="status">
 <?= $opt('', $f['status']) ?>Wszystkie</option>
-<?php foreach (['scheduled' => 'Zaplanowana', 'queued' => 'W kolejce', 'retrying' => 'Ponawiana', 'sent' => 'Wysłana', 'delivered' => 'Doręczona', 'undelivered' => 'Niedoręczona', 'failed' => 'Błąd', 'cancelled' => 'Anulowana'] as $k => $v): ?>
+<optgroup label="Zbiorczo"><?php foreach (['pending' => 'Oczekujące (zaplanowane i w kolejce)', 'done' => 'Wysłane, doręczone i niedoręczone', 'problem' => 'Błędy i niedoręczone'] as $k => $v): ?>
 <?= $opt($k, $f['status']) ?><?= e($v) ?></option>
-<?php endforeach ?></select></div>
+<?php endforeach ?></optgroup>
+<optgroup label="Status"><?php foreach (['scheduled' => 'Zaplanowana', 'queued' => 'W kolejce', 'retrying' => 'Ponawiana', 'sent' => 'Wysłana', 'delivered' => 'Doręczona', 'undelivered' => 'Niedoręczona', 'failed' => 'Błąd', 'cancelled' => 'Anulowana'] as $k => $v): ?>
+<?= $opt($k, $f['status']) ?><?= e($v) ?></option>
+<?php endforeach ?></optgroup></select></div>
 <div class="field"><label for="source">Źródło</label><select id="source" name="source">
 <?= $opt('', $f['source']) ?>Wszystkie</option><?= $opt('gui', $f['source']) ?>Panel</option><?= $opt('external', $f['source']) ?>Zewnętrzne</option><?= $opt('api', $f['source']) ?>API</option></select></div>
 <div class="field"><label for="from">Od</label><input id="from" name="from" type="date" value="<?= e($f['from']) ?>"></div>
 <div class="field"><label for="to">Do</label><input id="to" name="to" type="date" value="<?= e($f['to']) ?>"></div>
 <button type="submit" class="secondary"><?= icon('filter') ?>Filtruj</button>
 </form>
+<?php if ($f['sent_from'] !== '' || $f['changed_from'] !== ''): ?>
+<p class="card-note"><?= $f['sent_from'] !== '' ? 'Wysłane od ' . e(date('d.m.Y', (int) ts($f['sent_from']))) : 'Zmienione od ' . e(date('d.m.Y', (int) ts($f['changed_from']))) ?> · <a href="<?= e(url('sent', array_diff_key($f, ['sent_from' => 1, 'changed_from' => 1]))) ?>">pokaż bez ograniczenia daty</a></p>
+<?php endif ?>
 <?php if ($rows === []): ?>
 <?= array_filter($f) ? Ui::empty('magnifer', 'Brak wyników', 'Zmień filtry.', '<a href="' . e(url('sent')) . '" role="button" class="secondary outline">Wyczyść filtry</a>')
     : Ui::empty('inbox-out', 'Nie wysłano jeszcze żadnej wiadomości', 'Wiadomości z panelu i wysłane innymi drogami pojawią się tutaj.', '<a href="' . e(url('compose')) . '" role="button">' . icon('add-circle') . 'Nowa wiadomość</a>') ?>

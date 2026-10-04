@@ -1,7 +1,7 @@
 <?php /** @var array $tiles @var array $health @var array $recent @var ?array $modem @var string $service @var bool $callsEnabled */
 $problems = array_values(array_filter($health, static fn ($h) => $h['level'] !== 'ok'));
 $links = ['drd' => url('config'), 'conf' => url('config', ['tab' => 'editor']), 'service' => url('config', ['tab' => 'service']), 'modem' => url('modem'),
-    'blocklist' => url('blocklist'), 'blocklist-conf' => url('blocklist'), 'queue' => url('sent', ['status' => 'queued']), 'include' => url('config', ['tab' => 'editor'])];
+    'blocklist' => url('blocklist'), 'blocklist-conf' => url('blocklist'), 'queue' => url('sent', ['status' => 'pending']), 'include' => url('config', ['tab' => 'editor'])];
 $worker = Settings::get('worker_seen_at');
 ?>
 <header class="page-head"><div><h1>Pulpit</h1><p class="sub"><?= e(fmt_long_date(time())) ?></p></div>
@@ -12,9 +12,9 @@ $worker = Settings::get('worker_seen_at');
 <?php endforeach ?>
 <div class="tiles">
 <a class="tile" href="<?= e(url('threads')) ?>"><span class="label">Nieprzeczytane</span><span class="value"><?= (int) $tiles['unread']['n'] ?></span><span class="hint"><?= (int) $tiles['unread']['n'] ? 'w ' . (int) $tiles['unread']['threads'] . ' ' . plural((int) $tiles['unread']['threads'], 'rozmowie', 'rozmowach', 'rozmowach') : 'wszystko przeczytane' ?></span></a>
-<a class="tile" href="<?= e(url('sent', ['status' => 'queued'])) ?>"><span class="label">W kolejce</span><span class="value"><?= (int) $tiles['queue']['n'] ?></span><span class="hint"><?= $tiles['queue']['oldest'] ? 'najstarsza ' . e(fmt_duration(max(0, time() - (int) ts($tiles['queue']['oldest'])))) : 'kolejka pusta' ?></span></a>
-<a class="tile" href="<?= e(url('sent', ['from' => date('Y-m-d')])) ?>"><span class="label">Wysłane dziś</span><span class="value"><?= (int) $tiles['sent']['n'] ?></span><span class="hint"><?= (int) $tiles['sent']['delivered'] ?> doręczone</span></a>
-<a class="tile" href="<?= e(url('sent', ['status' => 'failed'])) ?>"><span class="label">Błędy (7 dni)</span><span class="value<?= (int) $tiles['errors']['n'] ? ' err' : '' ?>"><?= (int) $tiles['errors']['n'] ?></span><span class="hint">błąd lub niedoręczona</span></a>
+<a class="tile" href="<?= e(url('sent', ['status' => 'pending'])) ?>"><span class="label">W kolejce</span><span class="value"><?= (int) $tiles['queue']['n'] ?></span><span class="hint"><?= $tiles['queue']['oldest'] ? 'najstarsza ' . e(fmt_duration(max(0, time() - (int) ts($tiles['queue']['oldest'])))) : 'kolejka pusta' ?></span></a>
+<a class="tile" href="<?= e(url('sent', ['status' => 'done', 'sent_from' => date('Y-m-d')])) ?>"><span class="label">Wysłane dziś</span><span class="value"><?= (int) $tiles['sent']['n'] ?></span><span class="hint"><?= (int) $tiles['sent']['delivered'] ?> doręczone</span></a>
+<a class="tile" href="<?= e(url('sent', ['status' => 'problem', 'changed_from' => $weekAgo])) ?>"><span class="label">Błędy (7 dni)</span><span class="value<?= (int) $tiles['errors']['n'] ? ' err' : '' ?>"><?= (int) $tiles['errors']['n'] ?></span><span class="hint">błąd lub niedoręczona</span></a>
 <a class="tile" href="<?= e(url('contacts')) ?>"><span class="label">Kontakty</span><span class="value"><?= (int) $tiles['contacts']['n'] ?></span><span class="hint">w <?= (int) $tiles['contacts']['groups_n'] ?> <?= plural((int) $tiles['contacts']['groups_n'], 'grupie', 'grupach', 'grupach') ?></span></a>
 <?php if ($callsEnabled || (int) $tiles['calls']['n'] > 0): ?><a class="tile" href="<?= e(url('calls')) ?>"><span class="label">Połączenia dziś</span><span class="value"><?= (int) $tiles['calls']['n'] ?></span><span class="hint"><?= $tiles['calls']['last'] ? 'odrzucone · ostatnie ' . e(date('H:i', (int) ts($tiles['calls']['last']))) : 'odrzucane i zapisywane' ?></span></a><?php endif ?>
 </div>

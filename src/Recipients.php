@@ -93,10 +93,16 @@ final class Recipients
         }
         $from = (string) Settings::get('window_from');
         $to = (string) Settings::get('window_to');
-        if (!preg_match('/^\d\d:\d\d$/', $from) || !preg_match('/^\d\d:\d\d$/', $to) || $from >= $to) {
+        if (!self::validTime($from) || !self::validTime($to) || $from >= $to) {
             return null;
         }
         return [$from . ':00', $to . ':59'];
+    }
+
+    /** Godzina HH:MM w zakresie 00:00–23:59. */
+    public static function validTime(string $t): bool
+    {
+        return (bool) preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', $t);
     }
 
     /** Pierwszy moment wysyłki w oknie, licząc od $t (bez zmian, gdy $t jest w oknie). */

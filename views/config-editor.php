@@ -1,5 +1,5 @@
 <?php /** @var string $editorText @var array $validation @var string $path */ ?>
-<form method="post" action="<?= e(url('config', ['tab' => 'editor'])) ?>" id="conf-form" class="split"><?= csrf_field() ?>
+<form method="post" action="<?= e(url('config', ['tab' => 'editor'])) ?>" id="conf-form" class="split"><?= csrf_field() ?><input type="hidden" name="base" value="<?= e($base) ?>">
 <section class="card">
 <header><h2><?= e($path) ?></h2><span class="muted"><?= substr_count(rtrim($editorText, "\n"), "\n") + 1 ?> linii · UTF-8</span></header>
 <label for="conf-text" class="visually-hidden">Treść pliku gammu-smsdrc</label>

@@ -24,14 +24,24 @@ if (is_post()) {
             flash('ok', 'Zapisano szablon.', 'Zmienisz jego nazwę na ekranie „Szablony”.');
         }
     } elseif ($plan['errors'] === [] && (!$plan['multi'] || input('confirm') === '1')) {
+        // Jednorazowy token formularza: ponowne wysłanie tego samego formularza (odświeżenie, podwójne kliknięcie) nie dubluje SMS
+        $token = input('send_token');
+        if ($token !== '' && isset($_SESSION['compose_sent'][$token])) {
+            flash('info', 'Ta wiadomość została już wysłana.', 'Nic nie dodano ponownie do kolejki.');
+            redirect($_SESSION['compose_sent'][$token]);
+        }
         [$batch, $first] = Compose::send($in, $plan);
         if ($batch !== null) {
             flash('ok', 'Wysyłka zapisana w kolejce.', $plan['count'] . ' odbiorców × ' . $plan['parts'] . ' SMS.');
-            redirect(url('batch', ['id' => $batch]));
+            $target = url('batch', ['id' => $batch]);
+        } else {
+            flash('ok', 'Wiadomość dodana do kolejki.', $plan['delayed'] ? 'Wysyłka: ' . Compose::startLabel($plan) . '.' : 'Gammu wyśle ją w ciągu kilku sekund.');
+            $target = url('threads', ['phone' => $plan['recipients']['list'][0]['phone']]);
         }
-        $phone = $plan['recipients']['list'][0]['phone'];
-        flash('ok', 'Wiadomość dodana do kolejki.', $plan['delayed'] ? 'Wysyłka: ' . Compose::startLabel($plan) . '.' : 'Gammu wyśle ją w ciągu kilku sekund.');
-        redirect(url('threads', ['phone' => $phone]));
+        if ($token !== '') {
+            $_SESSION['compose_sent'] = array_slice(($_SESSION['compose_sent'] ?? []) + [$token => $target], -20, null, true);
+        }
+        redirect($target);
     } else {
         $attempted = $plan['errors'] !== [];
         $confirm = $plan['errors'] === [] && $plan['multi'];
@@ -69,6 +79,7 @@ function compose_contacts(string $q, array $selected): array
 }
 
 render('compose', [
+    'sendToken' => preg_match('/^[0-9a-f]{16}$/', input('send_token')) ? input('send_token') : bin2hex(random_bytes(8)),
     'title' => 'Nowa wiadomość', 'nav' => 'compose', 'in' => $in, 'plan' => $plan, 'attempted' => $attempted, 'confirm' => $confirm,
     'groups' => Contacts::groups(), 'contacts' => compose_contacts('', $in['contacts']), 'templates' => Templates::all(),
 ]);

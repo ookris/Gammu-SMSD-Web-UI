@@ -34,7 +34,8 @@ ask() {
     fi
     printf -v "$var" '%s' "${answer:-$def}"
 }
-randpw() { tr -dc 'A-Za-z0-9' </dev/urandom | head -c 32; }
+# 32 znaki hex z openssl – bez potoku tr | head, który przy set -o pipefail kończy skrypt sygnałem SIGPIPE
+randpw() { openssl rand -hex 16; }
 
 [ "$(id -u)" -eq 0 ] || die "Uruchom jako root: sudo $0"
 
@@ -42,7 +43,7 @@ randpw() { tr -dc 'A-Za-z0-9' </dev/urandom | head -c 32; }
 SELF_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd || echo /nonexistent)"
 if [ ! -f "$SELF_DIR/../src/bootstrap.php" ]; then
     say "Pobieranie aplikacji do $DIR"
-    apt-get update -qq && apt-get install -y -qq git ca-certificates >/dev/null
+    apt-get update -qq && apt-get install -y -qq git ca-certificates openssl >/dev/null
     if [ -d "$DIR/.git" ]; then git -C "$DIR" pull --ff-only; else git clone --branch "$BRANCH" "$REPO" "$DIR"; fi
     exec bash "$DIR/deploy/install.sh" "$@"
 fi
@@ -130,6 +131,13 @@ visudo -cq || die "Błąd w /etc/sudoers.d/smsgui"
 
 # Usługa Gammu: nazwa, użytkownik, przeładowanie (⚠ U1)
 GAMMU_USER=$(systemctl show -p User --value gammu-smsd 2>/dev/null || true); GAMMU_USER=${GAMMU_USER:-root}
+if [ "$GAMMU_USER" != root ]; then
+    # Demon na zwykłym koncie: grupa www-data daje mu odczyt gammu-smsdrc (root:www-data 0660), config.php (hook)
+    # i katalogu /var/lib/smsgui (czarna lista); log należy do niego, panel czyta go przez grupę
+    info "Gammu działa jako $GAMMU_USER – dodaję je do grupy www-data"
+    usermod -aG www-data "$GAMMU_USER"
+fi
+GAMMU_LOG_OWNER=$GAMMU_USER
 if [ "$(systemctl show -p CanReload --value gammu-smsd 2>/dev/null || echo no)" != yes ]; then
     info "gammu-smsd.service bez ExecReload – dodaję przeładowanie sygnałem SIGHUP"
     install -d /etc/systemd/system/gammu-smsd.service.d
@@ -194,8 +202,10 @@ fi
 [ -f "$CONF" ] || touch "$CONF"
 php "$APP/bin/smsgui" setup gammu "${SETUP_ARGS[@]}"
 chown root:www-data "$CONF" && chmod 0660 "$CONF"
-touch "$GAMMU_LOG" && chown root:www-data "$GAMMU_LOG" && chmod 0640 "$GAMMU_LOG"
-install -m 0644 "$APP/deploy/logrotate-gammu-smsd" /etc/logrotate.d/gammu-smsd-smsgui
+chown "$GAMMU_LOG_OWNER":www-data /var/log/gammu-smsd && chmod 0750 /var/log/gammu-smsd
+touch "$GAMMU_LOG" && chown "$GAMMU_LOG_OWNER":www-data "$GAMMU_LOG" && chmod 0640 "$GAMMU_LOG"
+sed "s#create 0640 root www-data#create 0640 $GAMMU_LOG_OWNER www-data#" "$APP/deploy/logrotate-gammu-smsd" >/etc/logrotate.d/gammu-smsd-smsgui
+chmod 0644 /etc/logrotate.d/gammu-smsd-smsgui
 systemctl enable gammu-smsd >/dev/null 2>&1 || true
 systemctl restart gammu-smsd || warn "Gammu nie wystartował – sprawdź: journalctl -u gammu-smsd i $GAMMU_LOG"
 
