@@ -38,6 +38,8 @@ ask() {
 randpw() { openssl rand -hex 16; }
 
 [ "$(id -u)" -eq 0 ] || die "Uruchom jako root: sudo $0"
+# Przed pierwszym apt-get (także tym przy „curl | bash”); exec niżej dziedziczy środowisko
+export DEBIAN_FRONTEND=noninteractive NEEDRESTART_SUSPEND=1   # needrestart: bez skanowania procesów po instalacji
 
 # ---------- 1. Pobranie aplikacji ----------
 SELF_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd || echo /nonexistent)"
@@ -52,7 +54,6 @@ info "Aplikacja: $APP"
 
 # ---------- 2. Pakiety ----------
 say "Pakiety systemowe"
-export DEBIAN_FRONTEND=noninteractive NEEDRESTART_SUSPEND=1   # needrestart: bez skanowania procesów po instalacji
 apt-get update -qq
 apt-get install -y -qq gammu gammu-smsd mariadb-server nginx php-fpm php-cli php-mysql php-mbstring openssl >/dev/null
 PHPV=$(php -r 'echo PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION;')
