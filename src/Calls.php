@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-/** Połączenia przychodzące (rozdz. 2.13, 3.11): zapis z hooka RunOnIncomingCall, lista, liczniki. */
+/** Połączenia przychodzące: zapis z hooka RunOnIncomingCall, lista, liczniki. */
 final class Calls
 {
     /** raw_number dla numeru, którego nie da się zapisać; wiersze sprzed tłumaczenia mają tekst po polsku. */

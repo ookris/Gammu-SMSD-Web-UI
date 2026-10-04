@@ -1,5 +1,5 @@
 <?php
-// Pulpit (rozdz. 2.2)
+// Pulpit
 if (is_post() && isset($_POST['sync'])) {
     $r = Sync::run(true);
     flash('ok', t('sync.done'), $r ? Sync::summary($r) : t('sync.busy'));

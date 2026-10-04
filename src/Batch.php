@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-/** Raport wysyłki do wielu odbiorców (batch_id) – rozdz. 2.3. */
+/** Raport wysyłki do wielu odbiorców (batch_id). */
 final class Batch
 {
     public static function valid(string $id): bool

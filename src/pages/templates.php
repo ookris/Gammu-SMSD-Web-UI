@@ -1,5 +1,5 @@
 <?php
-// Szablony wiadomości (rozdz. 2.9)
+// Szablony wiadomości
 $id = (int) input('id');
 $error = null;
 if (is_post()) {

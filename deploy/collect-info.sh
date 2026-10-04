@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# Zbieranie informacji o systemie do weryfikacji U1–U10 (rozdz. 3.14) i testu instalatora (zadania 6.1, 6.6).
+# Zbieranie informacji o systemie: wartości zależne od paczek Ubuntu (U1–U10 – usługa Gammu, gammu-smsdrc, sterownik SQL,
+# schemat, log, PHP, strefa czasowa) i stan po instalacji – do zgłaszania problemów z instalatorem.
 # Tylko odczyt – niczego nie zmienia (dlatego bez `smsgui check`, który uruchamia migracje i zapisuje stan usługi
-# w bazie – ten uruchamia się osobno, rozdz. 10.4). Hasła i PIN są maskowane. Uruchom przed instalacją i po niej:
+# w bazie – ten uruchamia się osobno: sudo -u www-data php /opt/smsgui/bin/smsgui check). Hasła i PIN są maskowane. Uruchom przed instalacją i po niej:
 #
 #   sudo bash deploy/collect-info.sh > info-przed.txt 2>&1
 #   sudo bash deploy/collect-info.sh > info-po.txt 2>&1

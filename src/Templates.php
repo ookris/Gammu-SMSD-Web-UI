@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-/** Szablony wiadomości (rozdz. 2.9). */
+/** Szablony wiadomości. */
 final class Templates
 {
     public static function all(): array

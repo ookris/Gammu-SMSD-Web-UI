@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-/** Ekran „Nowa wiadomość” (rozdz. 2.3): plan wysyłki z formularza (podgląd na żywo przez htmx) i sama wysyłka. */
+/** Ekran „Nowa wiadomość”: plan wysyłki z formularza (podgląd na żywo przez htmx) i sama wysyłka. */
 final class Compose
 {
     /** Dane formularza z żądania (POST) albo wartości startowe. */

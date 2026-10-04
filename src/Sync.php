@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 /**
- * Synchronizacja z tabelami Gammu (rozdz. 3.7). Wywołują ją: proces w tle (co worker_interval s),
+ * Synchronizacja z tabelami Gammu. Wywołują ją: proces w tle (co worker_interval s),
  * `smsgui sync` i panel przy odświeżeniu strony (nie częściej niż co 10 s). Blokada GET_LOCK – nigdy równolegle.
  */
 final class Sync
@@ -144,7 +144,7 @@ final class Sync
         return $changed;
     }
 
-    // ---------- Krok 2: wiadomości zewnętrzne (D9) ----------
+    // ---------- Krok 2: wiadomości zewnętrzne (gammu-smsd-inject, inne programy piszące do bazy Gammu) ----------
 
     private static function external(): int
     {
@@ -177,7 +177,7 @@ final class Sync
         return $n;
     }
 
-    // ---------- Krok 3: odebrane (rozdz. 3.4) ----------
+    // ---------- Krok 3: odebrane ----------
 
     private static function inbox(): int
     {
@@ -225,7 +225,7 @@ final class Sync
         return $n;
     }
 
-    // ---------- Krok 4: stan modemów (rozdz. 3.9) ----------
+    // ---------- Krok 4: stan modemów ----------
 
     private static function phones(): int
     {

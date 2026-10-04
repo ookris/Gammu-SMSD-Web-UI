@@ -1,5 +1,5 @@
 <?php
-// Symulator Gammu SMSD do pracy lokalnej bez modemu (rozdz. 9.2). Zachowuje się jak Gammu 1.42 wg rozdz. 3:
+// Symulator Gammu SMSD do pracy lokalnej bez modemu. Zachowuje się jak Gammu 1.42:
 // czyta outbox tymi samymi warunkami, zapisuje sentitems, raporty doręczenia, inbox, phones, USSD, połączenia.
 //
 //   php tests/sim/gammu-sim.php init                     – var/dev/, bazy dev i test, config/config.php
@@ -421,7 +421,7 @@ function sim_call(string $number): void
     $cmd = sim_conf('runonincomingcall');
     sim_log('Hanging up call');
     if ($cmd !== '') {
-        // Jak Gammu 1.42: sh -c "<polecenie> <numer>" – bez cytowania argumentu (rozdz. 3.11)
+        // Jak Gammu 1.42: sh -c "<polecenie> <numer>" – bez cytowania argumentu (poprawione dopiero w 1.43.3)
         sim_log("Starting run on incoming call: $cmd");
         exec('sh -c ' . escapeshellarg($cmd . ' ' . $number) . ' 2>&1', $out, $code);
         echo "Połączenie od $number – hook zakończony kodem $code\n" . implode("\n", $out) . ($out ? "\n" : '');

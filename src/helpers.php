@@ -1,5 +1,5 @@
 <?php
-// Funkcje pomocnicze używane w całym panelu (rozdz. 9.1 – konwencje kodu).
+// Funkcje pomocnicze używane w całym panelu.
 declare(strict_types=1);
 
 /** Wartość konfiguracji, klucze z kropką: cfg('db.dsn'). */
@@ -435,7 +435,7 @@ function fmt_bytes(int $b): string
 
 // ---------- Log aplikacji ----------
 
-/** Wpis w logu aplikacji; nieudane logowania w formacie dla fail2ban (rozdz. 5.3). */
+/** Wpis w logu aplikacji; nieudane logowania w formacie dla fail2ban (deploy/fail2ban/). */
 function app_log(string $level, string $message): void
 {
     $path = (string) cfg('log_path');

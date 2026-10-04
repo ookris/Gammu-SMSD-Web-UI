@@ -1,7 +1,7 @@
 <?php
-// Wartości domyślne konfiguracji panelu (rozdz. 1.6). Lokalne zmiany – w config/config.php
+// Wartości domyślne konfiguracji panelu. Lokalne zmiany – w config/config.php
 // (tablica z tymi samymi kluczami, nakładana na ten plik). Ścieżki, dane bazy i polecenia systemowe
-// są tylko tutaj – nie da się ich zmienić z panelu (rozdz. 5.1).
+// są tylko tutaj – nie da się ich zmienić z panelu (polecenia systemowe i ścieżki – zabezpieczenie przed ich podmianą z poziomu WWW).
 return [
     'db' => [
         'dsn' => 'mysql:unix_socket=/run/mysqld/mysqld.sock;dbname=smsgui;charset=utf8mb4',

@@ -2,7 +2,8 @@
 declare(strict_types=1);
 
 /**
- * Kodowanie i liczenie części SMS (rozdz. 3.3, decyzja D13). Ta sama logika jest w public/assets/sms-text.js;
+ * Kodowanie i liczenie części SMS – panel sam wybiera GSM/Unicode i dzieli na części z UDH, bo Gammu nie dzieli
+ * wiadomości z bazy i przy kodowaniu GSM po cichu zamienia polskie znaki (ą→a). Ta sama logika jest w public/assets/sms-text.js;
  * zgodność obu wersji sprawdza wspólny plik tests/cases/smstext.json.
  * Alfabet GSM wg Gammu (GSM_DefaultAlphabetUnicode + rozszerzenie): podstawowy z „¤”, bez „¹” i bez znaku nowej strony.
  */

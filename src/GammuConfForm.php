@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-/** Pola formularza „Ustawienia” konfiguracji Gammu (rozdz. 2.10a) – bez parametrów zarządzanych przez panel. */
+/** Pola formularza „Ustawienia” konfiguracji Gammu – bez parametrów zarządzanych przez panel. */
 final class GammuConfForm
 {
     /** Karty formularza: tytuł → lista pól [sekcja, klucz, rodzaj, opis, opcje]. */

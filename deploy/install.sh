@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Gammu SMSD Web UI – instalacja na Ubuntu Server 26.04 (rozdz. 6.3). Idempotentny: ponowne uruchomienie
+# Gammu SMSD Web UI – instalacja na Ubuntu Server 26.04. Idempotentny: ponowne uruchomienie
 # aktualizuje kod, naprawia uprawnienia i nie pyta ponownie o modem ani konto, jeśli już są.
 #
 #   curl -fsSL https://raw.githubusercontent.com/ookris/Gammu-SMSD-Web-UI/main/deploy/install.sh | sudo bash
@@ -9,7 +9,8 @@
 # Bez pytań – zmienne: SMSGUI_MODE, SMSGUI_MODEM (ścieżka lub skip), SMSGUI_PIN, SMSGUI_PHONEID, SMSGUI_HOST, SMSGUI_HTTPS (none/self-signed),
 # SMSGUI_USER, SMSGUI_PASSWORD, SMSGUI_TEST_NUMBER; pobieranie: SMSGUI_DIR, SMSGUI_REPO, SMSGUI_BRANCH.
 #
-# ⚠ Część wartości zależy od paczki Ubuntu (U1–U10, rozdz. 3.14) – skrypt je wykrywa zamiast zakładać.
+# Wartości zależne od paczki Ubuntu (nazwa i użytkownik usługi Gammu, przeładowanie, położenie mysql.sql, gniazdo
+# PHP-FPM) skrypt wykrywa zamiast je zakładać.
 set -euo pipefail
 
 REPO="${SMSGUI_REPO:-https://github.com/ookris/Gammu-SMSD-Web-UI.git}"
@@ -164,7 +165,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON gammu.* TO 'smsgui'@'localhost';
 FLUSH PRIVILEGES;
 SQL
 if ! mariadb gammu -e 'SELECT Version FROM gammu' >/dev/null 2>&1; then
-    SQLFILE=$(dpkg -L gammu-smsd 2>/dev/null | grep -E '/mysql\.sql(\.gz)?$' | head -1 || true)   # ⚠ U4
+    SQLFILE=$(dpkg -L gammu-smsd 2>/dev/null | grep -E '/mysql\.sql(\.gz)?$' | head -1 || true)   # zwykły albo .gz – zależy od wydania paczki
     if [ -n "$SQLFILE" ]; then
         info "Schemat Gammu z paczki: $SQLFILE"
         if [[ "$SQLFILE" == *.gz ]]; then zcat "$SQLFILE" | mariadb gammu; else mariadb gammu <"$SQLFILE"; fi
@@ -175,7 +176,7 @@ if ! mariadb gammu -e 'SELECT Version FROM gammu' >/dev/null 2>&1; then
 fi
 VER=$(mariadb -N gammu -e 'SELECT Version FROM gammu' 2>/dev/null || echo 0)
 [ "$VER" = 17 ] || warn "Schemat bazy Gammu w wersji $VER – panel wymaga 17 (Gammu 1.42)"
-for t in gammu inbox outbox outbox_multipart phones sentitems; do   # MyISAM → InnoDB (transakcje, rozdz. 3.2)
+for t in gammu inbox outbox outbox_multipart phones sentitems; do   # MyISAM → InnoDB: bez transakcji Gammu mógłby wysłać niepełną wiadomość wieloczęściową
     ENG=$(mariadb -N -e "SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA='gammu' AND TABLE_NAME='$t'")
     if [ -n "$ENG" ] && [ "$ENG" != InnoDB ]; then info "gammu.$t: $ENG → InnoDB"; mariadb gammu -e "ALTER TABLE \`$t\` ENGINE=InnoDB"; fi
 done
@@ -205,7 +206,7 @@ chown root:www-data "$CONFIG" && chmod 0640 "$CONFIG"
 install -m 0440 "$APP/deploy/sudoers-smsgui" /etc/sudoers.d/smsgui
 visudo -cq >/dev/null || die "Błąd w /etc/sudoers.d/smsgui"
 
-# Usługa Gammu: nazwa, użytkownik, przeładowanie (⚠ U1)
+# Usługa Gammu: użytkownik demona i przeładowanie (SIGHUP) – z pliku usługi z paczki
 GAMMU_USER=$(systemctl show -p User --value gammu-smsd 2>/dev/null || true); GAMMU_USER=${GAMMU_USER:-root}
 if [ "$GAMMU_USER" != root ]; then
     # Demon na zwykłym koncie: grupa www-data daje mu odczyt gammu-smsdrc (root:www-data 0660), config.php (hook)

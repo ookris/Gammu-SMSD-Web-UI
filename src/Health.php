@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 /**
- * Kontrola zdrowia – wspólna dla pulpitu (rozdz. 2.2) i `bin/smsgui check` (rozdz. 2.16).
+ * Kontrola zdrowia – wspólna dla pulpitu i `bin/smsgui check`.
  * Każdy wynik: level ok|warn|err, text (fragmenty w `…` są pokazywane jako kod), hint – co poprawić.
  */
 final class Health

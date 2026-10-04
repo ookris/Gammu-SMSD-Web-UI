@@ -1,5 +1,5 @@
 <?php
-// Wysłane / kolejka (rozdz. 2.6)
+// Wysłane / kolejka
 if (is_post()) {
     $ids = input_ids();
     if (($one = (int) input('cancel')) > 0 || ($one = (int) input('retry')) > 0 || ($one = (int) input('remove')) > 0) {

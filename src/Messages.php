@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-/** Operacje na historii wiadomości: usuwanie, czyszczenie starszych niż N dni (rozdz. 2.16, 2.17.8). */
+/** Operacje na historii wiadomości: usuwanie, czyszczenie starszych niż N dni. */
 final class Messages
 {
     public static function delete(array $ids, ?string $direction = null): int

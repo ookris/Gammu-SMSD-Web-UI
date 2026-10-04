@@ -5,7 +5,7 @@ Wszystko z przeglądarki: wysyłka do jednego i wielu odbiorców, rozmowy, odebr
 książka telefoniczna z grupami, szablony, USSD, odrzucone połączenia, czarna lista, konfiguracja Gammu z kopiami
 zapasowymi, log i stan modemu.
 
-PHP 8.5 bez frameworka, htmx + Pico.css, bez Composera i npm. Dokumentacja projektu: [docs/](docs/README.md).
+PHP 8.5 bez frameworka, htmx + Pico.css, bez Composera i npm.
 
 ## Instalacja (Ubuntu Server 26.04)
 
@@ -25,14 +25,13 @@ pomaga wybrać port modemu i sprawdza PIN (tylko raz), konfiguruje `/etc/gammu-s
 i nginx, pyta o login i hasło do panelu, uruchamia diagnostykę i opcjonalnie wysyła testowy SMS. Można go uruchomić
 ponownie – nie zmienia skonfigurowanego modemu ani konta. Bez modemu panel też się zainstaluje (`SMSGUI_MODEM=skip`);
 po podłączeniu modemu wystarczy uruchomić skrypt jeszcze raz. Bez pytań: zmienne `SMSGUI_*` (m.in. `SMSGUI_MODE`) opisane na początku
-[deploy/install.sh](deploy/install.sh) i w [docs/06](docs/06-plan-wdrozenia.md#63-skrypt-installsh).
+[deploy/install.sh](deploy/install.sh).
 
 Panel jest domyślnie dostępny **tylko z sieci lokalnej**. Do dostępu z zewnątrz zalecany jest VPN (WireGuard, Tailscale);
 jeśli bezpośrednio – HTTPS (`certbot --nginx`) i fail2ban (filtr i wyłączony jail instaluje skrypt).
 
 > **Stan:** instalator przetestowany na czystym Ubuntu Server 26.04.1 bez modemu (Gammu 1.42.0, MariaDB 11.8, nginx 1.28,
 > PHP 8.5). Wysyłka i odbiór SMS na prawdziwym modemie czekają na test – wersja przed wydaniem v1.0 (gałąź `dev`).
-> Wyniki weryfikacji: [docs/03, rozdz. 3.14](docs/03-integracja-gammu-smsd.md#314-do-weryfikacji-na-ubuntu-etap-0).
 > Do tego czasu instalacja z gałęzi `dev`:
 > `curl -fsSL https://raw.githubusercontent.com/ookris/Gammu-SMSD-Web-UI/dev/deploy/install.sh | sudo SMSGUI_BRANCH=dev bash`
 

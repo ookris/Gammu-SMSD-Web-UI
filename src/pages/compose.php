@@ -1,5 +1,5 @@
 <?php
-// Nowa wiadomość – do jednego lub wielu odbiorców (rozdz. 2.3)
+// Nowa wiadomość – do jednego lub wielu odbiorców
 
 // Wyszukiwarka kontaktów (htmx): zaznaczone zostają na liście
 if (isset($_GET['contacts_q'])) {

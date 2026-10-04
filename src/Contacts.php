@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-/** Książka telefoniczna i grupy (rozdz. 2.7, 2.8), import/eksport CSV, nazwy kontaktów w całym panelu. */
+/** Książka telefoniczna i grupy, import/eksport CSV, nazwy kontaktów w całym panelu. */
 final class Contacts
 {
     private static ?array $names = null;
@@ -169,7 +169,7 @@ final class Contacts
         return $id === null ? null : (int) $id;
     }
 
-    // ---------- CSV (rozdz. 2.7): nazwa;numer;grupy;notatka, grupy oddzielone | ----------
+    // ---------- CSV: nazwa;numer;grupy;notatka, grupy oddzielone | ----------
 
     public static function csvExport(): string
     {

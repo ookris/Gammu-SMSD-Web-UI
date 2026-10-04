@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-/** Odbiorcy wysyłki (rozdz. 2.3): grupy + kontakty + numery ręcznie, personalizacja, dławienie, okno wysyłki. */
+/** Odbiorcy wysyłki: grupy + kontakty + numery ręcznie, personalizacja, dławienie, okno wysyłki. */
 final class Recipients
 {
     /** Numery wpisane ręcznie: oddzielone przecinkiem, średnikiem lub nową linią. */

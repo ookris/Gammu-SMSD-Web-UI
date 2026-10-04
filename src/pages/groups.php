@@ -1,5 +1,5 @@
 <?php
-// Grupy (rozdz. 2.8) – usunięcie grupy nie usuwa kontaktów
+// Grupy – usunięcie grupy nie usuwa kontaktów
 if (is_post()) {
     $name = mb_substr(trim(input('name')), 0, 190); // ta sama długość przy sprawdzaniu duplikatu i zapisie
     $id = (int) input('id');

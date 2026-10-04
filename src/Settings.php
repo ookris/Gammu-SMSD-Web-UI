@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-/** Ustawienia „biznesowe” w tabeli settings – edytowalne z WWW (rozdz. 2.15) – oraz stan pracy panelu. */
+/** Ustawienia „biznesowe” w tabeli settings – edytowalne z WWW – oraz stan pracy panelu. */
 final class Settings
 {
     public const DEFAULTS = [

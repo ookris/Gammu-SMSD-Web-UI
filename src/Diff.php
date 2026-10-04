@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-/** Różnice linia po linii (LCS) do okna potwierdzenia zapisu i porównania kopii (rozdz. 2.10). */
+/** Różnice linia po linii (LCS) do okna potwierdzenia zapisu i porównania kopii. */
 final class Diff
 {
     /** @return list<array{0:string,1:string}> [op ' ' | '+' | '-', linia] */

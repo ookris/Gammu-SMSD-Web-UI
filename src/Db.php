@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 /**
- * Połączenie PDO z MariaDB i migracje bazy panelu (rozdz. 4).
+ * Połączenie PDO z MariaDB i migracje bazy panelu.
  * Jedno połączenie obsługuje obie bazy: tabele panelu bez prefiksu, tabele Gammu jako {g}.outbox
  * (nazwa bazy z konfiguracji gammu_db) – dzięki temu zapis do smsgui i gammu mieści się w jednej transakcji.
  */
@@ -28,7 +28,7 @@ final class Db
             PDO::ATTR_EMULATE_PREPARES => false,
             PDO::ATTR_STRINGIFY_FETCHES => false,
         ]);
-        // Gammu zapisuje czas lokalny (NOW()) – połączenie dostaje strefę zgodną z PHP (rozdz. 3.2).
+        // Gammu zapisuje czas lokalny (NOW()) – połączenie dostaje strefę zgodną z PHP, żeby porównania czasów z tabelami Gammu się zgadzały.
         // Przesunięcie zamiast nazwy strefy: działa także bez załadowanych tabel stref w MariaDB.
         $pdo->exec("SET NAMES utf8mb4, time_zone = '" . date('P') . "', "
             . "sql_mode = 'STRICT_ALL_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION'");
@@ -137,7 +137,7 @@ final class Db
         self::val('SELECT RELEASE_LOCK(?)', [$name]);
     }
 
-    // ---------- Migracje (rozdz. 4.3) ----------
+    // ---------- Migracje ----------
 
     public static function schemaVersion(): int
     {

@@ -1,5 +1,5 @@
 <?php
-// Konfiguracja Gammu (rozdz. 2.10): Ustawienia, Edytor pliku, Kopie zapasowe, Usługa
+// Konfiguracja Gammu: Ustawienia, Edytor pliku, Kopie zapasowe, Usługa
 $tabs = ['form', 'editor', 'backups', 'service'];
 $tab = in_array(input('tab'), $tabs, true) ? input('tab') : 'form';
 $conf = GammuConf::load(true);

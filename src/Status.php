@@ -27,7 +27,7 @@ final class Status
         return self::modems()[0] ?? null;
     }
 
-    /** Modem niedostępny, gdy phones.UpdatedInDB starszy niż StatusFrequency + 60 s (rozdz. 3.9). */
+    /** Modem niedostępny, gdy phones.UpdatedInDB starszy niż StatusFrequency + 60 s (Gammu odświeża wiersz co StatusFrequency). */
     public static function modemAvailable(?array $m): bool
     {
         if ($m === null || ($m['present'] ?? '1') === '0') {

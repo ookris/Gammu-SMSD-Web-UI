@@ -1,5 +1,5 @@
 <?php
-// Log Gammu (rozdz. 2.11) – plik czytany od końca
+// Log Gammu – plik czytany od końca
 $f = ['lines' => in_array(input('lines'), ['100', '500', '2000'], true) ? input('lines') : '500',
     'order' => input('order') === 'asc' ? 'asc' : 'desc', 'q' => input('q'),
     'hl' => input('hl', isset($_GET['lines']) ? '' : '1'), 'auto' => input('auto')];
