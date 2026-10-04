@@ -29,7 +29,9 @@ final class Threads
         $msgs = Db::all('SELECT *, COALESCE(received_at, created_at) AS at FROM messages WHERE phone = ? ORDER BY id DESC LIMIT ' . $limit, [$phone]);
         $calls = Db::all("SELECT id, received_at AS at, modem, 'call' AS kind FROM calls WHERE phone = ? ORDER BY received_at DESC, id DESC LIMIT " . $limit, [$phone]);
         $items = array_merge(array_map(static fn ($m) => $m + ['kind' => 'msg'], $msgs), $calls);
-        usort($items, static fn ($a, $b) => [$a['at'], $a['kind'] === 'msg' ? (int) $a['id'] : 0] <=> [$b['at'], $b['kind'] === 'msg' ? (int) $b['id'] : 0]);
+        // Od najstarszych; ta sama sekunda: najpierw połączenia, potem wiadomości, każde rosnąco po id
+        $key = static fn (array $x) => [$x['at'], $x['kind'] === 'call' ? 0 : 1, (int) $x['id']];
+        usort($items, static fn ($a, $b) => $key($a) <=> $key($b));
         return array_slice($items, -$limit); // najnowsze $limit wpisów obu rodzajów
     }
 

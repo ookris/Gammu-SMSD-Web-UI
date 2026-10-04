@@ -100,3 +100,41 @@ test('oś czasu rozmowy: limit obejmuje też połączenia', function () {
     assert_same(10, count($items));
     assert_same('najnowsza', $items[9]['body'] ?? null);
 });
+
+test('zapis pliku z końcami linii CRLF nie jest zgłaszany jako nieaktualny', function () {
+    reset_db();
+    write_conf("[smsd]\r\nservice = sql\r\nphoneid = GSM1\r\n");
+    $base = GammuConf::fingerprint(GammuConf::load(true)->text()); // tak jak formularz – z tekstu po parserze
+    GammuConf::save("[smsd]\nservice = sql\nphoneid = GSM2\n", 'test', $base);
+    assert_contains('GSM2', file_get_contents((string) cfg('gammu_conf')));
+});
+
+test('zapis nie tworzy pliku konfiguracji, który zniknął', function () {
+    $path = (string) cfg('gammu_conf');
+    @unlink($path);
+    try {
+        GammuConf::save("[smsd]\n", 'test', GammuConf::fingerprint(''));
+        throw new AssertionFailed('brak wyjątku');
+    } catch (RuntimeException $e) {
+        assert_contains('Nie można odczytać', $e->getMessage());
+    }
+    assert_same(false, file_exists($path));
+});
+
+test('oś czasu: zdarzenia z tej samej sekundy rosnąco po id', function () {
+    reset_db();
+    $at = now_db(-60);
+    foreach ([1, 2, 3] as $i) {
+        Db::insert('calls', ['phone' => '48601234567', 'raw_number' => '+48601234567', 'modem' => 'GSM1', 'received_at' => $at]);
+    }
+    $ids = array_column(Threads::timeline('48601234567', 10), 'id');
+    assert_same(array_map('intval', $ids), array_map('intval', Db::col('SELECT id FROM calls ORDER BY id')));
+});
+
+test('filtry dat: tylko istniejące daty, odrzucone czyszczone', function () {
+    assert_same('2026-10-04', valid_date('2026-10-04'));
+    foreach (['2026-99-99', '2026-02-30', '0000-01-01', '26-10-04', 'x'] as $d) {
+        assert_same(null, valid_date($d), $d);
+    }
+    assert_same(['from' => '', 'to' => '2026-10-04'], clean_dates(['from' => '2026-99-99', 'to' => '2026-10-04'], ['from', 'to']));
+});

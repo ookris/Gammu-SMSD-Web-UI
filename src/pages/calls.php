@@ -13,6 +13,7 @@ if (is_post()) {
     back(url('calls'));
 }
 $f = ['q' => input('q'), 'from' => input('from'), 'to' => input('to')];
+$f = clean_dates($f, ['from', 'to']);
 $where = ['1=1'];
 $params = [];
 if ($f['q'] !== '') {
@@ -20,11 +21,11 @@ if ($f['q'] !== '') {
     $where[] = '(phone LIKE ? OR phone IN (SELECT phone FROM contacts WHERE name LIKE ?))';
     array_push($params, '%' . ($digits !== '' ? ltrim($digits, '0') : $f['q']) . '%', '%' . $f['q'] . '%');
 }
-if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $f['from'])) {
+if ($f['from'] !== '') {
     $where[] = 'received_at >= ?';
     $params[] = $f['from'] . ' 00:00:00';
 }
-if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $f['to'])) {
+if ($f['to'] !== '') {
     $where[] = 'received_at <= ?';
     $params[] = $f['to'] . ' 23:59:59';
 }
