@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Zbieranie informacji o systemie do weryfikacji U1–U10 (rozdz. 3.14) i testu instalatora (zadania 6.1, 6.6).
-# Tylko odczyt – niczego nie zmienia. Hasła i PIN są maskowane. Uruchom przed instalacją i po niej:
+# Tylko odczyt – niczego nie zmienia (dlatego bez `smsgui check`, który uruchamia migracje i zapisuje stan usługi
+# w bazie – ten uruchamia się osobno, rozdz. 10.4). Hasła i PIN są maskowane. Uruchom przed instalacją i po niej:
 #
 #   sudo bash deploy/collect-info.sh > info-przed.txt 2>&1
 #   sudo bash deploy/collect-info.sh > info-po.txt 2>&1
@@ -59,6 +60,9 @@ section "U5: log Gammu i logrotate"
 run ls -la /var/log/gammu-smsd/
 run ls -l /var/log/gammu* /var/log/smsd*
 for f in /etc/logrotate.d/gammu*; do [ -e "$f" ] && show "$f"; done
+if [ -f /var/log/gammu-smsd/smsd.log ]; then   # bajty NUL = Gammu pisze pod starym przesunięciem po copytruncate (U5)
+    printf 'smsd.log: %s bajtów, w tym NUL: %s\n' "$(wc -c </var/log/gammu-smsd/smsd.log)" "$(tr -cd '\000' </var/log/gammu-smsd/smsd.log | wc -c)"
+fi
 grep -iE '^[[:space:]]*logfile' /etc/gammu-smsdrc 2>/dev/null || echo "(brak logfile w /etc/gammu-smsdrc)"
 
 section "U10: czas i strefa MariaDB"
@@ -84,10 +88,7 @@ run ls -l /etc/sudoers.d/smsgui /etc/nginx/sites-enabled/ /etc/logrotate.d/gammu
 run cat /etc/systemd/system/gammu-smsd.service.d/smsgui.conf
 run systemctl show -p ActiveState -p SubState smsgui-worker gammu-smsd nginx mariadb
 run id www-data
-if [ -f /opt/smsgui/bin/smsgui ] && have php; then
-    run sudo -u www-data php /opt/smsgui/bin/smsgui check
-    run git -C /opt/smsgui log --oneline -1
-fi
+[ -d /opt/smsgui/.git ] && run git -C /opt/smsgui log --oneline -1
 
 section "Dzienniki (ostatnie linie)"
 have journalctl && run journalctl -u gammu-smsd -n 40 --no-pager
