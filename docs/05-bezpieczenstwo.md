@@ -32,7 +32,7 @@ Panel i proces w tle działają jako `www-data`. Potrzebują:
 |-------|--------|------------|
 | MariaDB | połączenie przez gniazdo | konto `smsgui` z hasłem w `config/config.php` (`0640 root:www-data`) |
 | `/etc/gammu-smsdrc` | odczyt i zapis | `root:www-data 0660` (decyzja D4) |
-| plik czarnej listy (`/var/lib/smsgui/exclude-numbers.txt`) | zapis (panel), odczyt (Gammu) | katalog panelu; Gammu działa jako root (⚠ U1) |
+| plik czarnej listy (`/var/lib/smsgui/exclude-numbers.txt`) | zapis (panel), odczyt (Gammu) | katalog panelu; Gammu działa jako root (U1) |
 | log Gammu (`/var/log/gammu-smsd/smsd.log`) | odczyt | grupa `www-data` + `g+r`, także w regule logrotate |
 | `systemctl reload` / `restart gammu-smsd` (i `gammu-smsd@*` – R) | wykonanie jako root | wpis w `/etc/sudoers.d/smsgui` |
 | `/var/lib/smsgui` | odczyt i zapis | właściciel `www-data`, `0750` |
@@ -47,8 +47,9 @@ Panel zapisuje `/etc/gammu-smsdrc` bezpośrednio (decyzja D4). Ryzyko: ktoś, kt
 mógłby zmienić konfigurację Gammu – w tym `RunOnReceive`, czyli polecenie uruchamiane przez demon jako root.
 Akceptowalne przy panelu dostępnym tylko w sieci lokalnej (i tak równoważne pełnej kontroli nad bramką SMS);
 walidacja edytora ostrzega przy każdym parametrze `RunOn…` innym niż ustawiony przez panel.
-Jeśli ⚠ U1 pokaże, że paczka pozwala uruchamiać Gammu jako zwykły użytkownik (`--user`), instalator to wykorzysta
-(użytkownik `gammu` w grupie `dialout`).
+Paczka Ubuntu 26.04 uruchamia Gammu jako root (U1); wariant z `--user` jest w pliku usługi tylko zakomentowany.
+Instalator obsługuje demona na zwykłym koncie, jeśli administrator ustawi `User=` w usłudze (dodaje je do grupy
+`www-data`), ale sam tego nie zmienia. W Ubuntu 26.04 `sudo` to sudo-rs – powyższy wpis sudoers działa bez zmian.
 
 ### W bazie
 | Konto | Uprawnienia | Używa |
