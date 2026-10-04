@@ -1,13 +1,10 @@
 <?php
 $code ??= 500;
-$title ??= match ($code) { 404 => 'Nie ma takiej strony', 403 => 'Odmowa dostępu', default => 'Wystąpił błąd' };
-$message ??= match ($code) {
-    404 => 'Adres jest nieprawidłowy albo strona została usunięta.',
-    default => 'Szczegóły zapisano w logu aplikacji. Spróbuj ponownie za chwilę.',
-};
+$title ??= t(in_array($code, [403, 404], true) ? 'error.' . $code : 'error.500');
+$message ??= t($code === 404 ? 'error.404_text' : 'error.500_text');
 ?>
 <!doctype html>
-<html lang="pl">
+<html lang="<?= e(lang()) ?>">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -23,7 +20,7 @@ $message ??= match ($code) {
 <h1><?= e($title) ?></h1>
 <p class="muted"><?= e($message) ?></p>
 <?php if (isset($error) && $error instanceof Throwable): ?><pre class="codebox"><span><?= e($error::class . ': ' . $error->getMessage()) ?></span><span><?= e($error->getFile() . ':' . $error->getLine()) ?></span></pre><?php endif ?>
-<div><a href="./" role="button" class="secondary">Wróć na pulpit</a></div>
+<div><a href="./" role="button" class="secondary"><?= e(t('error.back')) ?></a></div>
 </div>
 </div>
 </main>

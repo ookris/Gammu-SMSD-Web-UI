@@ -60,7 +60,7 @@ final class Ussd
                 }
                 $sent = Db::row('SELECT Status, SendingDateTime, SenderID FROM {g}.sentitems WHERE ID = ? ORDER BY SequencePosition LIMIT 1', [$gid]);
                 if ($sent === null || in_array($sent['Status'], GammuDb::SENT_ERROR, true)) {
-                    Db::update('ussd_requests', ['status' => 'failed', 'response' => $sent === null ? 'żądanie usunięte z kolejki Gammu' : 'modem nie wysłał kodu'], 'id = ?', [$r['id']]);
+                    Db::update('ussd_requests', ['status' => 'failed', 'response' => msg_key($sent === null ? 'ussd.removed' : 'ussd.not_sent')], 'id = ?', [$r['id']]);
                 } else {
                     Db::update('ussd_requests', ['status' => 'sent', 'sent_at' => $sent['SendingDateTime'], 'modem' => $sent['SenderID'] ?: $r['modem']], 'id = ?', [$r['id']]);
                 }

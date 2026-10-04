@@ -42,18 +42,20 @@ final class Status
     {
         $service = self::service();
         $m = self::modem();
-        $sync = 'Synchronizacja ' . fmt_ago(Settings::get('last_sync_at'));
+        $sync = t('status.sync', ['ago' => fmt_ago(Settings::get('last_sync_at'))]);
         if ($service !== 'active') {
-            return ['level' => 'err', 'title' => 'Gammu: nie działa', 'line2' => 'Usługa: ' . $service, 'line3' => $sync,
+            return ['level' => 'err', 'title' => t('status.gammu_down'), 'line2' => t('status.service', ['state' => $service]), 'line3' => $sync,
                 'modem' => $m['modem'] ?? ''];
         }
         if (!self::modemAvailable($m)) {
-            $since = $m && $m['gammu_updated_at'] ? ' od ' . date('H:i', (int) ts($m['gammu_updated_at'])) : '';
-            return ['level' => 'warn', 'title' => 'Gammu: działa', 'line2' => 'Modem niedostępny' . $since, 'line3' => $sync,
+            $line2 = $m && $m['gammu_updated_at'] ? t('status.modem_down_since', ['time' => date('H:i', (int) ts($m['gammu_updated_at']))])
+                : t('status.modem_down');
+            return ['level' => 'warn', 'title' => t('status.gammu_up'), 'line2' => $line2, 'line3' => $sync,
                 'modem' => $m['modem'] ?? ''];
         }
-        $signal = (int) $m['signal_pct'] >= 0 ? ' · sygnał ' . $m['signal_pct'] . ' %' : '';
-        return ['level' => 'ok', 'title' => 'Gammu: działa', 'line2' => 'Modem ' . $m['modem'] . $signal, 'line3' => $sync,
+        $line2 = (int) $m['signal_pct'] >= 0 ? t('status.modem_signal', ['modem' => $m['modem'], 'pct' => $m['signal_pct']])
+            : t('status.modem', ['modem' => $m['modem']]);
+        return ['level' => 'ok', 'title' => t('status.gammu_up'), 'line2' => $line2, 'line3' => $sync,
             'modem' => $m['modem']];
     }
 

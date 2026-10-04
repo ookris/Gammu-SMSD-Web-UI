@@ -3,6 +3,30 @@
   'use strict';
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
+  // Teksty interfejsu z <script type="application/json" id="i18n"> (Ui::jsTexts) – te same klucze co t()/tn() w PHP
+  let i18n = null;
+  const entry = (key) => {
+    if (i18n === null) {
+      const el = document.getElementById('i18n');
+      try { i18n = el ? JSON.parse(el.textContent) : {}; } catch (err) { i18n = {}; }
+    }
+    return (i18n.t || {})[key];
+  };
+  const fill = (text, vars) => text.replace(/\{([a-z_]+)\}/g, (m, k) => (vars && vars[k] !== undefined ? String(vars[k]) : m));
+  const pluralIndex = (n) => {
+    if (i18n.lang !== 'pl') return n === 1 ? 0 : 1;
+    if (n === 1) return 0;
+    const d = n % 10, h = n % 100;
+    return d >= 2 && d <= 4 && (h < 12 || h > 14) ? 1 : 2;
+  };
+  window.I18n = {
+    t: (key, vars) => { const s = entry(key); return typeof s === 'string' ? fill(s, vars) : key; },
+    tn: (key, n, vars) => {
+      const f = entry(key);
+      return Array.isArray(f) ? fill(f[Math.min(pluralIndex(n), f.length - 1)], Object.assign({ n }, vars)) : key;
+    },
+  };
+
   // Menu boczne na telefonie
   document.addEventListener('click', (e) => {
     const toggle = e.target.closest('[data-nav-toggle]');
@@ -47,7 +71,9 @@
     const old = dlg.querySelector('[data-confirm-ok]');
     const ok = old.cloneNode(false); // nowy przycisk = bez obsługi z poprzedniego (anulowanego) okna
     old.replaceWith(ok);
-    ok.textContent = el.dataset.confirmOk || 'Potwierdź';
+    if (!old.dataset.label) old.dataset.label = old.textContent; // domyślny tekst z układu (w języku panelu)
+    ok.dataset.label = old.dataset.label;
+    ok.textContent = el.dataset.confirmOk || ok.dataset.label;
     ok.addEventListener('click', () => {
       dlg.close();
       if (el instanceof HTMLAnchorElement) { location.href = el.href; return; }

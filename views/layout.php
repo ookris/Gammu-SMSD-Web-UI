@@ -5,7 +5,7 @@ $status = Status::indicator();
 $rest = flashes_html();
 ?>
 <!doctype html>
-<html lang="pl">
+<html lang="<?= e(lang()) ?>">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -14,6 +14,7 @@ $rest = flashes_html();
 <title><?= e($title ?? t('app.name')) ?> – <?= e(t('app.name')) ?></title>
 <link rel="stylesheet" href="<?= e(asset('vendor/pico/pico.min.css')) ?>">
 <link rel="stylesheet" href="<?= e(asset('app.css')) ?>">
+<script type="application/json" id="i18n"><?= Ui::jsTexts() ?></script>
 <script src="<?= e(asset('vendor/htmx/htmx.min.js')) ?>" defer></script>
 <script src="<?= e(asset('sms-text.js')) ?>" defer></script>
 <script src="<?= e(asset('app.js')) ?>" defer></script>
@@ -21,10 +22,10 @@ $rest = flashes_html();
 <body hx-headers='<?= e(json_encode(['X-CSRF-Token' => csrf_token()])) ?>'>
 <div class="app">
 <header class="topbar">
-<button type="button" data-nav-toggle aria-controls="sidebar" aria-expanded="false" aria-label="Menu"><?= icon('hamburger-menu', 'icon-lg') ?></button>
+<button type="button" data-nav-toggle aria-controls="sidebar" aria-expanded="false" aria-label="<?= e(t('layout.menu')) ?>"><?= icon('hamburger-menu', 'icon-lg') ?></button>
 <strong><?= e($title ?? '') ?></strong><span class="dot dot-<?= e($status['level']) ?>"></span><span class="muted small"><?= e($status['modem']) ?></span>
 </header>
-<nav class="sidebar" id="sidebar" aria-label="Menu główne" hx-get="<?= e(url('nav', ['cur' => $nav])) ?>" hx-trigger="every 15s" hx-swap="innerHTML">
+<nav class="sidebar" id="sidebar" aria-label="<?= e(t('layout.main_menu')) ?>" hx-get="<?= e(url('nav', ['cur' => $nav])) ?>" hx-trigger="every 15s" hx-swap="innerHTML">
 <?= view('partials/nav', ['nav' => $nav, 'status' => $status]) ?>
 </nav>
 <main class="main" id="main">
@@ -38,8 +39,8 @@ $rest = flashes_html();
 <div class="dlg-head"><span class="dlg-icon"><?= icon('danger-triangle', 'icon-lg') ?></span>
 <div><h2 id="confirm-dialog-t"></h2><p data-confirm-text></p></div></div>
 <footer>
-<button type="button" class="secondary outline" data-dialog-close>Anuluj</button>
-<button type="button" class="btn-danger" data-confirm-ok>Potwierdź</button>
+<button type="button" class="secondary outline" data-dialog-close><?= e(t('common.cancel')) ?></button>
+<button type="button" class="btn-danger" data-confirm-ok><?= e(t('common.confirm')) ?></button>
 </footer>
 </article>
 </dialog>

@@ -6,6 +6,19 @@ final class Ui
 {
     public const PER_PAGE = 50;
 
+    /** Teksty potrzebne w JS (licznik SMS), przekazywane przez <script id="i18n"> w układzie strony. */
+    public const JS_TEXTS = ['sms.counter', 'sms.chars', 'sms.too_long', 'sms.forces', 'sms.translit_gain'];
+
+    /** JSON dla public/assets/app.js: język (reguła liczebnika) i teksty z JS_TEXTS. */
+    public static function jsTexts(): string
+    {
+        $texts = [];
+        foreach (self::JS_TEXTS as $k) {
+            $texts[$k] = lang_entry($k);
+        }
+        return json_encode(['lang' => lang(), 't' => $texts], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP);
+    }
+
     /** Etykieta statusu wiadomości + linia z opisem (rozdz. 3.6). */
     public static function status(array $m, bool $withSub = true): string
     {
@@ -25,10 +38,10 @@ final class Ui
         if ($withSub) {
             $sub = match (true) {
                 $s === 'scheduled' => self::scheduledNote($m),
-                $retrying => (string) $m['error'],
+                $retrying => tr($m['error']),
                 $s === 'queued' => 'od ' . fmt_duration(max(0, time() - (int) ts($m['scheduled_at'] ?? $m['created_at']))),
                 $s === 'delivered' => $m['delivered_at'] ? date('H:i:s', (int) ts($m['delivered_at'])) : '',
-                default => (string) ($m['error'] ?? ''),
+                default => tr($m['error'] ?? null),
             };
         }
         return '<span class="badge ' . $class . '">' . e($label) . '</span>' . ($sub !== '' ? '<span class="sub">' . e($sub) . '</span>' : '');

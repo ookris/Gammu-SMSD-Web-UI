@@ -5,7 +5,7 @@ $calls = Status::unreadCalls();
 $user = Auth::user();
 $link = static function (string $page, string $iconName, string $label, int $count = 0) use ($nav): string {
     $current = $nav === $page ? ' aria-current="page"' : '';
-    $badge = $count > 0 ? '<span class="nav-count" aria-label="' . $count . ' nowe">' . $count . '</span>' : '';
+    $badge = $count > 0 ? '<span class="nav-count" aria-label="' . e(t('layout.nav_new', ['n' => $count])) . '">' . $count . '</span>' : '';
     return '<a class="nav-link" href="' . e(url($page)) . '"' . $current . '>' . icon($iconName) . '<span>' . e($label) . '</span>' . $badge . '</a>';
 };
 ?>
@@ -28,4 +28,4 @@ $link = static function (string $page, string $iconName, string $label, int $cou
 <?= $link('settings', 'settings', t('nav.settings')) ?>
 <div class="side-status" role="status"><strong><span class="dot dot-<?= e($status['level']) ?>"></span><?= e($status['title']) ?></strong><span class="line2"><?= e($status['line2']) ?></span><span class="line3"><?= e($status['line3']) ?></span></div>
 <div class="side-user"><a href="<?= e(url('password')) ?>"<?= $nav === 'password' ? ' aria-current="page"' : '' ?>><?= icon('user') ?><span><?= e($user['username'] ?? '') ?></span></a><form class="logout-form" method="post" action="<?= e(url('logout')) ?>"><?= csrf_field() ?><button type="submit" class="logout" aria-label="<?= e(t('nav.logout')) ?>" title="<?= e(t('nav.logout')) ?>"><?= icon('logout-2') ?></button></form></div>
-<p class="side-credit">Ikony: <a href="https://icon-sets.iconify.design/solar/">Solar Icon Set</a> (480 Design), CC BY 4.0</p>
+<p class="side-credit"><?= t('layout.credit', ['link' => '<a href="https://icon-sets.iconify.design/solar/">Solar Icon Set</a>']) ?></p>

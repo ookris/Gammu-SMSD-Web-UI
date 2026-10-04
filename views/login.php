@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="pl">
+<html lang="<?= e(lang()) ?>">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<title>Logowanie – <?= e(t('app.name')) ?></title>
+<title><?= e(t('login.title')) ?> – <?= e(t('app.name')) ?></title>
 <link rel="stylesheet" href="<?= e(asset('vendor/pico/pico.min.css')) ?>">
 <link rel="stylesheet" href="<?= e(asset('app.css')) ?>">
 </head>
@@ -15,21 +15,21 @@
 <form class="card" method="post" action="<?= e(url('login')) ?>">
 <?= csrf_field() ?>
 <input type="hidden" name="next" value="<?= e($next) ?>">
-<h1>Zaloguj się</h1>
+<h1><?= e(t('login.heading')) ?></h1>
 <?php foreach ($flashes as $f): ?><?= alert($f['type'], '', $f['title']) ?><?php endforeach ?>
 <?php if ($error !== null): ?><?= alert('err', '', $error) ?><?php endif ?>
 <div class="field">
-<label for="username">Login</label>
+<label for="username"><?= e(t('login.username')) ?></label>
 <input id="username" name="username" type="text" value="<?= e($username) ?>" autocomplete="username" required autofocus>
 </div>
 <div class="field">
-<label for="password">Hasło</label>
+<label for="password"><?= e(t('login.password')) ?></label>
 <input id="password" name="password" type="password" autocomplete="current-password" required>
 </div>
-<label><input type="checkbox" name="remember" value="1"> <span>Zapamiętaj mnie na 30 dni</span></label>
-<button type="submit">Zaloguj</button>
+<label><input type="checkbox" name="remember" value="1"> <span><?= e(t('login.remember')) ?></span></label>
+<button type="submit"><?= e(t('login.submit')) ?></button>
 </form>
-<p>Gammu SMSD · dostęp tylko z sieci lokalnej</p>
+<p><?= e(t('login.note')) ?></p>
 </div>
 </main>
 </body>

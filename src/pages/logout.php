@@ -3,7 +3,7 @@
 if (!is_post()) {
     http_response_code(405);
     header('Allow: POST');
-    echo view('error', ['code' => 405, 'title' => 'Niedozwolona metoda', 'message' => 'Wyloguj się przyciskiem w menu panelu.']);
+    echo view('error', ['code' => 405, 'title' => t('error.405'), 'message' => t('error.405_logout')]);
     exit;
 }
 Auth::logout();

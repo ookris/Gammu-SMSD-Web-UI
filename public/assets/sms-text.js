@@ -36,12 +36,6 @@
     return out;
   }
 
-  function plural(n, one, few, many) {
-    if (n === 1) return one;
-    const d = n % 10, t = n % 100;
-    return d >= 2 && d <= 4 && (t < 12 || t > 14) ? few : many;
-  }
-
   // Zmienne personalizacji: licznik liczy najdłuższy wariant (vars = {imie: '…', nazwa: '…'})
   function personalize(text, vars) {
     if (!vars) return text;
@@ -51,16 +45,17 @@
   function describe(text, doTranslit, vars) {
     const src = personalize(doTranslit ? translit(text) : text, vars && doTranslit ? mapValues(vars, translit) : vars);
     const a = analyze(src);
-    const counter = `${a.chars} ${plural(a.chars, 'znak', 'znaki', 'znaków')} · ${a.parts} SMS · ${a.gsm ? 'GSM-7' : 'Unicode'}`;
+    const I = root.I18n; // teksty z app.js (Ui::jsTexts)
+    const counter = I.t('sms.counter', { chars: I.tn('sms.chars', a.chars), parts: a.parts, coding: a.gsm ? 'GSM-7' : 'Unicode' });
     let why = '';
     if (a.tooLong) {
-      why = `Za długa wiadomość: ${a.parts} części, limit to ${MAX_PARTS}.`;
+      why = escapeHtml(I.t('sms.too_long', { parts: a.parts, max: MAX_PARTS }));
     } else if (!a.gsm) {
       const t = analyze(translit(src));
       const list = a.bad.slice(0, 6).join(', ') + (a.bad.length > 6 ? '…' : '');
-      why = `<strong>${escapeHtml(list)}</strong> ${a.bad.length === 1 ? 'wymusza' : 'wymuszają'} kodowanie Unicode (70 znaków na SMS zamiast 160)`;
-      if (t.gsm && t.parts < a.parts) why += ` – po zamianie polskich znaków ${t.parts} SMS zamiast ${a.parts}.`;
-      else why += '.';
+      why = escapeHtml(I.tn('sms.forces', a.bad.length, { list: '\u0000' })).replace('\u0000', `<strong>${escapeHtml(list)}</strong>`);
+      if (t.gsm && t.parts < a.parts) why += ' – ' + escapeHtml(I.t('sms.translit_gain', { after: t.parts, before: a.parts }));
+      why += '.';
     }
     return { counter, why, analysis: a };
   }

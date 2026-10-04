@@ -90,7 +90,7 @@ final class Outbox
         }
         Db::update('messages', [
             'status' => 'cancelled',
-            'error' => $partly ? 'część wiadomości mogła zostać wysłana' : null,
+            'error' => $partly ? msg_key('gammu.partly_sent') : null,
             'updated_at' => now_db(),
         ], 'id = ?', [$id]);
         return 'cancelled';
@@ -144,7 +144,7 @@ final class Outbox
             }
         }
         $m = Db::row('SELECT status, error FROM messages WHERE id = ?', [$id]);
-        echo 'Status: ' . t('status.' . $m['status']) . ($m['error'] ? ' (' . $m['error'] . ')' : '') . PHP_EOL;
+        echo 'Status: ' . t('status.' . $m['status']) . ($m['error'] ? ' (' . tr($m['error']) . ')' : '') . PHP_EOL;
         return in_array($m['status'], ['failed', 'undelivered'], true) ? 1 : 0;
     }
 }
