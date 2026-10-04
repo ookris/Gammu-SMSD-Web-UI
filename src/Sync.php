@@ -69,8 +69,7 @@ final class Sync
 
     public static function summary(array $r): string
     {
-        return "Statusy: {$r['statuses']}, zewnętrzne: {$r['external']}, odebrane: {$r['received']}, USSD: {$r['ussd']}, "
-            . "modemy: {$r['modems']}, połączenia: {$r['calls']}, błędy: {$r['errors']}";
+        return t('sync.summary', $r);
     }
 
     /** Proces w tle: pętla co worker_interval s; koniec po 1 h lub po zmianie plików aplikacji (systemd uruchamia ponownie). */
