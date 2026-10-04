@@ -2,7 +2,8 @@
 
 Kolejność: diagnostyka przed instalacją → instalacja → diagnostyka po instalacji → panel w przeglądarce → testy
 automatyczne → (po podłączeniu modemu) U7–U9, wiersze do `tests/fixtures/`, lista kontrolna 7.1.
-Wyniki z plików `~/*.txt` trafiają do rozdz. 3.14 (U1–U10) i do poprawek instalatora.
+Wyniki z plików `~/*.txt` trafiają do rozdz. 3.14 (U1–U10) i do poprawek instalatora. Bez modemu da się zamknąć
+U1–U4 i U10; U5 (rotacja logu – Gammu musi działać i pisać) oraz U7–U9 wymagają modemu (rozdz. 10.6).
 
 Docelowo Ubuntu Server 26.04, czysta maszyna (bez wcześniejszego Gammu, MariaDB i nginx).
 
@@ -42,7 +43,10 @@ Po podłączeniu modemu uruchom instalator jeszcze raz – wtedy wykryje port i 
 
 ```bash
 sudo bash /opt/smsgui/deploy/collect-info.sh > ~/info-po.txt 2>&1
+sudo -u www-data php /opt/smsgui/bin/smsgui check > ~/check.txt 2>&1
 ```
+
+`collect-info.sh` tylko czyta; `smsgui check` uruchamia się osobno, bo zapisuje w bazie panelu (migracje, stan usługi).
 
 W przeglądarce: `http://<adres-serwera>/` – logowanie, pulpit (kontrola zdrowia), „Konfiguracja Gammu” (odczyt
 i zapis `gammu-smsdrc` przez okno potwierdzenia, zakładka „Usługa” – przeładowanie i restart), „Log Gammu”,
@@ -72,6 +76,27 @@ Sprzątanie po testach: `sudo mariadb -e "DROP DATABASE gammu_test; DROP DATABAS
 1. `sudo /opt/smsgui/deploy/install.sh` – wykrycie portu, PIN, testowy SMS na podany numer.
 2. U7–U9 (rozdz. 3.14): numer na czarnej liście i przeładowanie, `*101#` i odrzucenie połączenia testowego,
    format numeru nadawcy w odebranym SMS.
-3. Ponownie `collect-info.sh > ~/info-modem.txt`.
-4. Lista kontrolna z rozdz. 7.1.
-5. Wiersze z tabel Gammu do `tests/fixtures/` (zadanie 6.1) – sposób zrzutu ustalimy po pierwszych wysyłkach.
+3. U5 – rotacja logu (reguła z `copytruncate`; Gammu musi działać), wynik do `~/u5.txt`:
+
+   ```bash
+   { sudo ls -l /var/log/gammu-smsd/
+     sudo logrotate -f -v /etc/logrotate.d/gammu-smsd-smsgui
+     sudo systemctl reload gammu-smsd      # Gammu zapisuje w logu wczytanie konfiguracji
+     sleep 70                              # i co najmniej jeden przebieg pętli / odświeżenie stanu
+     sudo ls -l /var/log/gammu-smsd/
+     sudo tail -n 5 /var/log/gammu-smsd/smsd.log
+     echo "NUL w smsd.log: $(sudo sh -c "tr -cd '\\000' </var/log/gammu-smsd/smsd.log | wc -c")"
+   } > ~/u5.txt 2>&1
+   ```
+
+   U5 jest spełnione, gdy po rotacji `smsd.log.1` ma stare wpisy, `smsd.log` ma nowe linie, liczba bajtów NUL
+   wynosi 0 (inaczej Gammu pisze pod starym przesunięciem – potrzebny `postrotate` z restartem zamiast `copytruncate`),
+   a „Log Gammu” w panelu pokazuje nowe linie.
+4. Ponownie diagnostyka i `check`:
+
+   ```bash
+   sudo bash /opt/smsgui/deploy/collect-info.sh > ~/info-modem.txt 2>&1
+   sudo -u www-data php /opt/smsgui/bin/smsgui check > ~/check-modem.txt 2>&1
+   ```
+5. Lista kontrolna z rozdz. 7.1.
+6. Wiersze z tabel Gammu do `tests/fixtures/` (zadanie 6.1) – sposób zrzutu ustalimy po pierwszych wysyłkach.
