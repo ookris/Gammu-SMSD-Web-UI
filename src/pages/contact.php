@@ -15,7 +15,7 @@ $selected = $contact ? Contacts::groupIdsOf($id) : [];
 if (is_post()) {
     if (isset($_POST['delete']) && $contact) {
         Contacts::delete([$id]);
-        flash('ok', 'Usunięto kontakt ' . $contact['name'] . '.', 'Wiadomości i rozmowa zostały – widać w nich numer ' . Phone::format($contact['phone']) . '.');
+        flash('ok', t('contact.deleted', ['name' => $contact['name']]), t('contact.deleted_text', ['phone' => Phone::format($contact['phone'])]));
         redirect(url('contacts'));
     }
     if (isset($_POST['block']) && $contact) {
@@ -26,7 +26,7 @@ if (is_post()) {
     $selected = input_ids('groups');
     [$saved, $errors] = Contacts::save($contact ? $id : null, $form['name'], $form['phone_input'], $form['note'], $selected);
     if ($saved !== null) {
-        flash('ok', 'Zapisano kontakt.');
+        flash('ok', t('contact.saved'));
         redirect(url('contact', ['id' => $saved]));
     }
 }
@@ -41,5 +41,5 @@ if ($contact) {
     $feed = array_slice($feed, 0, 10);
 }
 
-render('contact', ['title' => $contact['name'] ?? 'Nowy kontakt', 'nav' => 'contacts', 'contact' => $contact, 'form' => $form, 'errors' => $errors,
+render('contact', ['title' => $contact['name'] ?? t('contact.new'), 'nav' => 'contacts', 'contact' => $contact, 'form' => $form, 'errors' => $errors,
     'groups' => Contacts::groups(), 'selected' => $selected, 'feed' => $feed, 'blocked' => $contact && Blocklist::isBlocked($contact['phone'])]);

@@ -57,15 +57,15 @@ final class Contacts
         $errors = [];
         $name = trim($name);
         if ($name === '') {
-            $errors['name'] = 'Podaj nazwę kontaktu.';
+            $errors['name'] = t('contact.err_name');
         }
         $phone = Phone::normalize($phoneInput);
         if ($phone === null) {
-            $errors['phone'] = 'Nieprawidłowy numer: ' . Phone::error($phoneInput) . '.';
+            $errors['phone'] = t('contact.err_phone', ['why' => Phone::error($phoneInput)]);
         } else {
             $other = self::byPhone($phone);
             if ($other !== null && (int) $other['id'] !== $id) {
-                $errors['phone'] = 'Numer ' . Phone::format($phone) . ' jest już w książce (' . $other['name'] . ').';
+                $errors['phone'] = t('contact.err_exists', ['phone' => Phone::format($phone), 'name' => $other['name']]);
             }
         }
         if ($errors !== []) {
@@ -173,7 +173,7 @@ final class Contacts
 
     public static function csvExport(): string
     {
-        $out = "\u{FEFF}nazwa;numer;grupy;notatka\r\n";
+        $out = "\u{FEFF}" . t('contacts.csv_header') . "\r\n";
         $contacts = Db::all('SELECT id, name, phone, note FROM contacts ORDER BY name');
         $groups = self::groupsOf(array_map('intval', array_column($contacts, 'id')));
         foreach ($contacts as $c) {
@@ -231,11 +231,11 @@ final class Contacts
             [$name, $number, $groups, $note] = array_pad($r, 4, '');
             $phone = Phone::normalize($number);
             if ($name === '' || $phone === null) {
-                $errors[] = [$line, $name === '' ? 'brak nazwy' : 'nieprawidłowy numer „' . $number . '”: ' . Phone::error($number)];
+                $errors[] = [$line, $name === '' ? t('contacts.err_no_name') : t('contacts.err_number', ['number' => $number, 'why' => Phone::error($number)])];
                 continue;
             }
             if (isset($seen[$phone])) {
-                $errors[] = [$line, 'numer powtórzony (linia ' . $seen[$phone] . ')'];
+                $errors[] = [$line, t('contacts.err_duplicate', ['line' => $seen[$phone]])];
                 continue;
             }
             $seen[$phone] = $line;

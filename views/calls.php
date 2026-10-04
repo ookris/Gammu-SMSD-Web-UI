@@ -22,7 +22,7 @@
 <?php foreach ($rows as $c): $hidden = $c['phone'] === ''; $isBlocked = in_array($c['phone'], $blocked, true); $known = !$hidden && Contacts::name($c['phone']) !== null; ?>
 <tr><td class="check"><input type="checkbox" name="ids[]" value="<?= (int) $c['id'] ?>" aria-label="<?= e(t('common.select_row')) ?>"></td>
 <td class="nowrap"><?= e(fmt_when($c['received_at'])) ?></td>
-<td><?= $hidden ? '<strong>' . e(t(in_array($c['raw_number'], [Calls::INVALID, 'nieprawidłowy numer'], true) ? 'calls.invalid_number' : 'calls.hidden_number')) . '</strong>' : Ui::who($c['phone']) ?><?= $isBlocked ? ' <span class="badge badge-err">' . e(t('inbox.blocked')) . '</span>' : '' ?></td>
+<td><?= $hidden ? '<strong>' . e(t(in_array($c['raw_number'], Calls::INVALID, true) ? 'calls.invalid_number' : 'calls.hidden_number')) . '</strong>' : Ui::who($c['phone']) ?><?= $isBlocked ? ' <span class="badge badge-err">' . e(t('inbox.blocked')) . '</span>' : '' ?></td>
 <td><?= e($c['modem'] ?: '—') ?></td>
 <td><div class="cell-actions">
 <?php if (!$hidden): ?><?= Ui::iconBtnLink(url('compose', ['to' => $c['phone']]), 'plain', t('calls.send_sms')) ?>

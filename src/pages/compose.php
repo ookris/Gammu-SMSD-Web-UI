@@ -21,21 +21,21 @@ if (is_post()) {
     if (isset($_POST['save_template'])) {
         if (trim($in['text']) !== '') {
             Templates::save(null, Ui::snippet($in['text'], 40), $in['text']);
-            flash('ok', 'Zapisano szablon.', 'Zmienisz jego nazwę na ekranie „Szablony”.');
+            flash('ok', t('templates.saved'), t('compose.template_saved_text'));
         }
     } elseif ($plan['errors'] === [] && (!$plan['multi'] || input('confirm') === '1')) {
         // Jednorazowy token formularza: ponowne wysłanie tego samego formularza (odświeżenie, podwójne kliknięcie) nie dubluje SMS
         $token = input('send_token');
         if ($token !== '' && isset($_SESSION['compose_sent'][$token])) {
-            flash('info', 'Ta wiadomość została już wysłana.', 'Nic nie dodano ponownie do kolejki.');
+            flash('info', t('compose.already_sent'), t('compose.already_sent_text'));
             redirect($_SESSION['compose_sent'][$token]);
         }
         [$batch, $first] = Compose::send($in, $plan);
         if ($batch !== null) {
-            flash('ok', 'Wysyłka zapisana w kolejce.', $plan['count'] . ' odbiorców × ' . $plan['parts'] . ' SMS.');
+            flash('ok', t('compose.batch_queued'), t('compose.batch_queued_text', ['recipients' => tn('sent.recipients', $plan['count']), 'parts' => $plan['parts']]));
             $target = url('batch', ['id' => $batch]);
         } else {
-            flash('ok', 'Wiadomość dodana do kolejki.', $plan['delayed'] ? 'Wysyłka: ' . Compose::startLabel($plan) . '.' : 'Gammu wyśle ją w ciągu kilku sekund.');
+            flash('ok', t('threads.queued'), $plan['delayed'] ? t('compose.single_delayed', ['start' => Compose::startLabel($plan)]) : t('compose.single_now'));
             $target = url('threads', ['phone' => $plan['recipients']['list'][0]['phone']]);
         }
         if ($token !== '') {
@@ -80,6 +80,6 @@ function compose_contacts(string $q, array $selected): array
 
 render('compose', [
     'sendToken' => preg_match('/^[0-9a-f]{16}$/', input('send_token')) ? input('send_token') : bin2hex(random_bytes(8)),
-    'title' => 'Nowa wiadomość', 'nav' => 'compose', 'in' => $in, 'plan' => $plan, 'attempted' => $attempted, 'confirm' => $confirm,
+    'title' => t('nav.compose'), 'nav' => 'compose', 'in' => $in, 'plan' => $plan, 'attempted' => $attempted, 'confirm' => $confirm,
     'groups' => Contacts::groups(), 'contacts' => compose_contacts('', $in['contacts']), 'templates' => Templates::all(),
 ]);
