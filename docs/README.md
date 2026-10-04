@@ -1,6 +1,6 @@
 # Dokumentacja projektu – Gammu SMSD Web UI
 
-Status: **projekt – dokumentacja gotowa, trwa etap P – projekt interfejsu** (etap 0 – weryfikacja w kodzie źródłowym zakończona)
+Status: **projekt – dokumentacja gotowa, etap P (projekt interfejsu) zakończony, następny: etap 1 – szkielet** (etap 0 – weryfikacja w kodzie źródłowym zakończona)
 Data: 2026-10-04
 
 Prosty interfejs WWW (PHP + JS + MariaDB) do obsługi bramki SMS opartej na

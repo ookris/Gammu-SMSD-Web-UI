@@ -95,7 +95,7 @@ a następnie statyczną stronę HTML, z której w etapach 1–5 powstaje widok `
 | [x] P.6 | Prototyp – podstawa: Pico.css, czcionki IBM Plex, ikony Solar (SVG), `app.css` (zmienne kolorów, jasny/ciemny motyw), układ strony (menu boczne zwijane na telefonie, wskaźnik usługi i modemu, licznik nieprzeczytanych, komunikaty, stopka z atrybucją) | `prototype/assets/`, `prototype/_layout.html` (Pico.css 2.1.1, IBM Plex łacina + łac. rozszerzona) |
 | [x] P.7 | Prototyp – wszystkie ekrany z przykładowymi danymi, linkowane z menu | `prototype/*.html` |
 | [x] P.8 | Prototyp – interakcje: okna `<dialog>`, licznik znaków (szkic `sms-text.js`), przełączanie zakładek; bez JS/CSS inline (CSP) | `prototype/assets/app.js` |
-| [ ] P.9 | Przegląd prototypu (komputer, 360 px, oba motywy) i akceptacja | — |
+| [x] P.9 | Przegląd prototypu (komputer, 360 px, oba motywy) i akceptacja – zaakceptowany 2026-10-04; drobne poprawki wyglądu na bieżąco w etapach 1–5 | — |
 
 **Zasady prototypu:**
 - Ten sam kod HTML i CSS, który trafi do aplikacji – klasy i struktura znaczników zgodne z Pico.css,
