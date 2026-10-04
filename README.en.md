@@ -16,10 +16,16 @@ the modem and finishes with a health check.
 > The user interface is available in Polish and English (switchable in the panel settings). The installer and the
 > console tool currently print messages in Polish.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="screenshots/dashboard-dark.png">
+  <img src="screenshots/dashboard.png" alt="Panel dashboard">
+</picture>
+
 ## Contents
 
 - [How it works](#how-it-works)
 - [Features](#features)
+- [Screenshots](#screenshots)
 - [Technology](#technology)
 - [Requirements](#requirements)
 - [Installation](#installation)
@@ -94,6 +100,29 @@ and other national characters (ą→a, ł→l).
 
 **Planned (after 1.0):** forwarding SMS and calls to e-mail and webhooks, HTTP API, auto-replies,
 periodic balance checks, admin notifications, statistics, multiple modems.
+
+## Screenshots
+
+Screenshots show the Polish interface (English is available in the panel settings). Light and dark themes follow the system setting. Click a thumbnail for full size.
+
+<table>
+  <tr>
+    <td width="50%"><a href="screenshots/threads.png"><img src="screenshots/threads.png" alt="Conversations"></a><br><sub>Conversations</sub></td>
+    <td width="50%"><a href="screenshots/threads-dark.png"><img src="screenshots/threads-dark.png" alt="Conversations – dark theme"></a><br><sub>Conversations – dark theme</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><a href="screenshots/compose.png"><img src="screenshots/compose.png" alt="New message to groups and contacts"></a><br><sub>New message to groups and contacts</sub></td>
+    <td width="50%"><a href="screenshots/sent.png"><img src="screenshots/sent.png" alt="Sent – statuses and delivery reports"></a><br><sub>Sent – statuses and delivery reports</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><a href="screenshots/contacts.png"><img src="screenshots/contacts.png" alt="Contacts and groups"></a><br><sub>Contacts and groups</sub></td>
+    <td width="50%"><a href="screenshots/modem.png"><img src="screenshots/modem.png" alt="Modem and USSD"></a><br><sub>Modem and USSD</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><a href="screenshots/config.png"><img src="screenshots/config.png" alt="Gammu configuration"></a><br><sub>Gammu configuration</sub></td>
+    <td width="50%"><a href="screenshots/log.png"><img src="screenshots/log.png" alt="Gammu log"></a><br><sub>Gammu log</sub></td>
+  </tr>
+</table>
 
 ## Technology
 
