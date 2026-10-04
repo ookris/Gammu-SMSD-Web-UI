@@ -3,7 +3,9 @@
 Kolejność: diagnostyka przed instalacją → instalacja → diagnostyka po instalacji → panel w przeglądarce → testy
 automatyczne → (po podłączeniu modemu) U7–U9, wiersze do `tests/fixtures/`, lista kontrolna 7.1.
 Wyniki z plików `~/*.txt` trafiają do rozdz. 3.14 (U1–U10) i do poprawek instalatora. Bez modemu da się zamknąć
-U1–U4 i U10; U5 (rotacja logu – Gammu musi działać i pisać) oraz U7–U9 wymagają modemu (rozdz. 10.6).
+U1–U4 i pierwszą część U10 (strefa czasowa MariaDB = strefa systemu). Modemu wymagają: U5 (rotacja logu – Gammu
+musi działać i pisać), U7–U9 i druga część U10 (raport doręczenia przy wyłączonym telefonie) – rozdz. 10.6.
+U10 jest spełnione dopiero po obu częściach.
 
 Docelowo Ubuntu Server 26.04, czysta maszyna (bez wcześniejszego Gammu, MariaDB i nginx).
 
@@ -76,27 +78,35 @@ Sprzątanie po testach: `sudo mariadb -e "DROP DATABASE gammu_test; DROP DATABAS
 1. `sudo /opt/smsgui/deploy/install.sh` – wykrycie portu, PIN, testowy SMS na podany numer.
 2. U7–U9 (rozdz. 3.14): numer na czarnej liście i przeładowanie, `*101#` i odrzucenie połączenia testowego,
    format numeru nadawcy w odebranym SMS.
-3. U5 – rotacja logu (reguła z `copytruncate`; Gammu musi działać), wynik do `~/u5.txt`:
+3. U5 – rotacja logu bez ingerencji w Gammu (reguła z `copytruncate` nie przeładowuje demona, więc test też nie
+   może – przeładowanie lub restart otwiera log od nowa i zamaskowałby błąd). Nowe wpisy wywołuje zwykła wysyłka SMS;
+   log oglądamy przed jakimkolwiek przeładowaniem. Wynik do `~/u5.txt`:
 
    ```bash
+   NUMER=601234567                         # numer do testowego SMS
    { sudo ls -l /var/log/gammu-smsd/
      sudo logrotate -f -v /etc/logrotate.d/gammu-smsd-smsgui
-     sudo systemctl reload gammu-smsd      # Gammu zapisuje w logu wczytanie konfiguracji
-     sleep 70                              # i co najmniej jeden przebieg pętli / odświeżenie stanu
      sudo ls -l /var/log/gammu-smsd/
-     sudo tail -n 5 /var/log/gammu-smsd/smsd.log
+     sudo -u www-data php /opt/smsgui/bin/smsgui send "$NUMER" "Test U5 – rotacja logu" --wait=90
+     sudo ls -l /var/log/gammu-smsd/
+     sudo tail -n 15 /var/log/gammu-smsd/smsd.log
      echo "NUL w smsd.log: $(sudo sh -c "tr -cd '\\000' </var/log/gammu-smsd/smsd.log | wc -c")"
    } > ~/u5.txt 2>&1
    ```
 
-   U5 jest spełnione, gdy po rotacji `smsd.log.1` ma stare wpisy, `smsd.log` ma nowe linie, liczba bajtów NUL
-   wynosi 0 (inaczej Gammu pisze pod starym przesunięciem – potrzebny `postrotate` z restartem zamiast `copytruncate`),
-   a „Log Gammu” w panelu pokazuje nowe linie.
-4. Ponownie diagnostyka i `check`:
+   U5 jest spełnione, gdy po rotacji `smsd.log.1` ma stare wpisy, a `smsd.log` – wpisy o wysłaniu testowego SMS,
+   liczba bajtów NUL wynosi 0 (inaczej Gammu pisze pod starym przesunięciem – potrzebny `postrotate` z restartem
+   zamiast `copytruncate`), a „Log Gammu” w panelu pokazuje te wpisy. Do tego czasu nie przeładowuj ani nie restartuj Gammu.
+4. U10, część druga – raport doręczenia przy wyłączonym telefonie (`DeliveryReportDelay`; instalator ustawia
+   172800 s): wyłącz telefon odbiorcy, wyślij z panelu SMS z raportem doręczenia, odczekaj co najmniej 15 min
+   (dłużej niż domyślne 600 s Gammu), włącz telefon. U10 jest spełnione, gdy w „Wysłanych” wiadomość przejdzie na
+   „Doręczona” z godziną doręczenia po włączeniu telefonu (a nie zostanie „Wysłana” bez raportu). Zapisz godziny
+   wysłania, włączenia telefonu i doręczenia oraz `grep -i 'status report' /var/log/gammu-smsd/smsd.log`.
+5. Ponownie diagnostyka i `check`:
 
    ```bash
    sudo bash /opt/smsgui/deploy/collect-info.sh > ~/info-modem.txt 2>&1
    sudo -u www-data php /opt/smsgui/bin/smsgui check > ~/check-modem.txt 2>&1
    ```
-5. Lista kontrolna z rozdz. 7.1.
-6. Wiersze z tabel Gammu do `tests/fixtures/` (zadanie 6.1) – sposób zrzutu ustalimy po pierwszych wysyłkach.
+6. Lista kontrolna z rozdz. 7.1.
+7. Wiersze z tabel Gammu do `tests/fixtures/` (zadanie 6.1) – sposób zrzutu ustalimy po pierwszych wysyłkach.
