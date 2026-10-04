@@ -174,7 +174,7 @@ podłączenie modemu później, naprawa uprawnień). Na początku pyta o tryb (`
 
 - **`full`** (domyślny) – instaluje brakujące pakiety i konfiguruje całość;
 - **`app`** – nie instaluje pakietów (np. PHP z innego repozytorium): sprawdza, czy są potrzebne programy
-  (PHP ≥ 8.5 z `pdo_mysql` i `mbstring`, PHP-FPM, MariaDB z dostępem root przez gniazdo, Gammu i usługa
+  (PHP ≥ 8.5 z `pdo_mysql` i `mbstring`, PHP-FPM w tej samej wersji co CLI, MariaDB z dostępem root przez gniazdo, Gammu i usługa
   `gammu-smsd`, nginx, OpenSSL; przy pobieraniu także `git`), przy braku przerywa z poleceniem `apt install`
   do wykonania; dalsze kroki jak w `full`.
 
@@ -216,7 +216,7 @@ pobieranie: `SMSGUI_DIR` (domyślnie `/opt/smsgui`), `SMSGUI_REPO`, `SMSGUI_BRAN
 
 Ograniczenie do sieci lokalnej jest włączone zawsze – zmienia się je ręcznie w konfiguracji nginx.
 Wartości zależne od paczki wykrywa zamiast je zakładać: nazwę usługi i użytkownika demona (⚠ U1),
-położenie `mysql.sql` (⚠ U4), wersję PHP-FPM. Dodatkowo: wyłącza domyślną stronę nginx (`sites-enabled/default`),
+położenie `mysql.sql` (⚠ U4), gniazdo PHP-FPM (tylko w wersji PHP CLI; nie działa → uruchamia usługę, a gdy jej nie ma – przerywa). Dodatkowo: wyłącza domyślną stronę nginx (`sites-enabled/default`),
 instaluje filtr fail2ban (jail wyłączony).
 Szablony konfiguracji: `deploy/nginx-smsgui.conf`, `deploy/smsgui-worker.service`, `deploy/gammu-smsd@.service` (R),
 `deploy/logrotate-gammu-smsd`, `deploy/fail2ban/`.
