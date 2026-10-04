@@ -121,10 +121,10 @@ function msg_key(string $key, array $vars = []): string
     return '@' . $key . ($vars !== [] ? ' ' . json_encode($vars, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : '');
 }
 
-/** Tekst z bazy: klucz z msg_key() tłumaczony (parametry też mogą być kluczami), zwykły tekst bez zmian. */
+/** Tekst z bazy: klucz z msg_key() tłumaczony (parametry też mogą być kluczami); zwykły tekst i nieznany klucz bez zmian. */
 function tr(?string $stored): string
 {
-    if ($stored === null || !preg_match('~^@([a-z0-9_]+\.[a-z0-9_.]+)(?: (\{.*\}))?$~s', $stored, $m)) {
+    if ($stored === null || !preg_match('~^@([a-z0-9_]+\.[a-z0-9_.]+)(?: (\{.*\}))?$~s', $stored, $m) || lang_entry($m[1]) === null) {
         return (string) $stored;
     }
     $vars = isset($m[2]) ? json_decode($m[2], true) : [];

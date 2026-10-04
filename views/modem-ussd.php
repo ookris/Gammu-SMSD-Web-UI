@@ -15,6 +15,6 @@
 <?php endif ?>
 </div>
 <?php else: ?>
-<?= alert('err', $current['status'] === 'timeout' ? t('modem.timeout', ['code' => $current['code'], 'n' => Ussd::TIMEOUT]) : t('modem.send_failed', ['code' => $current['code']]), tr($current['response'])) ?>
+<?= alert('err', $current['status'] === 'timeout' ? t('modem.timeout', ['code' => $current['code'], 'n' => Ussd::TIMEOUT]) : t('modem.send_failed', ['code' => $current['code']]), $current['status'] === 'failed' ? tr($current['response']) : (string) $current['response']) ?>
 <?php endif ?>
 </div>
