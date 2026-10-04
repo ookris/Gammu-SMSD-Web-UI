@@ -4,45 +4,44 @@ declare(strict_types=1);
 /** Pola formularza „Ustawienia” konfiguracji Gammu (rozdz. 2.10a) – bez parametrów zarządzanych przez panel. */
 final class GammuConfForm
 {
-    private const BOOL = ['' => 'domyślnie', 'yes' => 'tak', 'no' => 'nie'];
-
     /** Karty formularza: tytuł → lista pól [sekcja, klucz, rodzaj, opis, opcje]. */
     public static function cards(): array
     {
+        $bool = ['' => t('config.default'), 'yes' => t('common.yes'), 'no' => t('common.no')];
         return [
-            'Modem – sekcja [gammu]' => [
-                ['gammu', 'device', 'device', 'Port modemu – najlepiej stała nazwa z ' . cfg('serial_dir')],
-                ['gammu', 'connection', 'select', 'Sposób połączenia z modemem', ['at' => 'at (zalecane)', 'at115200' => 'at115200', 'at57600' => 'at57600',
+            t('form.card_modem') => [
+                ['gammu', 'device', 'device', t('form.device', ['dir' => cfg('serial_dir')])],
+                ['gammu', 'connection', 'select', t('form.connection'), ['at' => t('form.recommended'), 'at115200' => 'at115200', 'at57600' => 'at57600',
                     'at38400' => 'at38400', 'at19200' => 'at19200', 'at9600' => 'at9600']],
             ],
-            'Bramka – sekcja [smsd]' => [
-                ['smsd', 'phoneid', 'text', 'Nazwa modemu widoczna w panelu'],
-                ['smsd', 'pin', 'password', 'PIN karty SIM · puste = bez PIN'],
-                ['smsd', 'smsc', 'text', 'Numer centrum SMS – zwykle niepotrzebny'],
-                ['smsd', 'send', 'select', 'Wysyłanie · domyślnie: tak', self::BOOL],
-                ['smsd', 'receive', 'select', 'Odbieranie · domyślnie: tak', self::BOOL],
+            t('form.card_gateway') => [
+                ['smsd', 'phoneid', 'text', t('form.phoneid')],
+                ['smsd', 'pin', 'password', t('form.pin')],
+                ['smsd', 'smsc', 'text', t('form.smsc')],
+                ['smsd', 'send', 'select', t('form.send'), $bool],
+                ['smsd', 'receive', 'select', t('form.receive'), $bool],
             ],
-            'Wysyłka i raporty doręczenia' => [
-                ['smsd', 'deliveryreportdelay', 'number', 'Jak długo czekać na raport doręczenia (s) · zalecane 172800 (2 dni), domyślnie 600'],
-                ['smsd', 'maxretries', 'number', 'Ponowienia nieudanej wysyłki · domyślnie 1'],
-                ['smsd', 'retrytimeout', 'number', 'Odstęp między ponowieniami (s) · domyślnie 600'],
-                ['smsd', 'multiparttimeout', 'number', 'Czekanie na brakujące części odebranej wiadomości (s) · domyślnie 600'],
+            t('form.card_sending') => [
+                ['smsd', 'deliveryreportdelay', 'number', t('form.drd')],
+                ['smsd', 'maxretries', 'number', t('form.maxretries')],
+                ['smsd', 'retrytimeout', 'number', t('form.retrytimeout')],
+                ['smsd', 'multiparttimeout', 'number', t('form.multiparttimeout')],
             ],
-            'Stan modemu i niezawodność' => [
-                ['smsd', 'statusfrequency', 'number', 'Co ile sekund odświeżać stan · domyślnie 60'],
-                ['smsd', 'checksignal', 'select', 'Sprawdzanie sygnału · domyślnie: tak', self::BOOL],
-                ['smsd', 'checknetwork', 'select', 'Sprawdzanie sieci · domyślnie: tak', self::BOOL],
-                ['smsd', 'checkbattery', 'select', 'Sprawdzanie baterii · domyślnie: tak', self::BOOL],
-                ['smsd', 'resetfrequency', 'number', 'Okresowy reset modemu (s) · 0 = wyłączony'],
-                ['smsd', 'hardresetfrequency', 'number', 'Okresowy twardy reset (s) · 0 = wyłączony'],
-                ['smsd', 'loopsleep', 'number', 'Czas pętli (s) · domyślnie 1'],
-                ['smsd', 'commtimeout', 'number', 'Czekanie na modem (s) · domyślnie 30'],
-                ['smsd', 'sendtimeout', 'number', 'Czekanie na wysłanie (s) · domyślnie 30'],
+            t('form.card_reliability') => [
+                ['smsd', 'statusfrequency', 'number', t('form.statusfrequency')],
+                ['smsd', 'checksignal', 'select', t('form.checksignal'), $bool],
+                ['smsd', 'checknetwork', 'select', t('form.checknetwork'), $bool],
+                ['smsd', 'checkbattery', 'select', t('form.checkbattery'), $bool],
+                ['smsd', 'resetfrequency', 'number', t('form.resetfrequency')],
+                ['smsd', 'hardresetfrequency', 'number', t('form.hardresetfrequency')],
+                ['smsd', 'loopsleep', 'number', t('form.loopsleep')],
+                ['smsd', 'commtimeout', 'number', t('form.commtimeout')],
+                ['smsd', 'sendtimeout', 'number', t('form.sendtimeout')],
             ],
-            'Log' => [
-                ['smsd', 'debuglevel', 'select', 'Szczegółowość logu Gammu', ['' => 'domyślny (0)', '0' => '0 – tylko błędy', '1' => '1 – podstawowy',
-                    '2' => '2 – szczegółowy', '3' => '3 – bardzo szczegółowy', '255' => '255 – wszystko']],
-                ['smsd', 'logfile', 'text', 'Panel musi mieć prawo odczytu tego pliku'],
+            t('form.card_log') => [
+                ['smsd', 'debuglevel', 'select', t('form.debuglevel'), ['' => t('form.debug_default'), '0' => t('form.debug_0'), '1' => t('form.debug_1'),
+                    '2' => t('form.debug_2'), '3' => t('form.debug_3'), '255' => t('form.debug_255')]],
+                ['smsd', 'logfile', 'text', t('form.logfile')],
             ],
         ];
     }
@@ -72,23 +71,23 @@ final class GammuConfForm
                     continue; // niezmieniony PIN
                 }
                 if ($type === 'number' && $value !== '' && !ctype_digit($value)) {
-                    $errors[$name] = 'Podaj liczbę całkowitą.';
+                    $errors[$name] = t('config.err_int');
                     continue;
                 }
                 // Wartość spoza listy jest dozwolona, jeśli to niezmieniona wartość z pliku (np. debuglevel = 4)
                 if ($type === 'select' && !array_key_exists($value, $f[4]) && $value !== (string) $old) {
-                    $errors[$name] = 'Nieprawidłowa wartość.';
+                    $errors[$name] = t('config.err_value');
                     continue;
                 }
                 if (preg_match('/[\r\n]/', $value)) {
-                    $errors[$name] = 'Wartość nie może zawierać nowej linii.';
+                    $errors[$name] = t('config.err_newline');
                     continue;
                 }
                 if ((string) $old === $value) {
                     continue;
                 }
                 $copy->set($section, $key, $value === '' ? null : $value);
-                $show = static fn (?string $v) => $type === 'password' && $v !== null && $v !== '' ? '****' : ($v === null || $v === '' ? '(domyślnie)' : $v);
+                $show = static fn (?string $v) => $type === 'password' && $v !== null && $v !== '' ? '****' : ($v === null || $v === '' ? t('config.default_value') : $v);
                 $changes[] = $key . ' ' . $show($old) . ' → ' . $show($value === '' ? null : $value);
             }
         }

@@ -106,12 +106,6 @@ function plural_index(int $n): int
     return $d >= 2 && $d <= 4 && ($h < 12 || $h > 14) ? 1 : 2;
 }
 
-/** Przejściowo – do przeniesienia wszystkich widoków na tn(). */
-function plural(int $n, string $one, string $few, string $many): string
-{
-    return [$one, $few, $many][plural_index($n)] ?? $many;
-}
-
 function fill(string $text, array $vars): string
 {
     $map = [];
@@ -124,7 +118,7 @@ function fill(string $text, array $vars): string
 /** Tekst zapisywany w bazie jako klucz z parametrami – tłumaczony dopiero przy wyświetlaniu (tr()). */
 function msg_key(string $key, array $vars = []): string
 {
-    return '@' . $key . ($vars !== [] ? ' ' . json_encode($vars, JSON_UNESCAPED_UNICODE) : '');
+    return '@' . $key . ($vars !== [] ? ' ' . json_encode($vars, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : '');
 }
 
 /** Tekst z bazy: klucz z msg_key() tłumaczony (parametry też mogą być kluczami), zwykły tekst bez zmian. */

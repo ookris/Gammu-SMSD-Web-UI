@@ -5,10 +5,10 @@ $waiting = $op !== null && $back === null && $elapsed <= 30;
 ?>
 <div id="modem-wait"<?= $waiting ? ' hx-get="' . e(url('config', ['fragment' => 'modemwait'])) . '" hx-trigger="every 2s" hx-swap="outerHTML"' : '' ?>>
 <?php if ($back !== null): ?>
-<p class="status-line"><?= icon('check-circle') ?>Modem <?= e($back['ID']) ?> zgłosił się w tabeli <code>phones</code> po <?= max(0, (int) ts($back['UpdatedInDB']) - (int) ts($op['started'])) ?> s</p>
+<p class="status-line"><?= icon('check-circle') ?><?= t('config.modem_back', ['modem' => e($back['ID']), 'table' => '<code>phones</code>', 'n' => max(0, (int) ts($back['UpdatedInDB']) - (int) ts($op['started']))]) ?></p>
 <?php elseif ($waiting): ?>
-<div class="ussd-wait" role="status"><?= icon('hourglass') ?><div><strong>Czekam, aż modem zgłosi się w tabeli phones…</strong><div class="muted small"><?= $elapsed ?> s z 30</div></div></div>
+<div class="ussd-wait" role="status"><?= icon('hourglass') ?><div><strong><?= e(t('config.modem_waiting')) ?></strong><div class="muted small"><?= e(t('config.modem_waiting_text', ['n' => $elapsed])) ?></div></div></div>
 <?php elseif ($op !== null): ?>
-<p class="status-line warn"><?= icon('danger-triangle') ?>Modem nie zgłosił się w ciągu 30 s – sprawdź log Gammu poniżej.</p>
+<p class="status-line warn"><?= icon('danger-triangle') ?><?= e(t('config.modem_timeout')) ?></p>
 <?php endif ?>
 </div>

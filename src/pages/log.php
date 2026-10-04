@@ -17,4 +17,4 @@ if (input('fragment') === 'lines') {
     echo view('log-lines', $data);
     exit;
 }
-render('log', $data + ['title' => 'Log Gammu', 'nav' => 'log']);
+render('log', $data + ['title' => t('nav.log'), 'nav' => 'log']);

@@ -15,7 +15,7 @@ if (is_post()) {
         $conf = GammuConf::load(true) ?? throw new RuntimeException(t('file.cannot_read', ['path' => GammuConf::path()]));
         $copy = GammuConf::parse($conf->text());
         $copy->set('smsd', 'excludenumbersfile', Blocklist::path());
-        ConfigSave::propose($copy->text(), t('blocklist.enable_note'), 'form');
+        ConfigSave::propose($copy->text(), msg_key('blocklist.enable_note'), 'form');
     }
     if (isset($_FILES['csv']) && ($_FILES['csv']['error'] !== UPLOAD_ERR_OK || $_FILES['csv']['size'] > 5 * 1024 * 1024)) {
         flash('err', t('blocklist.upload_failed'), t($_FILES['csv']['error'] === UPLOAD_ERR_NO_FILE ? 'blocklist.choose_file' : 'blocklist.file_too_big'));

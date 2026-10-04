@@ -46,7 +46,7 @@ if (is_post()) {
         flash('ok', t('settings.saved'));
         $calls = isset($_POST['calls_enabled']);
         if ($calls !== Calls::enabledInConf()) {
-            ConfigSave::propose(Calls::confChange($calls)->text(), t($calls ? 'settings.calls_enable' : 'settings.calls_disable'), 'form');
+            ConfigSave::propose(Calls::confChange($calls)->text(), msg_key($calls ? 'settings.calls_enable' : 'settings.calls_disable'), 'form');
         }
         redirect(url('settings'));
     }

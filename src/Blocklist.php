@@ -34,7 +34,7 @@ final class Blocklist
             if ($old === self::fileContent()) {
                 return;
             }
-            GammuConf::backup($old, t('blocklist.backup_note'), 'exclude-numbers.txt');
+            GammuConf::backup($old, msg_key('blocklist.backup_note'), 'exclude-numbers.txt');
         }
         $tmp = $path . '.tmp' . getmypid();
         if (@file_put_contents($tmp, self::fileContent()) === false || !@rename($tmp, $path)) {

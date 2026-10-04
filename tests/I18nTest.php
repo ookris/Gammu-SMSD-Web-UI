@@ -2,7 +2,7 @@
 /** Pliki PHP, w których teksty interfejsu muszą iść przez t() (bez komentarzy – sprawdza tokenizer). */
 function i18n_files(): array
 {
-    return array_merge(glob(APP_ROOT . '/views/*.php'), glob(APP_ROOT . '/views/partials/*.php'), glob(APP_ROOT . '/src/pages/*.php'));
+    return array_merge(glob(APP_ROOT . '/views/*.php'), glob(APP_ROOT . '/views/partials/*.php'), glob(APP_ROOT . '/src/pages/*.php'), [APP_ROOT . '/public/index.php']);
 }
 
 /** Napisy i HTML z polskimi literami (pominięte komentarze); [plik:linia => tekst]. */

@@ -21,10 +21,10 @@ final class Outbox
         }
         $a = SmsText::analyze($text);
         if ($a['chars'] === 0) {
-            throw new InvalidArgumentException('Pusta treść wiadomości');
+            throw new InvalidArgumentException(t('compose.err_text'));
         }
         if ($a['too_long']) {
-            throw new InvalidArgumentException("Wiadomość ma {$a['parts']} części – limit to " . SmsText::MAX_PARTS);
+            throw new InvalidArgumentException(t('sms.too_long', ['parts' => $a['parts'], 'max' => SmsText::MAX_PARTS]));
         }
         $sendAt = $o['send_at'] ?? null;
         $window = $o['window'] ?? null;

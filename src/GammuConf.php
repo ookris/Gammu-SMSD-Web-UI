@@ -232,46 +232,46 @@ final class GammuConf
         $entries = $this->entries();
         $sections = $this->sections();
         $missing = array_diff(['gammu', 'smsd'], $sections);
-        $out[] = $missing === [] ? ['ok', 'Sekcje [gammu] i [smsd] obecne']
-            : ['err', 'Brak sekcji: [' . implode('], [', $missing) . ']'];
+        $out[] = $missing === [] ? ['ok', t('conf.sections_ok')]
+            : ['err', t('conf.sections_missing', ['list' => '[' . implode('], [', $missing) . ']'])];
 
         $service = strtolower((string) $this->get('smsd', 'service'));
         $db = $this->get('smsd', 'database');
         if ($service !== 'sql') {
-            $out[] = ['err', 'service = ' . ($service ?: '(brak)') . ' – panel wymaga service = sql'];
+            $out[] = ['err', t('conf.service_bad', ['service' => $service ?: t('conf.none')])];
         } elseif ($db !== (string) cfg('gammu_db')) {
-            $out[] = ['err', 'database = ' . ($db ?? '(brak)') . ' – panel używa bazy ' . cfg('gammu_db')];
+            $out[] = ['err', t('conf.db_bad', ['db' => $db ?? t('conf.none'), 'expected' => cfg('gammu_db')])];
         } else {
-            $out[] = ['ok', 'service = sql, baza ' . $db . ' zgodna z panelem'];
+            $out[] = ['ok', t('conf.db_ok', ['db' => $db])];
         }
 
         $device = $this->get('gammu', 'device');
         if ($device === null || $device === '') {
-            $out[] = ['err', 'Brak parametru device w sekcji [gammu]'];
+            $out[] = ['err', t('conf.device_missing')];
         } else {
-            $out[] = file_exists($device) ? ['ok', 'Port modemu istnieje'] : ['warn', 'Port modemu ' . $device . ' nie istnieje'];
+            $out[] = file_exists($device) ? ['ok', t('conf.device_ok')] : ['warn', t('conf.device_bad', ['device' => $device])];
         }
 
         $drd = $this->get('smsd', 'deliveryreportdelay');
         if ($drd === null || (int) $drd < 3600) {
-            $out[] = ['warn', 'deliveryreportdelay = ' . ($drd ?? '600 (domyślnie)') . ' – zalecane co najmniej 3600, najlepiej 172800'];
+            $out[] = ['warn', t('conf.drd', ['value' => $drd ?? t('conf.drd_default')])];
         }
 
         $invalid = array_filter($entries, static fn ($e) => $e['type'] === 'invalid');
-        $out[] = $invalid === [] ? ['ok', 'Wszystkie linie zrozumiałe']
-            : ['err', 'Niezrozumiałe linie: ' . implode(', ', array_column($invalid, 'line'))];
+        $out[] = $invalid === [] ? ['ok', t('conf.lines_ok')]
+            : ['err', t('conf.lines_bad', ['list' => implode(', ', array_column($invalid, 'line'))])];
 
         foreach (['includenumbersfile', 'includesmsc'] as $k) {
             if ($this->get('smsd', $k) !== null) {
-                $out[] = ['warn', $k . ' ustawiony – lista dozwolonych wyłącza czarną listę'];
+                $out[] = ['warn', t('conf.include', ['key' => $k])];
             }
         }
         if (in_array('include_numbers', $sections, true)) {
-            $out[] = ['warn', 'Sekcja [include_numbers] – lista dozwolonych wyłącza czarną listę'];
+            $out[] = ['warn', t('conf.include_section')];
         }
         foreach ($this->section('smsd') as $k => $v) {
             if (str_starts_with($k, 'runon') && $k !== 'runonincomingcall') {
-                $out[] = ['warn', $k . ' = ' . $v . ' – polecenie uruchamiane przez Gammu (jako root)'];
+                $out[] = ['warn', t('conf.runon', ['key' => $k, 'value' => $v])];
             }
         }
         if ($original !== null) {
@@ -281,8 +281,8 @@ final class GammuConf
                     $changed[] = $k;
                 }
             }
-            $out[] = $changed === [] ? ['ok', 'Parametry zarządzane przez panel bez zmian']
-                : ['warn', 'Zmieniasz parametry zarządzane przez panel: ' . implode(', ', $changed)];
+            $out[] = $changed === [] ? ['ok', t('conf.managed_ok')]
+                : ['warn', t('conf.managed_changed', ['list' => implode(', ', $changed)])];
         }
         return $out;
     }
@@ -317,13 +317,13 @@ final class GammuConf
         $path = self::path();
         $fh = @fopen($path, 'r+'); // bez tworzenia: brakujący plik zostaje brakujący i jest zgłaszany jako nieczytelny
         if ($fh === false) {
-            throw new RuntimeException(is_readable($path) ? "Brak prawa zapisu do $path" : "Nie można odczytać $path");
+            throw new RuntimeException(t(is_readable($path) ? 'file.no_write_permission' : 'file.cannot_read', ['path' => $path]));
         }
         try {
             flock($fh, LOCK_EX);
             $current = (string) stream_get_contents($fh);
             if ($expected !== null && !hash_equals($expected, self::fingerprint($current))) {
-                throw new ConfStaleException("$path zmienił się od otwarcia formularza");
+                throw new ConfStaleException(t('file.changed', ['path' => $path]));
             }
             $backup = self::backup($current, $note);
             ftruncate($fh, 0);
@@ -335,7 +335,7 @@ final class GammuConf
             fclose($fh);
         }
         self::forget();
-        app_log('info', "zapis $path ($note), kopia $backup");
+        app_log('info', "zapis $path (" . tr($note) . "), kopia $backup");
         return $backup;
     }
 
@@ -343,7 +343,7 @@ final class GammuConf
     {
         $dir = self::backupDir();
         if (!is_dir($dir) && !@mkdir($dir, 0750, true)) {
-            throw new RuntimeException("Nie można utworzyć katalogu kopii $dir");
+            throw new RuntimeException(t('file.cannot_create_dir', ['dir' => $dir]));
         }
         $name = $prefix . '.' . date('Ymd-His');
         for ($i = 1; is_file("$dir/$name"); $i++) {
@@ -376,7 +376,7 @@ final class GammuConf
             umask($old);
         }
         if ($fh === false) {
-            throw new RuntimeException("Nie można utworzyć pliku $path" . (file_exists($path) ? ' (już istnieje)' : ''));
+            throw new RuntimeException(t(file_exists($path) ? 'file.cannot_create_exists' : 'file.cannot_create', ['path' => $path]));
         }
         // Obsługa błędów zamienia ostrzeżenia I/O w wyjątki – stąd @ (liczą się zwracane wartości) i sprzątanie w finally
         $ok = false;
@@ -384,11 +384,11 @@ final class GammuConf
             for ($done = 0, $len = strlen($content); $done < $len; $done += $n) {
                 $n = @fwrite($fh, substr($content, $done));
                 if ($n === false || $n === 0) {
-                    throw new RuntimeException("Nie można zapisać pliku $path");
+                    throw new RuntimeException(t('file.cannot_write', ['path' => $path]));
                 }
             }
             if (!@fflush($fh)) {
-                throw new RuntimeException("Nie można zapisać pliku $path");
+                throw new RuntimeException(t('file.cannot_write', ['path' => $path]));
             }
             $ok = true;
         } finally {
@@ -398,7 +398,7 @@ final class GammuConf
             }
         }
         if (!$closed) {
-            throw new RuntimeException("Nie można zapisać pliku $path");
+            throw new RuntimeException(t('file.cannot_write', ['path' => $path]));
         }
         @chmod($path, $mode);
     }

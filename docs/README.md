@@ -39,7 +39,7 @@ projektu (smstools3), w etapie P uzupełnione o wszystkie ekrany i stany wersji 
 | D7 | Wiele modemów | Wersja 1 – jeden modem. Kilka modemów w etapie rozszerzeń: **osobny proces Gammu na modem** (własna konfiguracja i PhoneID, wspólna baza), wybór przez `outbox.SenderID` |
 | D8 | Wiersze Gammu po imporcie | Zostają (tryb `keep`, `inbox.Processed = 'true'`), opcjonalnie tryb `delete` |
 | D9 | „Obce” wiadomości | Panel pokazuje też SMS wysłane innymi drogami (`gammu-smsd-inject`, inne programy piszące do bazy Gammu) |
-| D10 | Język interfejsu | Polski; teksty w jednym pliku, wersja angielska w etapie rozszerzeń |
+| D10 | Język interfejsu | Polski i angielski – teksty w `resources/lang/pl.php` i `en.php`, język wybierany w ustawieniach panelu (wspólny dla wszystkich użytkowników); CLI po polsku |
 | D11 | Historia | Bezterminowo; opcjonalne automatyczne czyszczenie starszych niż N dni |
 | D12 | Kanały przekazywania | **E-mail i webhook** (SMS i połączenia). Telegram i inne kanały – w przyszłości |
 | D13 | Kodowanie i dzielenie SMS | **Panel sam wybiera kodowanie** (GSM / Unicode) **i sam dzieli wiadomość na części z UDH** – Gammu nie dzieli wiadomości z bazy i przy kodowaniu GSM po cichu zamienia ą→a, ł→l, ó→o, ż→z ([03, rozdz. 3.3](03-integracja-gammu-smsd.md#33-wysyłka--zapis-do-outbox)) |

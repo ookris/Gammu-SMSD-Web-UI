@@ -31,7 +31,7 @@ Nakład: S – mały, M – średni, L – duży. Specyfikacje przyjętych funkc
 | **Statystyki** | SMS dziennie/miesięcznie, odsetek doręczeń, połączenia | S | 2.17.6 |
 | **Kilka modemów** | osobne instancje Gammu (PhoneID), wybór modemu przy wysyłce | L | 2.17.7 |
 | **Automatyczne czyszczenie historii** | usuwanie wiadomości starszych niż N dni (bez części RODO) | S | 2.17.8 |
-| **Wersja angielska interfejsu** | | S | 2.17.9 |
+| **Wersja angielska interfejsu** | zrobione 2026-10-04 (poza CLI) | S | 2.17.9 |
 
 ## 8.3. Na przyszłość (po ukończeniu wersji bazowej)
 

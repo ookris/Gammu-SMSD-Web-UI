@@ -39,8 +39,9 @@ używać nowości z 8.4 i 8.5, gdy realnie upraszczają kod (np. `array_find()`,
   to ucięty numer; kolumny `modem_status.signal_pct`/`battery_pct`, `ussd_requests.parent_id`/`sent_at`; podział na części
   w `SmsText::split()` (bez osobnego `SmsSplit.php`). Dodatkowe klasy: `Compose`, `Threads`, `Batch`, `Templates`,
   `ConfigSave`, `Status`, `Settings`, `Setup`, `Ui`.
-- **Następny etap – tłumaczenie całego interfejsu:** dziś `t()` obejmuje menu, statusy, komunikaty logowania i stany USSD;
-  wszystkie pozostałe teksty z `views/` i komunikaty stron trafią do `resources/lang/pl.php` + `en.php`.
+- **Tłumaczenie całego interfejsu (zrobione 2026-10-04):** wszystkie teksty widoków, stron i komunikatów idą przez
+  `t()` / `tn()` z `resources/lang/pl.php` + `en.php` (szczegóły – „Konwencje kodu”). Wersja angielska zrobiona wcześniej
+  niż w etapie 8; narzędzie wiersza poleceń (`bin/smsgui`) zostaje po polsku do kolejnego etapu.
 - Anulowanie: `SendingTimeOut <= NOW()` (świeżo dodany wiersz ma `SendingTimeOut = NOW()`; blokada Gammu ustawia czas w przyszłości).
 - Proces w tle zapisuje `worker_seen_at` – kontrola zdrowia odróżnia go od synchronizacji przy odświeżeniu strony.
 - Poprawki po przeglądzie: wysyłka do wielu w jednej transakcji (`Db::tx` zagnieżdżone dołącza do zewnętrznej) i z jednorazowym
@@ -52,7 +53,16 @@ używać nowości z 8.4 i 8.5, gdy realnie upraszczają kod (np. `array_find()`,
 - Każde wyjście przez `e()`; SQL tylko z parametrami.
 - Strona = plik `src/pages/<nazwa>.php` + widok `views/<nazwa>.php`. Ta sama strona zwraca
   **fragment** (bez układu), gdy żądanie ma nagłówek `HX-Request` – jedna logika dla całej strony i htmx.
-- Teksty interfejsu przez `t('klucz')` z pliku `resources/lang/pl.php` od początku (D10).
+- Teksty interfejsu przez `t('klucz', ['zmienna' => …])` z `resources/lang/pl.php` i `en.php` (D10) – te same klucze
+  w obu plikach (pilnuje `tests/I18nTest.php`, który zgłasza też polskie litery w napisach widoków i stron poza `t()`).
+  Brakujący tekst w `en.php` – zapasowo po polsku. Liczebniki: `tn('klucz', $n)`, wpis to lista form (pl: 1 / 2–4 / 5+,
+  en: 1 / inne). Daty i liczby: `fmt_date()`, `fmt_when()`, `fmt_num()` – formaty z plików języków.
+- Język: jedno ustawienie panelu (`settings.lang`, ekran „Ustawienia panelu”), wspólne dla wszystkich użytkowników.
+  `lang()` w CLI zawsze zwraca polski.
+- Tekst zapisywany w bazie, który pokazuje panel (`messages.error`, `ussd_requests.response` przy błędzie, notatki
+  kopii `gammu-smsdrc`), to klucz z parametrami z `msg_key()`; tłumaczy go `tr()` przy wyświetlaniu. Wiersze sprzed
+  tej zmiany mają zwykły tekst po polsku i są pokazywane bez zmian.
+- Teksty dla JS (licznik SMS): lista `Ui::JS_TEXTS`, przekazywane w `<script type="application/json" id="i18n">`.
 - Daty w bazie: `DATETIME`, czas lokalny.
 - Kodowanie plików UTF-8, końce linii LF (`.gitattributes`).
 
@@ -270,4 +280,5 @@ Zakres wg [07](07-plan-realizacji.md) i specyfikacji 2.17. Każde rozszerzenie d
   (usługa, modem, kolejka, błędy, proces w tle), HTTP API z tokenami i listą IP, ekran „Automatyzacje”.
 - **Etap 8:** autoodpowiedzi (słowo kluczowe / godziny / połączenie, blokada pętli 60 min); cykliczne saldo USSD
   z wykresem i progiem; kilka modemów (`gammu-smsd@.service`, „Dodaj modem”, `SenderID`, wybór modemu w formularzach);
-  statystyki (wykresy SVG po stronie serwera); automatyczne czyszczenie historii; wersja angielska.
+  statystyki (wykresy SVG po stronie serwera); automatyczne czyszczenie historii; ~~wersja angielska~~ (zrobiona
+  2026-10-04, poza CLI).

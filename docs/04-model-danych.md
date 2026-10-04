@@ -82,7 +82,7 @@ Jedna tabela dla obu kierunków – upraszcza widok rozmów.
 | modem_requested | VARCHAR(64) | modem wybrany przy wysyłce (`outbox.SenderID`, R) |
 | retries | TINYINT | ostatnio odczytane `outbox.Retries` |
 | status_code | INT | `StatusCode` / `StatusError` z Gammu |
-| error | VARCHAR(255) | opis błędu / raportu w języku użytkownika |
+| error | VARCHAR(255) | opis błędu / raportu – klucz tekstu z parametrami (`msg_key()`), tłumaczony przy wyświetlaniu |
 | is_read | TINYINT(1) | dla `in` |
 | scheduled_at, created_at, sent_at, received_at, delivered_at, updated_at | DATETIME | |
 
@@ -153,7 +153,7 @@ id, name, body, created_at, updated_at.
 
 ### `settings`
 `key` VARCHAR(64) PK, `value` TEXT – m.in. czas i wynik ostatniej synchronizacji, domyślne opcje wysyłki,
-okno wysyłki, szybkie kody USSD, licznik numerów referencyjnych UDH, retencja.
+okno wysyłki, szybkie kody USSD, licznik numerów referencyjnych UDH, retencja, język interfejsu (`lang`: `pl`/`en`).
 
 ### `login_attempts`
 ip, attempted_at – do blokady po nieudanych logowaniach (stare wpisy czyszczone).

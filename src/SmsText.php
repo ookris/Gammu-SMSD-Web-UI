@@ -117,7 +117,7 @@ final class SmsText
         $chunks[] = $current;
         $n = count($chunks);
         if ($n > self::MAX_PARTS) {
-            throw new InvalidArgumentException("Wiadomość ma $n części – limit to " . self::MAX_PARTS);
+            throw new InvalidArgumentException(t('sms.too_long', ['parts' => $n, 'max' => self::MAX_PARTS]));
         }
         $out = [];
         foreach ($chunks as $i => $chunk) {
