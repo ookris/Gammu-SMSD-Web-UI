@@ -78,5 +78,5 @@ Ustalenia z rozdziału 3 sprawdzono w źródłach Gammu **1.42.0** (`smsd/core.c
 | # | Kwestia |
 |---|---------|
 | O1 | Sprawdzenia specyficzne dla paczki Ubuntu i modemu – lista U1–U10 w [03, rozdz. 3.14](03-integracja-gammu-smsd.md#314-do-weryfikacji-na-ubuntu-etap-0). **Odłożone do dostarczenia modemu.** Nie blokują etapów 1–5: wartości zależne od paczki (ścieżki, nazwa usługi) są w `config.php`, a instalator (etap 6) powstanie po weryfikacji |
-| O2 | Adres repozytorium używany w poleceniu instalacyjnym (`ookris/Gammu-SMSD-Web-UI`) – do potwierdzenia przy publikacji |
+| O2 | ✔ Adres repozytorium: `ookris/Gammu-SMSD-Web-UI` – potwierdzony 2026-10-04 |
 | O3 | Makiety nowych ekranów (Modem/USSD, Połączenia, Zablokowane numery, konfiguracja Gammu) – do dorysowania przed etapem 5 |
