@@ -65,8 +65,9 @@ bazy MariaDB: smsgui_dev, gammu_dev (+ smsgui_test, gammu_test dla testów)
 ```
 
 ```bash
-brew install php mariadb && brew services start mariadb
-php tests/sim/gammu-sim.php init       # tworzy var/dev/, bazy dev z mysql.sql (InnoDB), config/config.php
+brew install php mariadb@11.8
+tests/db/mariadb.sh start              # osobna instancja MariaDB 11.8 na porcie 3307 (obok MySQL, jeśli jest)
+SIM_DB_PORT=3307 php tests/sim/gammu-sim.php init   # tworzy var/dev/, bazy dev z mysql.sql (InnoDB), config/config.php
 php bin/smsgui setup db && php bin/smsgui passwd admin
 php tests/sim/gammu-sim.php run        # symulator Gammu SMSD (osobny terminal)
 php bin/smsgui worker                  # proces w tle (osobny terminal)
@@ -133,7 +134,7 @@ a następnie statyczną stronę HTML, z której w etapach 1–5 powstaje widok `
 | [x] 1.13 | Runner testów bez zależności (`test()`, `assert_same()`, raport, kod wyjścia), baza testowa tworzona i czyszczona przez runner + testy `Db` (migracje na pustej bazie, ponowne uruchomienie), `Auth` (blokada), `GammuConf` (odczyt) | `tests/run.php`, `tests/*Test.php` |
 | [x] 1.14 | Symulator: polecenia `init`, `status`, `reload`, `restart`; skrypt `deploy/sql/gammu-mysql-17.sql` | `tests/sim/gammu-sim.php` |
 
-**Stan (2026-10-04):** wykonany, kryteria odbioru sprawdzone na symulatorze (lokalnie MySQL 9.7 zamiast MariaDB – kod pisany pod MariaDB).
+**Stan (2026-10-04):** wykonany, kryteria odbioru sprawdzone na symulatorze – testy i pełny cykl na MariaDB 11.8 (wcześniej także na MySQL 9.7).
 
 **Odbiór:** logowanie działa (także blokada po 5 próbach i wylogowanie); POST bez tokenu CSRF → 403;
 `php bin/smsgui check` na środowisku dev pokazuje same ✔, a po zamianie tabeli `gammu.outbox` na MyISAM – ✘ z podpowiedzią;

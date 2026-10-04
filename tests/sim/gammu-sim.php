@@ -3,6 +3,7 @@
 // czyta outbox tymi samymi warunkami, zapisuje sentitems, raporty doręczenia, inbox, phones, USSD, połączenia.
 //
 //   php tests/sim/gammu-sim.php init                     – var/dev/, bazy dev i test, config/config.php
+//     (serwer bazy: SIM_DB_HOST, SIM_DB_PORT, SIM_DB_USER, SIM_DB_PASSWORD; lokalna MariaDB: tests/db/mariadb.sh start, port 3307)
 //   php tests/sim/gammu-sim.php run                      – „demon” (osobny terminal)
 //   php tests/sim/gammu-sim.php receive <numer> <treść> [--parts=N] [--incomplete] [--flash]
 //   php tests/sim/gammu-sim.php external <numer> <treść> – wiadomość z „gammu-smsd-inject”
@@ -100,7 +101,8 @@ function sim_init(): void
     $user = getenv('SIM_DB_USER') ?: 'root';
     $pass = getenv('SIM_DB_PASSWORD') ?: '';
     $host = getenv('SIM_DB_HOST') ?: '127.0.0.1';
-    $pdo = new PDO("mysql:host=$host;port=3306;charset=utf8mb4", $user, $pass, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+    $port = getenv('SIM_DB_PORT') ?: '3306';
+    $pdo = new PDO("mysql:host=$host;port=$port;charset=utf8mb4", $user, $pass, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
     $schema = file_get_contents(SIM_ROOT . '/deploy/sql/gammu-mysql-17.sql');
     $schema = preg_replace('/^--.*$/m', '', $schema);
     foreach (['gammu_dev', 'gammu_test'] as $db) {
@@ -147,7 +149,7 @@ function sim_init(): void
         $php = PHP_BINARY;
         $sim = escapeshellarg($php) . ' ' . escapeshellarg("$root/tests/sim/gammu-sim.php");
         $export = var_export([
-            'db' => ['dsn' => "mysql:host=$host;port=3306;dbname=smsgui_dev;charset=utf8mb4", 'user' => $user, 'password' => $pass],
+            'db' => ['dsn' => "mysql:host=$host;port=$port;dbname=smsgui_dev;charset=utf8mb4", 'user' => $user, 'password' => $pass],
             'gammu_db' => 'gammu_dev',
             'log_path' => "$dev/smsgui.log",
             'backup_dir' => "$dev/backups",
@@ -162,7 +164,7 @@ function sim_init(): void
         file_put_contents($config, "<?php\n// Środowisko deweloperskie – utworzone przez tests/sim/gammu-sim.php init\nreturn $export;\n");
     }
     if (!is_file("$dev/hook.cnf")) {
-        file_put_contents("$dev/hook.cnf", "[client]\nuser = $user\npassword = $pass\nhost = $host\ndatabase = smsgui_dev\n");
+        file_put_contents("$dev/hook.cnf", "[client]\nuser = $user\npassword = $pass\nhost = $host\nport = $port\ndatabase = smsgui_dev\n");
     }
     echo "Gotowe: var/dev/, bazy smsgui_dev, gammu_dev (+ _test), config/config.php.\n";
     echo "Dalej: php bin/smsgui setup db && php bin/smsgui passwd admin\n";

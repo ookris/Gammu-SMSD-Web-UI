@@ -43,7 +43,7 @@ final class Calls
         $c = $ini['client'];
         $db = $c['database'] ?? 'smsgui';
         $dsn = isset($c['socket']) ? "mysql:unix_socket={$c['socket']};dbname=$db;charset=utf8mb4"
-            : 'mysql:host=' . ($c['host'] ?? 'localhost') . ';dbname=' . $db . ';charset=utf8mb4';
+            : 'mysql:host=' . ($c['host'] ?? 'localhost') . (isset($c['port']) ? ';port=' . (int) $c['port'] : '') . ';dbname=' . $db . ';charset=utf8mb4';
         return Db::connect($dsn, (string) ($c['user'] ?? 'smsgui_hook'), (string) ($c['password'] ?? ''));
     }
 

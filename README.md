@@ -50,11 +50,14 @@ Proces w tle sam się restartuje po zmianie plików. Zapomniane hasło: `sudo -u
 
 ## Praca lokalna (Mac, bez modemu)
 
-Wymagane PHP 8.5 i serwer MariaDB (lub MySQL) z Homebrew. Symulator Gammu SMSD zachowuje się jak Gammu 1.42 na bazie
-`gammu_dev` (wysyłka, ponowienia, raporty doręczenia, odbiór wieloczęściowy, USSD, połączenia, czarna lista).
+Wymagane PHP 8.5 i MariaDB z Homebrew (`brew install php mariadb@11.8`). MariaDB działa jako osobna instancja
+na porcie 3307 (dane w `~/.local/share/smsgui-mariadb`), więc nie koliduje z MySQL zainstalowanym obok.
+Symulator Gammu SMSD zachowuje się jak Gammu 1.42 na bazie `gammu_dev` (wysyłka, ponowienia, raporty doręczenia,
+odbiór wieloczęściowy, USSD, połączenia, czarna lista).
 
 ```bash
-php tests/sim/gammu-sim.php init               # var/dev/, bazy *_dev i *_test, config/config.php
+tests/db/mariadb.sh start                      # MariaDB na 127.0.0.1:3307 (stop | status | client [baza])
+SIM_DB_PORT=3307 php tests/sim/gammu-sim.php init   # var/dev/, bazy *_dev i *_test, config/config.php
 php bin/smsgui setup db && php bin/smsgui passwd admin
 php tests/sim/gammu-sim.php run                # „demon” Gammu (osobny terminal)
 php bin/smsgui worker                          # proces w tle (osobny terminal)
