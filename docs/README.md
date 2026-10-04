@@ -1,6 +1,6 @@
 # Dokumentacja projektu – Gammu SMSD Web UI
 
-Status: **projekt – dokumentacja gotowa, implementacja nierozpoczęta** (etap 0 – weryfikacja w kodzie źródłowym zakończona)
+Status: **projekt – dokumentacja gotowa, trwa etap P – projekt interfejsu** (etap 0 – weryfikacja w kodzie źródłowym zakończona)
 Data: 2026-10-04
 
 Prosty interfejs WWW (PHP + JS + MariaDB) do obsługi bramki SMS opartej na
@@ -22,9 +22,9 @@ o możliwości Gammu (USSD, połączenia przychodzące, czarna lista, okna wysy�
 | 8 | [Pomysły i propozycje](08-pomysly.md) | propozycje funkcji i ich status (przyjęte / odrzucone) |
 | 9 | [Plan implementacji](09-plan-implementacji.md) | zasady pracy, środowisko deweloperskie z symulatorem Gammu, zadania i pliki dla każdego etapu |
 
-**Makiety interfejsu:** https://claude.ai/artifact/1GcJxMSqGRWsxjPYG9mXG8 – przygotowane dla poprzedniego projektu
-(smstools3). Układ, nowa wiadomość, rozmowy, wysłane, kontakty i logowanie obowiązują bez zmian; ekran konfiguracji
-będzie dotyczył `gammu-smsdrc`, a nowe ekrany (Modem/USSD, Połączenia, Zablokowane numery) zostaną dorysowane w tym samym stylu.
+**Makiety interfejsu:** https://claude.ai/artifact/1GcJxMSqGRWsxjPYG9mXG8 – pierwotnie przygotowane dla poprzedniego
+projektu (smstools3), w etapie P uzupełniane o wszystkie ekrany i stany z rozdz. 2 (decyzja D23).
+**Prototyp HTML:** katalog `prototype/` – statyczne strony w docelowej technologii, z których powstają widoki panelu.
 
 ## Podjęte decyzje
 
@@ -52,6 +52,7 @@ będzie dotyczył `gammu-smsdrc`, a nowe ekrany (Modem/USSD, Połączenia, Zablo
 | D20 | Obsługa | **Wszystko przez przeglądarkę** (decyzja 2026-10-04). Konsola tylko do instalacji jednym poleceniem i w sytuacjach awaryjnych (zapomniane hasło) |
 | D21 | Nowe funkcje z Gammu | Przyjęte do wersji 1 (decyzja 2026-10-04): **USSD na żądanie**, **połączenia przychodzące** (odrzucanie + lista), **czarna lista numerów**, **okna wysyłki i priorytet**; stan modemu z tabeli `phones` |
 | D22 | Projekt | **Nowy projekt od zera** (decyzja 2026-10-04) – kod panelu dla smstools3 nie jest przenoszony |
+| D23 | Interfejs najpierw | **Najpierw projekt interfejsu, potem kod** (decyzja 2026-10-04). Etap P przed etapem 1: (1) makiety wszystkich ekranów i stanów do akceptacji, (2) statyczny prototyp HTML w docelowej technologii (Pico.css, `app.css`, ikony Solar, IBM Plex, zgodny z CSP) w `prototype/`. Widoki `views/*.php` powstają z prototypu przez podstawienie danych |
 
 ## Weryfikacja w kodzie źródłowym Gammu
 
@@ -79,4 +80,4 @@ Ustalenia z rozdziału 3 sprawdzono w źródłach Gammu **1.42.0** (`smsd/core.c
 |---|---------|
 | O1 | Sprawdzenia specyficzne dla paczki Ubuntu i modemu – lista U1–U10 w [03, rozdz. 3.14](03-integracja-gammu-smsd.md#314-do-weryfikacji-na-ubuntu-etap-0). **Odłożone do dostarczenia modemu.** Nie blokują etapów 1–5: wartości zależne od paczki (ścieżki, nazwa usługi) są w `config.php`, a instalator (etap 6) powstanie po weryfikacji |
 | O2 | ✔ Adres repozytorium: `ookris/Gammu-SMSD-Web-UI` – potwierdzony 2026-10-04 |
-| O3 | Makiety nowych ekranów (Modem/USSD, Połączenia, Zablokowane numery, konfiguracja Gammu) – do dorysowania przed etapem 5 |
+| O3 | Makiety nowych ekranów (Modem/USSD, Połączenia, Zablokowane numery, konfiguracja Gammu) – przeniesione do etapu P (D23), realizowane przed etapem 1 |

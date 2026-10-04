@@ -169,6 +169,7 @@ gammu-smsd-web-ui/
 ├── deploy/                 ← install.sh, nginx, sudoers, unity systemd, logrotate, fail2ban, SQL
 ├── tests/                  ← testy (php tests/run.php) + przykładowe wiersze tabel Gammu
 │   └── sim/                ← symulator gammu-smsd do pracy lokalnej
+├── prototype/              ← statyczny prototyp HTML interfejsu (etap P, decyzja D23) – wzór dla views/
 ├── var/                    ← dane środowiska deweloperskiego (poza repozytorium)
 └── docs/                   ← ta dokumentacja
 ```
