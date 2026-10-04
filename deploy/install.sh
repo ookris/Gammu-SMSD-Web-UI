@@ -107,8 +107,15 @@ else
     need "PHP (CLI) ≥ 8.5" php-cli php -r 'exit(version_compare(PHP_VERSION, "8.5.0", ">=") ? 0 : 1);'
     need "PHP: pdo_mysql" php-mysql php -r 'exit(extension_loaded("pdo_mysql") ? 0 : 1);'
     need "PHP: mbstring" php-mbstring php -r 'exit(extension_loaded("mbstring") ? 0 : 1);'
-    CLIV=$(php -r 'echo PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION;' 2>/dev/null || true)
-    need "PHP-FPM ${CLIV:-?} (ta sama wersja co CLI)" "php${CLIV}-fpm" test -x "/usr/sbin/php-fpm$CLIV"
+    # FPM w wersji CLI – wyznaczany dopiero, gdy CLI spełnia wymaganie (inaczej podpowiedź wskazałaby np. php8.4-fpm)
+    if php -r 'exit(version_compare(PHP_VERSION, "8.5.0", ">=") ? 0 : 1);' 2>/dev/null; then
+        CLIV=$(php -r 'echo PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION;')
+        need "PHP-FPM $CLIV (ta sama wersja co CLI)" "php$CLIV-fpm" test -x "/usr/sbin/php-fpm$CLIV"
+    elif ! have php; then
+        need "PHP-FPM" php-fpm false   # bez PHP: pakiety php-cli i php-fpm z Ubuntu mają tę samą wersję
+    else
+        info "– PHP-FPM: sprawdzę po aktualizacji PHP CLI do 8.5 (musi mieć tę samą wersję)"
+    fi
     need "MariaDB (dostęp root przez gniazdo)" mariadb-server mariadb -e 'SELECT 1'
     need "Gammu" gammu have gammu
     need "Gammu SMSD (usługa gammu-smsd)" gammu-smsd systemctl cat gammu-smsd
