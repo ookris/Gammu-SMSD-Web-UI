@@ -107,7 +107,8 @@ else
     need "PHP (CLI) ≥ 8.5" php-cli php -r 'exit(version_compare(PHP_VERSION, "8.5.0", ">=") ? 0 : 1);'
     need "PHP: pdo_mysql" php-mysql php -r 'exit(extension_loaded("pdo_mysql") ? 0 : 1);'
     need "PHP: mbstring" php-mbstring php -r 'exit(extension_loaded("mbstring") ? 0 : 1);'
-    need "PHP-FPM" php-fpm compgen -G '/usr/sbin/php-fpm*'
+    CLIV=$(php -r 'echo PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION;' 2>/dev/null || true)
+    need "PHP-FPM ${CLIV:-?} (ta sama wersja co CLI)" "php${CLIV}-fpm" test -x "/usr/sbin/php-fpm$CLIV"
     need "MariaDB (dostęp root przez gniazdo)" mariadb-server mariadb -e 'SELECT 1'
     need "Gammu" gammu have gammu
     need "Gammu SMSD (usługa gammu-smsd)" gammu-smsd systemctl cat gammu-smsd
@@ -121,7 +122,13 @@ PHPV=$(php -r 'echo PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION;')
 php -r 'exit(version_compare(PHP_VERSION, "8.5.0", ">=") ? 0 : 1);' || die "Wymagane PHP 8.5 lub nowsze (jest $PHPV)"
 GAMMUV=$(dpkg-query -W -f='${Version}' gammu-smsd 2>/dev/null || true)
 info "PHP $PHPV, Gammu ${GAMMUV:-?}"
-FPM_SOCK=$(ls /run/php/php"$PHPV"-fpm.sock 2>/dev/null || ls /run/php/php*-fpm.sock 2>/dev/null | head -1 || echo "/run/php/php$PHPV-fpm.sock")
+# Gniazdo FPM tylko w wersji CLI – inna wersja (np. 8.4) uruchamiałaby panel na nieobsługiwanym PHP
+FPM_SOCK=/run/php/php$PHPV-fpm.sock
+if [ ! -S "$FPM_SOCK" ]; then
+    systemctl enable --now "php$PHPV-fpm" >/dev/null 2>&1 || true
+    [ -S "$FPM_SOCK" ] || die "Nie działa PHP-FPM $PHPV (brak gniazda $FPM_SOCK) – zainstaluj php$PHPV-fpm i uruchom: systemctl enable --now php$PHPV-fpm"
+fi
+info "PHP-FPM $PHPV: $FPM_SOCK"
 systemctl enable --now mariadb >/dev/null 2>&1 || true
 
 # ---------- 3. Baza danych ----------
