@@ -6,6 +6,7 @@
 #   sudo bash deploy/collect-info.sh > info-przed.txt 2>&1
 #   sudo bash deploy/collect-info.sh > info-po.txt 2>&1
 set -uo pipefail
+export SYSTEMD_PAGER=cat PAGER=cat GIT_PAGER=cat   # bez pagera – na terminalu systemctl cat/show zatrzymywał skrypt w less
 
 section() { printf '\n===== %s =====\n' "$*"; }
 run() { printf '$ %s\n' "$*"; "$@" 2>&1; printf '[kod %s]\n' "$?"; }
@@ -50,7 +51,7 @@ for f in "$(command -v gammu-smsd 2>/dev/null)" /usr/lib/*/libgsmsd.so* /usr/lib
     printf -- '--- %s\n' "$f"
     ldd "$f" 2>/dev/null | grep -iE 'mysql|maria|pq|odbc|dbi' || echo "(brak bibliotek SQL w ldd)"
 done
-have gammu-smsd && run gammu-smsd --version
+if have gammu-smsd; then run gammu-smsd --version; else echo "gammu-smsd: brak"; fi
 
 section "U4: schemat mysql.sql w paczce"
 dpkg -L gammu-smsd 2>/dev/null | grep -iE 'sql|\.gz$' || echo "(paczka gammu-smsd niezainstalowana albo bez plików SQL)"
