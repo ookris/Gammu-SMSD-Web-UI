@@ -1,6 +1,6 @@
 # Dokumentacja projektu – Gammu SMSD Web UI
 
-Status: **etapy 1–5 zaimplementowane i sprawdzone na symulatorze (czekają na przegląd), etap 6 – pliki wdrożeniowe napisane, test na Ubuntu po dostarczeniu modemu**
+Status: **etapy 1–5 zaimplementowane i sprawdzone na symulatorze; etap 6 – instalator przetestowany na czystym Ubuntu Server 26.04 bez modemu (2026-10-04), czekają testy z modemem (wysyłka SMS, U3, U5, U7–U10) i wydanie v1.0**
 Data: 2026-10-04
 
 Prosty interfejs WWW (PHP + JS + MariaDB) do obsługi bramki SMS opartej na
@@ -79,6 +79,6 @@ Ustalenia z rozdziału 3 sprawdzono w źródłach Gammu **1.42.0** (`smsd/core.c
 
 | # | Kwestia |
 |---|---------|
-| O1 | Sprawdzenia specyficzne dla paczki Ubuntu i modemu – lista U1–U10 w [03, rozdz. 3.14](03-integracja-gammu-smsd.md#314-do-weryfikacji-na-ubuntu-etap-0). **Odłożone do dostarczenia modemu.** Nie blokują etapów 1–5: wartości zależne od paczki (ścieżki, nazwa usługi) są w `config.php`, a instalator (etap 6) powstanie po weryfikacji |
+| O1 | Sprawdzenia specyficzne dla paczki Ubuntu i modemu – lista U1–U10 w [03, rozdz. 3.14](03-integracja-gammu-smsd.md#314-do-weryfikacji-na-ubuntu-etap-0). ✔ U1, U2, U4, U6 i część 1 U10 sprawdzone na Ubuntu 26.04 (2026-10-04). **Pozostałe (U3, U5, U7–U9, część 2 U10) – po dostarczeniu modemu** |
 | O2 | ✔ Adres repozytorium: `ookris/Gammu-SMSD-Web-UI` – potwierdzony 2026-10-04 |
 | O3 | Makiety nowych ekranów (Modem/USSD, Połączenia, Zablokowane numery, konfiguracja Gammu) – ✔ dorysowane i zaakceptowane w etapie P (2026-10-04) |

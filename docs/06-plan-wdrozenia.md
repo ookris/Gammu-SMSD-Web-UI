@@ -13,9 +13,9 @@ curl -fsSL https://raw.githubusercontent.com/ookris/Gammu-SMSD-Web-UI/main/deplo
 
 | Element | Wymaganie |
 |---------|-----------|
-| System | Ubuntu Server LTS 26.04 (PHP ≥ 8.5 i Gammu 1.42.0 z repozytorium systemu; starsze wydania Ubuntu nie są wspierane) |
+| System | Ubuntu Server LTS 26.04 (PHP ≥ 8.5 i Gammu 1.42.0 z repozytorium systemu, w tym `universe`; starsze wydania Ubuntu nie są wspierane). Sprawdzone na 26.04.1: Gammu 1.42.0-11, MariaDB 11.8.6, nginx 1.28.3, PHP 8.5.4 |
 | Sprzęt | modem GSM USB/szeregowy z aktywną kartą SIM (PIN wyłączony lub znany) |
-| Pakiety | `gammu`, `gammu-smsd`, `mariadb-server`, `nginx`, `php-fpm`, `php-cli`, `php-mysql`, `php-mbstring`, `git` (instaluje je skrypt) |
+| Pakiety | `gammu`, `gammu-smsd`, `mariadb-server`, `nginx`, `php-fpm`, `php-cli`, `php-mysql`, `php-mbstring`, `openssl`, `git` (w trybie `full` instaluje je skrypt) |
 | Opcjonalnie | w rozszerzeniach: `msmtp-mta` (przekazywanie na e-mail, jeśli nie przez SMTP z panelu) |
 
 ## 6.2. Kroki instalacji
@@ -48,7 +48,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON gammu.* TO 'gammu'@'localhost';
 GRANT ALL ON smsgui.* TO 'smsgui'@'localhost';
 GRANT SELECT, INSERT, UPDATE, DELETE ON gammu.* TO 'smsgui'@'localhost';
 SQL
-zcat /usr/share/doc/gammu-smsd/examples/mysql.sql.gz | sudo mariadb gammu   # ⚠ U4 – ścieżka do potwierdzenia
+sudo mariadb gammu < /usr/share/doc/gammu-smsd/examples/mysql.sql        # ścieżka z paczki Ubuntu 26.04 (U4)
 for t in gammu inbox outbox outbox_multipart phones sentitems; do
   sudo mariadb gammu -e "ALTER TABLE $t ENGINE=InnoDB"
 done
@@ -197,7 +197,7 @@ Kolejność:
      Stan karty sprawdza przez `gammu getsecuritystatus`: PIN wymagany → pyta o niego i **sprawdza go raz**
      (`gammu entersecuritycode PIN …`; przy błędzie przerywa, żeby demon nie zużył kolejnych prób i nie zablokował karty);
      PUK → przerywa z podpowiedzią. Brak modemu → ostrzeżenie, reszta panelu instaluje się normalnie.
-   - *istniejąca konfiguracja z backendem `files`* (domyślna z paczki, ⚠ U2) → przestawia na `sql` po potwierdzeniu
+   - *istniejąca konfiguracja z backendem `files`* (domyślna z paczki – U2) → przestawia na `sql` po potwierdzeniu
      (wiadomości z katalogów kolejek Gammu nie są przenoszone – informacja na ekranie).
    - *skonfigurowany:* modemu nie zmienia.
    - Brakujące ustawienia zalecane dla panelu – `logfile`, `deliveryreportdelay = 172800`, `phoneid` – dopisuje.
@@ -215,8 +215,8 @@ Pytania mają wartości domyślne (Enter je akceptuje). Bez pytań – zmienne �
 pobieranie: `SMSGUI_DIR` (domyślnie `/opt/smsgui`), `SMSGUI_REPO`, `SMSGUI_BRANCH` (domyślnie `main`).
 
 Ograniczenie do sieci lokalnej jest włączone zawsze – zmienia się je ręcznie w konfiguracji nginx.
-Wartości zależne od paczki wykrywa zamiast je zakładać: nazwę usługi i użytkownika demona (⚠ U1),
-położenie `mysql.sql` (⚠ U4), gniazdo PHP-FPM (tylko w wersji PHP CLI; nie działa → uruchamia usługę, a gdy jej nie ma – przerywa). Dodatkowo: wyłącza domyślną stronę nginx (`sites-enabled/default`),
+Wartości zależne od paczki wykrywa zamiast je zakładać: nazwę usługi, użytkownika demona i `ExecReload` (U1; paczka 26.04: root, `ExecReload` jest),
+położenie `mysql.sql` (U4; zwykły lub `.gz`), gniazdo PHP-FPM (tylko w wersji PHP CLI; nie działa → uruchamia usługę, a gdy jej nie ma – przerywa). Dodatkowo: wyłącza domyślną stronę nginx (`sites-enabled/default`),
 instaluje filtr fail2ban (jail wyłączony).
 Szablony konfiguracji: `deploy/nginx-smsgui.conf`, `deploy/smsgui-worker.service`, `deploy/gammu-smsd@.service` (R),
 `deploy/logrotate-gammu-smsd`, `deploy/fail2ban/`.

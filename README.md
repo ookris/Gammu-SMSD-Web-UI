@@ -13,18 +13,28 @@ PHP 8.5 bez frameworka, htmx + Pico.css, bez Composera i npm. Dokumentacja proje
 curl -fsSL https://raw.githubusercontent.com/ookris/Gammu-SMSD-Web-UI/main/deploy/install.sh | sudo bash
 ```
 
-Skrypt instaluje Gammu SMSD, MariaDB, nginx i PHP, tworzy bazy i konta (losowe hasła w `/etc/smsgui/secrets.env`),
+Na początku skrypt pyta o tryb:
+
+- **`full`** (domyślny) – pokazuje listę wymaganych pakietów (✔ jest / → do instalacji) i instaluje tylko brakujące
+  (Gammu SMSD, MariaDB, nginx, PHP) z paskiem postępu; pełne wyjście `apt-get` trafia do `/var/log/smsgui-install.log`;
+- **`app`** – nie instaluje pakietów: sprawdza, czy są potrzebne programy (PHP ≥ 8.5 z `pdo_mysql` i `mbstring`,
+  PHP-FPM w tej samej wersji, MariaDB, Gammu SMSD, nginx), a przy braku podaje polecenie `apt install` do wykonania.
+
+Dalej w obu trybach tworzy bazy i konta (losowe hasła w `/etc/smsgui/secrets.env`),
 pomaga wybrać port modemu i sprawdza PIN (tylko raz), konfiguruje `/etc/gammu-smsdrc`, proces w tle `smsgui-worker`
 i nginx, pyta o login i hasło do panelu, uruchamia diagnostykę i opcjonalnie wysyła testowy SMS. Można go uruchomić
-ponownie – nie zmienia skonfigurowanego modemu ani konta. Bez pytań: zmienne `SMSGUI_*` opisane na początku
+ponownie – nie zmienia skonfigurowanego modemu ani konta. Bez modemu panel też się zainstaluje (`SMSGUI_MODEM=skip`);
+po podłączeniu modemu wystarczy uruchomić skrypt jeszcze raz. Bez pytań: zmienne `SMSGUI_*` (m.in. `SMSGUI_MODE`) opisane na początku
 [deploy/install.sh](deploy/install.sh) i w [docs/06](docs/06-plan-wdrozenia.md#63-skrypt-installsh).
 
 Panel jest domyślnie dostępny **tylko z sieci lokalnej**. Do dostępu z zewnątrz zalecany jest VPN (WireGuard, Tailscale);
 jeśli bezpośrednio – HTTPS (`certbot --nginx`) i fail2ban (filtr i wyłączony jail instaluje skrypt).
 
-> ⚠ Instalator nie był jeszcze uruchomiony na docelowym Ubuntu z modemem – część wartości zależnych od paczki
-> (U1–U10, [docs/03, rozdz. 3.14](docs/03-integracja-gammu-smsd.md#314-do-weryfikacji-na-ubuntu-etap-0)) skrypt wykrywa,
-> ale wymaga to sprawdzenia w etapie 6.
+> **Stan:** instalator przetestowany na czystym Ubuntu Server 26.04.1 bez modemu (Gammu 1.42.0, MariaDB 11.8, nginx 1.28,
+> PHP 8.5). Wysyłka i odbiór SMS na prawdziwym modemie czekają na test – wersja przed wydaniem v1.0 (gałąź `dev`).
+> Wyniki weryfikacji: [docs/03, rozdz. 3.14](docs/03-integracja-gammu-smsd.md#314-do-weryfikacji-na-ubuntu-etap-0).
+> Do tego czasu instalacja z gałęzi `dev`:
+> `curl -fsSL https://raw.githubusercontent.com/ookris/Gammu-SMSD-Web-UI/dev/deploy/install.sh | sudo SMSGUI_BRANCH=dev bash`
 
 ## Aktualizacja i odinstalowanie
 

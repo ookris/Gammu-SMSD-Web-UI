@@ -254,19 +254,22 @@ w tej linii, kopia na liście → „przeładowanie” symulatora → przywróce
 
 ## 9.8. Etap 6 – Wdrożenie (wersja 1)
 
-**Stan (2026-10-04):** pliki z 6.2–6.5 napisane, **nieprzetestowane na Ubuntu** – instalator wykrywa wartości zależne od paczki (usługa i jej użytkownik, `ExecReload`, położenie `mysql.sql`, gniazdo PHP-FPM), ale wymaga 6.1 i 6.6.
+**Stan (2026-10-04):** instalator przetestowany na czystym Ubuntu Server 26.04.1 bez modemu (6.6): instalacja,
+diagnostyka, panel w przeglądarce, testy automatyczne. Poprawki po teście: sudo-rs (`runuser` zamiast `sudo -E`),
+wersja Gammu z `dpkg-query`, bez skanowania needrestart, tryby `full`/`app`, lista pakietów ✔/→ z paskiem postępu
+i logiem `/var/log/smsgui-install.log`, gniazdo PHP-FPM tylko w wersji PHP CLI, `collect-info.sh` bez pagera.
+Wyniki U1–U10 – rozdz. 3.14. Do wydania brakuje testów z modemem (6.1, 6.7).
 
-Warunek wstępny: modem dostarczony, punkty U1–U10 (rozdz. 3.14) sprawdzone na Ubuntu, wyniki wpisane
-do dokumentacji.
+Warunek wstępny 6.1 i 6.7: modem dostarczony.
 
 | # | Zadanie |
 |---|---------|
-| [ ] 6.1 | Weryfikacja U1–U10, zebranie prawdziwych wierszy z tabel Gammu do `tests/fixtures/`, poprawki, jeśli coś odbiega |
+| [ ] 6.1 | Weryfikacja U1–U10 (✔ bez modemu: U1, U2, U4, U6, U10 cz. 1; z modemem: U3, U5, U7–U9, U10 cz. 2), zebranie prawdziwych wierszy z tabel Gammu do `tests/fixtures/`, poprawki, jeśli coś odbiega |
 | [x] 6.2 | `deploy/nginx-smsgui.conf`, `deploy/sudoers-smsgui`, `deploy/smsgui-worker.service`, `deploy/logrotate-gammu-smsd`, `deploy/fail2ban/` (filtr + jail) |
-| [x] 6.3 | `deploy/install.sh` wg rozdz. 6.3: pobieranie przez `curl … \| sudo bash`, pakiety, bazy i konta (hasła losowe), schemat Gammu + InnoDB, kreator modemu (`gammu identify` na portach, PIN sprawdzany raz), `gammu-smsdrc` przez `bin/smsgui setup gammu`, proces w tle, nginx, konto, `check`, testowy SMS (`bin/smsgui send --wait`) |
+| [x] 6.3 | `deploy/install.sh` wg rozdz. 6.3: tryby `full`/`app`, pobieranie przez `curl … \| sudo bash`, pakiety (tylko brakujące, z postępem), bazy i konta (hasła losowe), schemat Gammu + InnoDB, kreator modemu (`gammu identify` na portach, PIN sprawdzany raz), `gammu-smsdrc` przez `bin/smsgui setup gammu`, proces w tle, nginx, konto, `check`, testowy SMS (`bin/smsgui send --wait`) |
 | [x] 6.4 | `deploy/uninstall.sh` (z `--purge`) |
 | [x] 6.5 | Instrukcja instalacji, aktualizacji i odinstalowania w README |
-| [ ] 6.6 | Test instalacji na czystym serwerze Ubuntu 26.04 (maszyna wirtualna, nie Multipass) wg [rozdz. 10](10-test-na-ubuntu.md): `deploy/collect-info.sh` przed i po instalacji, panel w przeglądarce, `tests/run.php` na bazach testowych |
+| [x] 6.6 | Test instalacji na czystym serwerze Ubuntu 26.04 (maszyna wirtualna, nie Multipass) wg [rozdz. 10](10-test-na-ubuntu.md): `deploy/collect-info.sh` przed i po instalacji, panel w przeglądarce, `tests/run.php` na bazach testowych |
 | [ ] 6.7 | Lista kontrolna z rozdz. 7.1 na prawdziwym modemie |
 | [ ] 6.8 | Wydanie: scalenie `dev` → `main`, tag `v1.0` |
 

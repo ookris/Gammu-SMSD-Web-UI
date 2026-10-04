@@ -424,15 +424,21 @@ Wyświetlanie: `+48 601 234 567`.
 
 ## 3.14. Do weryfikacji na Ubuntu (etap 0)
 
-| # | Co | Jak sprawdzimy |
-|---|----|----------------|
-| U1 | Nazwa i plik usługi systemd (`gammu-smsd.service`?), czy ma `ExecReload` (SIGHUP), jako kto działa demon | `systemctl cat gammu-smsd` |
-| U2 | Domyślny `/etc/gammu-smsdrc` z paczki (backend, `logfile`, ścieżki) | odczyt pliku |
-| U3 | Czy paczka ma wkompilowany sterownik `native_mysql` | uruchomienie z `driver = native_mysql`, log startu |
-| U4 | Położenie skryptu `mysql.sql` w paczce | `dpkg -L gammu-smsd \| grep -i sql` |
-| U5 | Uprawnienia pliku logu, reguła logrotate (czy Gammu po rotacji pisze dalej – `copytruncate`) | `ls -l`, test rotacji |
-| U6 | ✔ Wersja PHP – użytkownik potwierdził PHP 8.5 na serwerze produkcyjnym (2026-10-03) | `php -v` przy instalacji |
-| U7 | Czy przeładowanie (`SIGHUP`) odczytuje ponownie `ExcludeNumbersFile` | test z numerem na liście |
-| U8 | USSD i odrzucanie połączeń na docelowym modemie; `SenderNumber` odpowiedzi USSD | test `*101#`, połączenie testowe |
-| U9 | Format numeru nadawcy podawany przez modem (z `+`, krajowy?) – istotne dla czarnej listy | odebrany SMS + log Gammu |
-| U10 | Strefa czasowa MariaDB = strefa systemu; `DeliveryReportDelay` – czas raportu przy wyłączonym telefonie | `SELECT NOW()`, test raportu |
+Test na czystym Ubuntu Server 26.04.1 (maszyna wirtualna bez modemu, 2026-10-04; [rozdz. 10](10-test-na-ubuntu.md)):
+Gammu 1.42.0-11, MariaDB 11.8.6, nginx 1.28.3, PHP 8.5.4. Punkty wymagające modemu – po jego dostarczeniu.
+
+| # | Co | Jak sprawdzimy | Wynik |
+|---|----|----------------|-------|
+| U1 | Nazwa i plik usługi systemd (`gammu-smsd.service`?), czy ma `ExecReload` (SIGHUP), jako kto działa demon | `systemctl cat gammu-smsd` | ✔ `/usr/lib/systemd/system/gammu-smsd.service`, `Type=forking`, `PIDFile=/run/gammu-smsd.pid`, `ExecReload=/bin/kill -HUP $MAINPID` (drop-in instalatora niepotrzebny); demon działa jako **root** (wariant z `--user` zakomentowany w pliku usługi) |
+| U2 | Domyślny `/etc/gammu-smsdrc` z paczki (backend, `logfile`, ścieżki) | odczyt pliku | ✔ `service = files`, `logfile = syslog` – instalator przestawia na `sql` i `/var/log/gammu-smsd/smsd.log` |
+| U3 | Czy paczka ma wkompilowany sterownik `native_mysql` | uruchomienie z `driver = native_mysql`, log startu | ⏳ bez modemu demon nie wystartował – do potwierdzenia w logu (`grep -i database /var/log/gammu-smsd/smsd.log`) |
+| U4 | Położenie skryptu `mysql.sql` w paczce | `dpkg -L gammu-smsd \| grep -i sql` | ✔ `/usr/share/doc/gammu-smsd/examples/mysql.sql` (nieskompresowany), schemat 17, tabele MyISAM (instalator zamienia na InnoDB) |
+| U5 | Uprawnienia pliku logu, reguła logrotate (czy Gammu po rotacji pisze dalej – `copytruncate`) | `ls -l`, test rotacji | ⏳ z modemem (rozdz. 10.6) |
+| U6 | Wersja PHP | `php -v` przy instalacji | ✔ PHP 8.5.4, gniazdo `/run/php/php8.5-fpm.sock` |
+| U7 | Czy przeładowanie (`SIGHUP`) odczytuje ponownie `ExcludeNumbersFile` | test z numerem na liście | ⏳ z modemem |
+| U8 | USSD i odrzucanie połączeń na docelowym modemie; `SenderNumber` odpowiedzi USSD | test `*101#`, połączenie testowe | ⏳ z modemem |
+| U9 | Format numeru nadawcy podawany przez modem (z `+`, krajowy?) – istotne dla czarnej listy | odebrany SMS + log Gammu | ⏳ z modemem |
+| U10 | Strefa czasowa MariaDB = strefa systemu; `DeliveryReportDelay` – czas raportu przy wyłączonym telefonie | `SELECT NOW()`, test raportu | część 1 ✔ czas bazy zgodny z PHP (różnica 0 s); część 2 (raport) ⏳ z modemem |
+
+Dodatkowo: domyślnym `sudo` w Ubuntu 26.04 jest **sudo-rs** – nie obsługuje `sudo -E` (instalator używa `runuser`),
+reguła z `/etc/sudoers.d/smsgui` działa bez zmian.

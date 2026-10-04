@@ -9,6 +9,9 @@ U10 jest spełnione dopiero po obu częściach.
 
 Docelowo Ubuntu Server 26.04, czysta maszyna (bez wcześniejszego Gammu, MariaDB i nginx).
 
+**Stan (2026-10-04):** kroki 10.1–10.5 wykonane na Ubuntu Server 26.04.1 (maszyna wirtualna QEMU, bez modemu) –
+wyniki w rozdz. 3.14, poprawki instalatora w rozdz. 9.8. Pozostaje rozdz. 10.6 (z modemem).
+
 ## 10.1. Kod
 
 Instalator pobiera domyślnie gałąź `main`; przed wydaniem v1.0 testujemy `dev`. Najpierw wypchnij `dev`
