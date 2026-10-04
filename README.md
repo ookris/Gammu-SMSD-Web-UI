@@ -9,9 +9,9 @@ czarna lista oraz konfiguracja i diagnostyka Gammu – wszystko z przeglądarki,
 Instalacja jednym poleceniem: skrypt instaluje i konfiguruje Gammu SMSD, MariaDB, nginx i PHP, pomaga wybrać modem
 i kończy diagnostyką.
 
-> **Stan projektu:** wersja przed wydaniem 1.0 (gałąź `dev`). Panel jest kompletny i przetestowany na symulatorze
-> Gammu oraz na czystym Ubuntu Server 26.04.1 (instalacja, diagnostyka, panel, testy automatyczne). Testy z prawdziwym
-> modemem (wysyłka, odbiór, USSD, raporty doręczenia) są w toku.
+> **Stan projektu:** wersja 1.0.0-beta.1. Panel jest kompletny i przetestowany na symulatorze Gammu oraz na czystym
+> Ubuntu Server 26.04.1 (instalacja, diagnostyka, panel, testy automatyczne). Testy z prawdziwym modemem (wysyłka,
+> odbiór, USSD, raporty doręczenia) są w toku.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="screenshots/dashboard-dark.png">
@@ -152,16 +152,10 @@ Wersje sprawdzone na Ubuntu 26.04.1: Gammu 1.42.0, MariaDB 11.8.6, nginx 1.28.3,
 curl -fsSL https://raw.githubusercontent.com/ookris/Gammu-SMSD-Web-UI/main/deploy/install.sh | sudo bash
 ```
 
-Przed wydaniem 1.0 aktualny kod jest w gałęzi `dev`:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/ookris/Gammu-SMSD-Web-UI/dev/deploy/install.sh | sudo SMSGUI_BRANCH=dev bash
-```
-
 Można też najpierw pobrać repozytorium i uruchomić skrypt z niego:
 
 ```bash
-sudo git clone -b dev https://github.com/ookris/Gammu-SMSD-Web-UI.git /opt/smsgui
+sudo git clone https://github.com/ookris/Gammu-SMSD-Web-UI.git /opt/smsgui
 sudo /opt/smsgui/deploy/install.sh
 ```
 

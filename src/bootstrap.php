@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 const APP_ROOT = __DIR__ . '/..';
-const APP_VERSION = '1.0-dev';
+const APP_VERSION = '1.0.0-beta.1';
 
 spl_autoload_register(static function (string $class): void {
     if (preg_match('/^[A-Z][A-Za-z0-9]*$/', $class)) {
