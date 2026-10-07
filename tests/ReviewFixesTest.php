@@ -195,3 +195,22 @@ test('nieudany zapis kopii: wyjątek i usunięty niepełny plik (także gdy ostr
     }
     assert_same([], FailingWriteStream::$files);
 });
+
+test('formularz i setup gammu usuwają port = /dev/null z szablonu Ubuntu', function () {
+    $conf = GammuConf::parse("[gammu]\nport = /dev/null\nconnection = at\ndevice = /dev/ttyUSB0\n[smsd]\nservice = sql\n");
+    [$new, $changes] = GammuConfForm::apply($conf, ['gammu_device' => '/dev/ttyUSB0', 'gammu_connection' => 'at']);
+    assert_same(null, $new->get('gammu', 'port'));
+    assert_same(['port /dev/null → (domyślnie)'], $changes);
+
+    write_conf("[gammu]\nport = /dev/null\nconnection = at\n\n[smsd]\nservice = sql\n");
+    ob_start();
+    $code = Setup::gammu(['device' => '/dev/ttyUSB0', 'db-user' => 'gammu', 'db-password' => 'x']);
+    ob_end_clean();
+    assert_same(0, $code);
+    $after = GammuConf::parse((string) file_get_contents((string) cfg('gammu_conf')));
+    assert_same(null, $after->get('gammu', 'port'));
+    assert_same('/dev/ttyUSB0', $after->get('gammu', 'device'));
+    foreach (glob(cfg('gammu_conf') . '.smsgui-*') as $b) {
+        unlink($b);
+    }
+});

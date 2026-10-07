@@ -935,6 +935,8 @@ return [
     'conf.device_missing' => 'No device parameter in the [gammu] section',
     'conf.device_ok' => 'The modem port exists',
     'conf.device_bad' => 'The modem port {device} does not exist',
+    'conf.port_ignored' => 'port = {port} – old name of the device parameter, ignored by Gammu – remove this line',
+    'conf.port_used' => 'port = {port} – old name of the device parameter – replace this line with device = …',
     'conf.drd' => 'deliveryreportdelay = {value} – at least 3600 recommended, ideally 172800',
     'conf.drd_default' => '600 (default)',
     'conf.lines_ok' => 'All lines understood',

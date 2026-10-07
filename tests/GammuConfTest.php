@@ -58,3 +58,25 @@ test('walidacja: brak sekcji, service, niezrozumiałe linie', function () {
     assert_contains('service = files', $text);
     assert_contains('Niezrozumiałe linie: 3', $text);
 });
+
+test('port – stara nazwa device: usunięcie, przeniesienie do device, walidacja', function () {
+    $c = GammuConf::parse("[gammu]\nport = /dev/null\nconnection = at\ndevice = /dev/ttyUSB0\n");
+    assert_same('/dev/null', $c->dropLegacyPort());
+    assert_same("[gammu]\nconnection = at\ndevice = /dev/ttyUSB0\n", $c->text());
+    assert_same(null, $c->dropLegacyPort());
+
+    $c = GammuConf::parse("[gammu]\nport = /dev/ttyUSB1\nconnection = at\n");
+    $c->dropLegacyPort();
+    assert_same("[gammu]\nconnection = at\ndevice = /dev/ttyUSB1\n", $c->text());
+
+    $c = GammuConf::parse("[gammu]\nport = /dev/null\n");
+    $c->dropLegacyPort();
+    assert_same("[gammu]\n", $c->text());
+
+    $text = implode(' | ', array_column(GammuConf::parse("[gammu]\nport = /dev/null\ndevice = /dev/null\n[smsd]\nservice = sql\n")->validate(), 1));
+    assert_contains('port = /dev/null – stara nazwa parametru device, Gammu ją pomija', $text);
+    assert_contains('Brak parametru device', $text);
+    $text = implode(' | ', array_column(GammuConf::parse("[gammu]\nport = /dev/ttyUSB9\n[smsd]\nservice = sql\n")->validate(), 1));
+    assert_contains('zamień tę linię na device', $text);
+    assert_contains('Port modemu /dev/ttyUSB9 nie istnieje', $text);
+});

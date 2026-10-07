@@ -935,6 +935,8 @@ return [
     'conf.device_missing' => 'Brak parametru device w sekcji [gammu]',
     'conf.device_ok' => 'Port modemu istnieje',
     'conf.device_bad' => 'Port modemu {device} nie istnieje',
+    'conf.port_ignored' => 'port = {port} – stara nazwa parametru device, Gammu ją pomija – usuń tę linię',
+    'conf.port_used' => 'port = {port} – stara nazwa parametru device – zamień tę linię na device = …',
     'conf.drd' => 'deliveryreportdelay = {value} – zalecane co najmniej 3600, najlepiej 172800',
     'conf.drd_default' => '600 (domyślnie)',
     'conf.lines_ok' => 'Wszystkie linie zrozumiałe',

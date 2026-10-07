@@ -188,6 +188,23 @@ final class GammuConf
         array_splice($this->lines, ($lastKv ?? $start) + 1, 0, [$new]);
     }
 
+    /**
+     * Usuwa `port` z [gammu] – starą nazwę `device`, którą Gammu czyta tylko przy braku `device` (szablon Ubuntu ma
+     * `port = /dev/null`). Prawdziwy port bez `device` przenosi do `device`. Zwraca usuniętą wartość albo null.
+     */
+    public function dropLegacyPort(): ?string
+    {
+        $port = $this->get('gammu', 'port');
+        if ($port === null) {
+            return null;
+        }
+        if ((string) $this->get('gammu', 'device') === '' && $port !== '' && $port !== '/dev/null') {
+            $this->set('gammu', 'device', $port);
+        }
+        $this->set('gammu', 'port', null);
+        return $port;
+    }
+
     // ---------- Maskowanie haseł (nie trafiają do przeglądarki) ----------
 
     /** Tekst z zamaskowanym hasłem do bazy i PIN-em. */
@@ -245,8 +262,13 @@ final class GammuConf
             $out[] = ['ok', t('conf.db_ok', ['db' => $db])];
         }
 
-        $device = $this->get('gammu', 'device');
-        if ($device === null || $device === '') {
+        $device = (string) $this->get('gammu', 'device');
+        $port = $this->get('gammu', 'port');
+        if ($port !== null) {
+            $out[] = ['warn', t($device === '' ? 'conf.port_used' : 'conf.port_ignored', ['port' => $port])];
+            $device = $device === '' ? $port : $device;
+        }
+        if ($device === '' || $device === '/dev/null') {
             $out[] = ['err', t('conf.device_missing')];
         } else {
             $out[] = file_exists($device) ? ['ok', t('conf.device_ok')] : ['warn', t('conf.device_bad', ['device' => $device])];
