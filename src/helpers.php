@@ -365,7 +365,7 @@ function fmt_short(?string $dt): string
     if ($t === null) {
         return '—';
     }
-    $days = (int) ((strtotime('today') - strtotime(date('Y-m-d', $t))) / 86400);
+    $days = (int) (new DateTimeImmutable('today'))->diff(new DateTimeImmutable(date('Y-m-d', $t)))->format('%r%a') * -1; // dni kalendarzowe (zmiana czasu skraca/wydłuża dobę)
     return match (true) {
         $days <= 0 => date('H:i', $t),
         $days === 1 => t('date.yesterday'),

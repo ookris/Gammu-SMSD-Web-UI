@@ -148,6 +148,9 @@ final class Contacts
 
     public static function addToGroup(array $ids, int $groupId): void
     {
+        if (!Db::val('SELECT 1 FROM `groups` WHERE id = ?', [$groupId])) {
+            return; // grupa usunięta w innej karcie
+        }
         foreach ($ids as $id) {
             Db::exec('INSERT IGNORE INTO contact_group_members (contact_id, group_id) VALUES (?, ?)', [$id, $groupId]);
         }
@@ -193,10 +196,12 @@ final class Contacts
     /** Wiersze CSV z wykrytym separatorem (; lub ,), UTF-8 także z BOM. */
     public static function csvRows(string $content): array
     {
-        $content = preg_replace('/^\x{FEFF}/u', '', str_replace("\r\n", "\n", $content));
+        $content = str_replace("\r\n", "\n", $content);
+        // Najpierw kodowanie (preg_replace z /u zwraca null dla bajtów spoza UTF-8); Windows-1250 zna iconv, mbstring go nie ma
         if (!mb_check_encoding($content, 'UTF-8')) {
-            $content = mb_convert_encoding($content, 'UTF-8', 'Windows-1250');
+            $content = (string) @iconv('CP1250', 'UTF-8//IGNORE', $content);
         }
+        $content = preg_replace('/^\x{FEFF}/u', '', $content) ?? $content;
         $first = strtok($content, "\n") ?: '';
         $sep = substr_count($first, ';') >= substr_count($first, ',') ? ';' : ',';
         $rows = [];

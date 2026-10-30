@@ -30,13 +30,13 @@ if (is_post()) {
             [$p, $err] = Blocklist::add($r[0] ?? '', $r[1] ?? '');
             $n += (int) ($err === null);
         }
-        flash('ok', tn('blocklist.imported', $n), Blocklist::apply());
+        flash('ok', tn('blocklist.imported', $n), Blocklist::applyQuietly());
         redirect(url('blocklist'));
     }
     if (($id = (int) input('unblock')) > 0) {
         $phone = Db::val('SELECT phone FROM blocked_numbers WHERE id = ?', [$id]);
         Db::exec('DELETE FROM blocked_numbers WHERE id = ?', [$id]);
-        flash('ok', t('blocklist.unblocked', ['who' => Phone::format((string) $phone)]), Blocklist::apply());
+        flash('ok', t('blocklist.unblocked', ['who' => Phone::format((string) $phone)]), Blocklist::applyQuietly());
         redirect(url('blocklist'));
     }
     if (input('phone') !== '') {

@@ -43,7 +43,13 @@ final class Sync
             if ($checked === null || time() - $checked >= 15) {
                 Service::refreshStatus();
             }
-            Messages::dailyCleanup();
+            try {
+                Messages::dailyCleanup();
+            } catch (Throwable $e) { // porządki nie mogą zatrzymać zapisu stanu synchronizacji ani zabić procesu w tle
+                $r['errors']++;
+                $errors[] = 'cleanup: ' . $e->getMessage();
+                app_log('error', 'czyszczenie historii: ' . $e->getMessage());
+            }
             Settings::set('last_sync_at', now_db());
             Settings::set('last_sync_result', $r);
             Settings::set('last_sync_error', implode('; ', $errors));

@@ -97,6 +97,16 @@ final class Blocklist
         return $code === 0 ? t('blocklist.reloaded') . '.' : t('blocklist.reload_failed', ['out' => $out]);
     }
 
+    /** apply() dla akcji po zmianie w bazie: błąd zapisu pliku nie może zamienić udanej zmiany w stronę błędu 500. */
+    public static function applyQuietly(): string
+    {
+        try {
+            return self::apply();
+        } catch (Throwable $e) {
+            return t('blocklist.not_written') . ': ' . $e->getMessage();
+        }
+    }
+
     /** Blokada z rozmowy, odebranych, kontaktu lub połączeń – komunikat flash. */
     public static function blockFromPanel(string $phone, string $note = ''): void
     {

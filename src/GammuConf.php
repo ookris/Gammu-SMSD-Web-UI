@@ -350,8 +350,14 @@ final class GammuConf
             $backup = self::backup($current, $note);
             ftruncate($fh, 0);
             rewind($fh);
-            fwrite($fh, $text);
-            fflush($fh);
+            // Niepełny zapis zostawiłby ucięty gammu-smsdrc – wtedy przywracamy poprzednią treść (kopia jest już zapisana)
+            if (@fwrite($fh, $text) !== strlen($text) || !@fflush($fh)) {
+                ftruncate($fh, 0);
+                rewind($fh);
+                @fwrite($fh, $current);
+                @fflush($fh);
+                throw new RuntimeException(t('file.cannot_write', ['path' => $path]));
+            }
             flock($fh, LOCK_UN);
         } finally {
             fclose($fh);

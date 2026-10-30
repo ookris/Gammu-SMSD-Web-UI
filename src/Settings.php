@@ -22,7 +22,11 @@ final class Settings
 
     public static function get(string $key, ?string $default = null): ?string
     {
-        self::$cache ??= array_column(Db::all('SELECT `key`, `value` FROM settings'), 'value', 'key');
+        if (str_starts_with($key, 'batch_')) {
+            // Opisy wysyłek rosną bez końca i są czytane pojedynczo – nie trafiają do pamięci podręcznej całej tabeli
+            return Db::val('SELECT `value` FROM settings WHERE `key` = ?', [$key]) ?? $default;
+        }
+        self::$cache ??= array_column(Db::all("SELECT `key`, `value` FROM settings WHERE `key` NOT LIKE 'batch\\_%'"), 'value', 'key');
         return self::$cache[$key] ?? $default ?? self::DEFAULTS[$key] ?? null;
     }
 
@@ -50,7 +54,7 @@ final class Settings
             default => (string) $value,
         };
         Db::exec('INSERT INTO settings (`key`, `value`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `value` = VALUES(`value`)', [$key, $value]);
-        if (self::$cache !== null) {
+        if (self::$cache !== null && !str_starts_with($key, 'batch_')) {
             self::$cache[$key] = $value;
         }
     }

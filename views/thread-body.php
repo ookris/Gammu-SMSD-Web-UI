@@ -1,6 +1,6 @@
 <?php /** @var string $phone @var array $items @var string $version */ $day = null; ?>
 <div class="thread-body" id="thread-body" aria-live="polite" data-scroll-bottom
-     hx-get="<?= e(url('inbox', ['phone' => $phone, 'fragment' => 'body', 'v' => $version])) ?>" hx-trigger="every 10s" hx-swap="outerHTML">
+     hx-get="<?= e(url('inbox', ['phone' => $phone, 'fragment' => 'body', 'v' => $version, 'poll' => 1])) ?>" hx-trigger="every 10s" hx-swap="outerHTML">
 <?php foreach ($items as $it): $d = substr((string) $it['at'], 0, 10); ?>
 <?php if ($d !== $day): $day = $d; ?><div class="day"><?= e(fmt_day_heading((string) $it['at'])) ?></div><?php endif ?>
 <?php if ($it['kind'] === 'call'): ?>

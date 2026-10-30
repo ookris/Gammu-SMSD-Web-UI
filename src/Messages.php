@@ -29,6 +29,8 @@ final class Messages
         $m = Db::exec("DELETE FROM messages WHERE created_at < ? AND NOT (direction = 'out' AND status IN ('scheduled','queued'))", [$before]);
         $c = Db::exec('DELETE FROM calls WHERE received_at < ?', [$before]);
         $u = Db::exec("DELETE FROM ussd_requests WHERE created_at < ? AND status NOT IN ('queued','sent')", [$before]);
+        // Opisy wysyłek (settings.batch_*) bez żadnej wiadomości
+        Db::exec("DELETE FROM settings WHERE `key` LIKE 'batch\\_%' AND NOT EXISTS (SELECT 1 FROM messages m WHERE m.batch_id = SUBSTRING(settings.`key`, 7))");
         $i = Db::exec("DELETE FROM {g}.inbox WHERE Processed = 'true' AND ReceivingDateTime < ?", [$before]);
         $s = Db::exec('DELETE FROM {g}.sentitems WHERE InsertIntoDB < ?', [$before]);
         app_log('info', "czyszczenie historii > $days dni: wiadomości $m, połączenia $c, USSD $u, inbox $i, sentitems $s");
