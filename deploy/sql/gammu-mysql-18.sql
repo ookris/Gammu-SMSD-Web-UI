@@ -1,4 +1,4 @@
--- Schemat bazy Gammu SMSD w wersji 17 (Gammu 1.40–1.43, w Ubuntu 26.04: 1.42.0) dla MySQL/MariaDB.
+-- Schemat bazy Gammu SMSD w wersji 18 (Gammu 1.44 i nowsze; wersja 17 – Gammu 1.40–1.43, w Ubuntu 26.04: 1.42.0) dla MySQL/MariaDB.
 -- Na podstawie docs/sql/mysql.sql z kodu źródłowego Gammu (https://github.com/gammu/gammu, licencja GPL-2.0).
 -- Dołączony do repozytorium, bo na Macu (środowisko deweloperskie) nie ma paczki Gammu; na serwerze
 -- instalator używa skryptu z paczki gammu-smsd. Tabele od razu w InnoDB (transakcje przy zapisie wiadomości wieloczęściowych).
@@ -7,11 +7,12 @@ CREATE TABLE IF NOT EXISTS `gammu` (
   `Version` integer NOT NULL DEFAULT '0' PRIMARY KEY
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-INSERT INTO `gammu` (`Version`) SELECT 17 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `gammu`);
+INSERT INTO `gammu` (`Version`) SELECT 18 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `gammu`);
 
 CREATE TABLE IF NOT EXISTS `inbox` (
   `UpdatedInDB` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `ReceivingDateTime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `InsertIntoDB` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `Text` text NOT NULL,
   `SenderNumber` varchar(20) NOT NULL DEFAULT '',
   `Coding` enum('Default_No_Compression','Unicode_No_Compression','8bit','Default_Compression','Unicode_Compression') NOT NULL DEFAULT 'Default_No_Compression',
@@ -20,10 +21,15 @@ CREATE TABLE IF NOT EXISTS `inbox` (
   `Class` integer NOT NULL DEFAULT '-1',
   `TextDecoded` text NOT NULL,
   `ID` integer unsigned NOT NULL AUTO_INCREMENT,
+  `MessageID` integer unsigned NOT NULL DEFAULT '0',
+  `SequencePosition` integer NOT NULL DEFAULT '1',
+  `PartCount` integer NOT NULL DEFAULT '1',
   `RecipientID` text NOT NULL,
   `Processed` enum('false','true') NOT NULL DEFAULT 'false',
   `Status` integer NOT NULL DEFAULT '-1',
-  PRIMARY KEY (`ID`)
+  PRIMARY KEY (`ID`),
+  KEY `inbox_message` (`MessageID`, `SequencePosition`),
+  KEY `inbox_insert` (`InsertIntoDB`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS `outbox` (
@@ -32,6 +38,7 @@ CREATE TABLE IF NOT EXISTS `outbox` (
   `SendingDateTime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `SendBefore` time NOT NULL DEFAULT '23:59:59',
   `SendAfter` time NOT NULL DEFAULT '00:00:00',
+  `SendDays` integer NOT NULL DEFAULT '127',
   `Text` text,
   `DestinationNumber` varchar(20) NOT NULL DEFAULT '',
   `Coding` enum('Default_No_Compression','Unicode_No_Compression','8bit','Default_Compression','Unicode_Compression') NOT NULL DEFAULT 'Default_No_Compression',

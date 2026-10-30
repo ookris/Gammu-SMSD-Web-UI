@@ -749,7 +749,7 @@ return [
     'health.db_hint' => 'check the MariaDB service and db.dsn / db.user / db.password in config.php',
     'health.db_ok' => 'Connected to the panel database, schema version {version}',
     'health.gammu_schema' => 'Database `{db}`, schema version {version}',
-    'health.gammu_schema_hint' => 'the panel requires schema 17 (Gammu 1.42)',
+    'health.gammu_schema_hint' => 'the panel supports schema 17 (Gammu 1.40–1.43) and 18 (Gammu 1.44+)',
     'health.gammu_missing' => 'Gammu database `{db}` or table `gammu` is missing',
     'health.gammu_missing_hint' => 'create the tables from mysql.sql in the gammu-smsd package or run deploy/install.sh again',
     'health.engine_ok' => 'Gammu tables use the InnoDB engine',

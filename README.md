@@ -137,7 +137,7 @@ Jasny i ciemny motyw przełączają się według ustawień systemu. Kliknij mini
 
 | Warstwa | Technologia |
 |---------|-------------|
-| Bramka SMS | Gammu SMSD 1.42 z backendem SQL (`native_mysql`), schemat bazy w wersji 17 |
+| Bramka SMS | Gammu SMSD 1.42 z backendem SQL (`native_mysql`), schemat bazy w wersji 17 lub 18 (Gammu 1.44+) |
 | Baza danych | MariaDB (tabele InnoDB – transakcje przy zapisie wiadomości wieloczęściowych) |
 | Aplikacja | PHP 8.5 bez frameworka i bez Composera; PDO, migracje bazy wbudowane w panel |
 | Interfejs | [htmx](https://htmx.org) 2, [Pico.css](https://picocss.com) 2, czcionki IBM Plex, ikony [Solar](https://icon-sets.iconify.design/solar/) – wszystko dołączone lokalnie, bez npm i bez procesu budowania |
@@ -270,7 +270,7 @@ for t in gammu inbox outbox outbox_multipart phones sentitems; do
 done
 ```
 
-Gdy paczka nie zawiera skryptu, można użyć `deploy/sql/gammu-mysql-17.sql` z repozytorium (krok 4).
+Gdy paczka nie zawiera skryptu, można użyć `deploy/sql/gammu-mysql-18.sql` z repozytorium (krok 4).
 
 ### 3. Konfiguracja Gammu SMSD
 
@@ -599,7 +599,7 @@ Program jest rozpowszechniany bez jakiejkolwiek gwarancji – szczegóły w plik
 
 Dołączone biblioteki: [htmx](https://htmx.org) (0BSD), [Pico.css](https://picocss.com) (MIT), czcionki IBM Plex (OFL),
 [PHPMailer](https://github.com/PHPMailer/PHPMailer) (LGPL-2.1, `src/vendor/PHPMailer/`).
-Schemat bazy `deploy/sql/gammu-mysql-17.sql` na podstawie Gammu (GPL-2.0).
+Schemat bazy `deploy/sql/gammu-mysql-18.sql` na podstawie Gammu (GPL-2.0).
 
 **Ikony:** [Solar Icon Set](https://icon-sets.iconify.design/solar/) – autor 480 Design, licencja
 [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) (pliki w `resources/icons/`, atrybucja także w stopce panelu).

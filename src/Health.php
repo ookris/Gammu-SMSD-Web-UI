@@ -37,7 +37,7 @@ final class Health
         // Baza Gammu: wersja schematu i silnik tabel
         try {
             $version = (int) Db::val('SELECT Version FROM {g}.gammu');
-            $add('gammu-schema', $version === 17 ? 'ok' : 'err', t('health.gammu_schema', ['db' => cfg('gammu_db'), 'version' => $version]),
+            $add('gammu-schema', in_array($version, [17, 18], true) ? 'ok' : 'err', t('health.gammu_schema', ['db' => cfg('gammu_db'), 'version' => $version]),
                 t('health.gammu_schema_hint'));
         } catch (Throwable) {
             $add('gammu-schema', 'err', t('health.gammu_missing', ['db' => cfg('gammu_db')]), t('health.gammu_missing_hint'));

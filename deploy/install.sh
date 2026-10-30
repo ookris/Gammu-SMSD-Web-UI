@@ -170,8 +170,8 @@ if ! mariadb gammu -e 'SELECT Version FROM gammu' >/dev/null 2>&1; then
         info "Schemat Gammu z paczki: $SQLFILE"
         if [[ "$SQLFILE" == *.gz ]]; then zcat "$SQLFILE" | mariadb gammu; else mariadb gammu <"$SQLFILE"; fi
     else
-        warn "Nie znaleziono mysql.sql w paczce – używam deploy/sql/gammu-mysql-17.sql"
-        mariadb gammu <"$APP/deploy/sql/gammu-mysql-17.sql"
+        warn "Nie znaleziono mysql.sql w paczce – używam deploy/sql/gammu-mysql-18.sql"
+        mariadb gammu <"$APP/deploy/sql/gammu-mysql-18.sql"
     fi
 fi
 VER=$(mariadb -N gammu -e 'SELECT Version FROM gammu' 2>/dev/null || echo 0)

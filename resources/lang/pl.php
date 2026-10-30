@@ -749,7 +749,7 @@ return [
     'health.db_hint' => 'sprawdź usługę MariaDB i db.dsn / db.user / db.password w config.php',
     'health.db_ok' => 'Połączenie z bazą panelu, schemat w wersji {version}',
     'health.gammu_schema' => 'Baza `{db}`, schemat w wersji {version}',
-    'health.gammu_schema_hint' => 'panel wymaga schematu 17 (Gammu 1.42)',
+    'health.gammu_schema_hint' => 'panel obsługuje schemat 17 (Gammu 1.40–1.43) i 18 (Gammu 1.44+)',
     'health.gammu_missing' => 'Brak bazy Gammu `{db}` lub tabeli `gammu`',
     'health.gammu_missing_hint' => 'utwórz tabele z mysql.sql z paczki gammu-smsd albo uruchom ponownie deploy/install.sh',
     'health.engine_ok' => 'Tabele Gammu w silniku InnoDB',

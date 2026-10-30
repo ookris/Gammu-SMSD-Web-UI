@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-/** Tabele Gammu (schemat 17, Gammu 1.42): zapis do outbox, odczyt stanu wiadomości, odczyt inbox i phones. */
+/** Tabele Gammu (schemat 17 – Gammu 1.40–1.43, i 18 – Gammu 1.44 i nowsze): zapis do outbox, odczyt stanu wiadomości, odczyt inbox i phones. */
 final class GammuDb
 {
     /** Wartości kolumn ENUM Gammu – tylko z tej listy (MariaDB w trybie ścisłym odrzuca inne). */

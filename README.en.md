@@ -142,7 +142,7 @@ Screenshots show the Polish interface (English is available in the panel setting
 
 | Layer | Technology |
 |-------|------------|
-| SMS gateway | Gammu SMSD 1.42 with the SQL backend (`native_mysql`), database schema version 17 |
+| SMS gateway | Gammu SMSD 1.42 with the SQL backend (`native_mysql`), database schema version 17 or 18 (Gammu 1.44+) |
 | Database | MariaDB (InnoDB tables – transactions when writing multipart messages) |
 | Application | PHP 8.5 without a framework and without Composer; PDO, database migrations built into the panel |
 | User interface | [htmx](https://htmx.org) 2, [Pico.css](https://picocss.com) 2, IBM Plex fonts, [Solar](https://icon-sets.iconify.design/solar/) icons – all bundled locally, no npm and no build step |
@@ -275,7 +275,7 @@ for t in gammu inbox outbox outbox_multipart phones sentitems; do
 done
 ```
 
-If the package has no schema script, use `deploy/sql/gammu-mysql-17.sql` from this repository (step 4).
+If the package has no schema script, use `deploy/sql/gammu-mysql-18.sql` from this repository (step 4).
 
 ### 3. Gammu SMSD configuration
 
@@ -607,7 +607,7 @@ This program is distributed without any warranty – see the [LICENSE](LICENSE) 
 
 Bundled libraries: [htmx](https://htmx.org) (0BSD), [Pico.css](https://picocss.com) (MIT), IBM Plex fonts (OFL),
 [PHPMailer](https://github.com/PHPMailer/PHPMailer) (LGPL-2.1, `src/vendor/PHPMailer/`).
-The database schema `deploy/sql/gammu-mysql-17.sql` is based on Gammu (GPL-2.0).
+The database schema `deploy/sql/gammu-mysql-18.sql` is based on Gammu (GPL-2.0).
 
 **Icons:** [Solar Icon Set](https://icon-sets.iconify.design/solar/) by 480 Design, licensed under
 [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) (files in `resources/icons/`, attribution also in the panel footer).
