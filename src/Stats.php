@@ -23,7 +23,7 @@ final class Stats
     /** Ostatnie $months miesięcy (z bieżącym), od najstarszego. @return list<array{month:string,out:int,in:int}> */
     public static function monthly(int $months = 12): array
     {
-        $from = date('Y-m-01', strtotime('-' . ($months - 1) . ' months'));
+        $from = date('Y-m-01', strtotime('first day of -' . ($months - 1) . ' months'));
         $out = array_column(Db::all("SELECT DATE_FORMAT(COALESCE(sent_at, created_at), '%Y-%m') AS m, COUNT(*) AS n FROM messages
             WHERE direction = 'out' AND status IN ('sent','delivered','undelivered') AND COALESCE(sent_at, created_at) >= ? GROUP BY m", [$from . ' 00:00:00']), 'n', 'm');
         $in = array_column(Db::all("SELECT DATE_FORMAT(COALESCE(received_at, created_at), '%Y-%m') AS m, COUNT(*) AS n FROM messages

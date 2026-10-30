@@ -77,7 +77,7 @@ switch ($cmd) {
         } elseif ($what === 'modem') {
             exit(Setup::modem($opts));
         } elseif ($what === 'unhook') {
-            exit(Setup::unhook());
+            exit(Setup::unhook(isset($opts['conf']) && is_string($opts['conf']) ? $opts['conf'] : null));
         } else {
             fwrite(STDERR, "Użycie: smsgui setup db | setup gammu [--device=…] [--phoneid=…] [--pin=…] [--db-password=…] | setup modem --phoneid=… --device=… | setup unhook\n");
             exit(1);

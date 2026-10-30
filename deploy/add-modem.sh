@@ -17,7 +17,12 @@ RC=0; php "$APP/bin/smsgui" setup modem --phoneid="$ID" --device="$DEVICE" "$@" 
 [ "$RC" -eq 0 ] || [ "$RC" -eq 2 ] || exit "$RC"
 install -m 0644 "$APP/deploy/gammu-smsd@.service" /etc/systemd/system/gammu-smsd@.service
 GAMMU_USER=$(systemctl show -p User --value gammu-smsd 2>/dev/null || true)
-[ -z "$GAMMU_USER" ] || [ "$GAMMU_USER" = root ] || chgrp www-data "/etc/gammu-smsdrc-$ID"
+if [ -n "$GAMMU_USER" ] && [ "$GAMMU_USER" != root ]; then
+    # Główna usługa działa na zwykłym koncie – dodatkowy modem też (dostęp do portu, pliku konfiguracji i logu)
+    chgrp www-data "/etc/gammu-smsdrc-$ID"
+    install -d "/etc/systemd/system/gammu-smsd@$ID.service.d"
+    printf '[Service]\nUser=%s\n' "$GAMMU_USER" >"/etc/systemd/system/gammu-smsd@$ID.service.d/user.conf"
+fi
 systemctl daemon-reload
 systemctl enable --now "gammu-smsd@$ID"
 echo "Gotowe. Stan: systemctl status gammu-smsd@$ID · log: /var/log/gammu-smsd/$ID.log"

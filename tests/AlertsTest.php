@@ -119,3 +119,26 @@ test('Kanał SMS: wiadomość trafia do kolejki ze źródłem notify', function 
     $m = Db::row("SELECT phone, source, status FROM messages WHERE direction = 'out'");
     assert_same(['48601234567', 'notify', 'queued'], [$m['phone'], $m['source'], $m['status']]);
 });
+
+test('Alerty: brak kanału dla rodzaju alarmu nie „zużywa” zgłoszenia – po dodaniu kanału powiadomienie wyjdzie od razu', function () {
+    $ch = alerts_setup();
+    Alerts::saveRoutes([]);
+    $t = time();
+    Settings::set('service_status', 'failed');
+    Alerts::process(['service'], $t, true);
+    assert_same(0, Alerts::process(['service'], $t + 120, true), 'brak tras');
+    Alerts::saveRoutes(['service' => [$ch]]);
+    assert_same(1, Alerts::process(['service'], $t + 130, true), 'po dodaniu kanału');
+    Channels::$factory = null;
+});
+
+test('Webhook: zapisany, ale nieodczytywalny sekret blokuje wysyłkę zamiast wysłać bez podpisu', function () {
+    $w = new WebhookChannel(['url' => 'https://example.com/h', 'secret' => 'enc1:uszkodzony']);
+    $threw = false;
+    try {
+        $w->request(['subject' => '', 'text' => '', 'data' => []]);
+    } catch (RuntimeException) {
+        $threw = true;
+    }
+    assert_true($threw, 'wyjątek');
+});

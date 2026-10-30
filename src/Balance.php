@@ -24,7 +24,7 @@ final class Balance
         foreach ($patterns as $re) {
             if (@preg_match($re, $response, $m) === 1 && isset($m[1])) {
                 $num = str_replace(',', '.', preg_replace('/\s+/u', '', $m[1]));
-                if (is_numeric($num)) {
+                if (is_numeric($num) && (float) $num < 10000000) { // kolumna DECIMAL(10,2); dłuższa liczba to raczej numer niż kwota
                     return round((float) $num, 2);
                 }
             }
@@ -82,13 +82,20 @@ final class Balance
             WHERE r.purpose = 'balance' AND r.status = 'answered' AND b.id IS NULL ORDER BY r.id") as $r) {
             $amount = self::parse((string) $r['response'], (string) Settings::get('balance_regex', ''));
             $at = $r['answered_at'] ?? now_db();
-            Db::tx(static function () use ($r, $amount, $at): void {
-                Db::insert('balance_log', ['ussd_id' => $r['id'], 'modem' => $r['modem'], 'amount' => $amount, 'raw' => (string) $r['response'], 'created_at' => $at]);
-                if ($r['modem'] !== null) {
-                    Db::exec('UPDATE modem_status SET balance = ?, balance_value = ?, balance_at = ? WHERE modem = ?',
-                        [mb_substr(preg_replace('/\s+/u', ' ', (string) $r['response']), 0, 255), $amount, $at, $r['modem']]);
-                }
-            });
+            try {
+                Db::tx(static function () use ($r, $amount, $at): void {
+                    Db::insert('balance_log', ['ussd_id' => $r['id'], 'modem' => $r['modem'], 'amount' => $amount, 'raw' => (string) $r['response'], 'created_at' => $at]);
+                    if ($r['modem'] !== null) {
+                        Db::exec('UPDATE modem_status SET balance = ?, balance_value = ?, balance_at = ? WHERE modem = ?',
+                            [mb_substr(preg_replace('/\s+/u', ' ', (string) $r['response']), 0, 255), $amount, $at, $r['modem']]);
+                    }
+                });
+            } catch (PDOException $e) {
+                // Jedna nieprzetwarzalna odpowiedź nie może blokować całej synchronizacji (byłaby ponawiana w każdym przebiegu)
+                app_log('error', "saldo: odpowiedź USSD #{$r['id']} pominięta: " . $e->getMessage());
+                Db::exec('INSERT IGNORE INTO balance_log (ussd_id, modem, amount, raw, created_at) VALUES (?, ?, NULL, ?, ?)',
+                    [$r['id'], $r['modem'], mb_substr((string) $r['response'], 0, 2000), $at]);
+            }
             $n++;
         }
         return $n;

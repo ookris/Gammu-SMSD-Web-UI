@@ -60,6 +60,12 @@ final class Status
     {
         $service = self::service();
         $m = self::modem();
+        foreach (self::modems() as $candidate) { // przy kilku modemach wskaźnik pokazuje pierwszy niedostępny
+            if (!self::modemAvailable($candidate)) {
+                $m = $candidate;
+                break;
+            }
+        }
         $sync = t('status.sync', ['ago' => fmt_ago(Settings::get('last_sync_at'))]);
         if ($service !== 'active') {
             return ['level' => 'err', 'title' => t('status.gammu_down'), 'line2' => t('status.service', ['state' => $service]), 'line3' => $sync,

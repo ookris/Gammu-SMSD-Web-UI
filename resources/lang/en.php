@@ -1317,4 +1317,5 @@ return [
     'api.e_modem' => 'Unknown modem: {modem}.',
     'modem.unavailable' => 'unavailable',
     'channels.expired' => 'Expired – not delivered within 48 hours.',
+    'channels.err_secret' => 'The saved secret cannot be read (encryption key changed?) – save the channel secret again.',
 ];

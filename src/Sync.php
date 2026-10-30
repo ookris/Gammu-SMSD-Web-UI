@@ -32,7 +32,6 @@ final class Sync
                 'calls' => Calls::process(...),
                 'rules' => Rules::process(...),
                 'alerts' => Alerts::process(...),
-                'deliveries' => Deliveries::process(...),
             ] as $step => $fn) {
                 try {
                     $r[$step] = $fn();
@@ -60,6 +59,15 @@ final class Sync
             Settings::set('last_sync_error', implode('; ', $errors));
         } finally {
             Db::unlock(self::LOCK);
+        }
+        // Wysyłka powiadomień po zwolnieniu blokady synchronizacji – sieć (SMTP, webhook) nie może jej przetrzymywać
+        try {
+            $r['deliveries'] = Deliveries::process();
+        } catch (PDOException $e) {
+            throw $e;
+        } catch (Throwable $e) {
+            $r['errors']++;
+            app_log('error', 'powiadomienia: ' . $e->getMessage());
         }
         return $r;
     }

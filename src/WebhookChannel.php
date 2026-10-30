@@ -9,24 +9,47 @@ final class WebhookChannel implements Channel
     {
     }
 
-    /** Adres http(s) z nazwą hosta; null gdy poprawny, inaczej opis błędu. Adresy loopback i link-local są zablokowane (SSRF), sieć lokalna dozwolona. */
-    public static function checkUrl(string $url): ?string
+    /** Adresy IP hosta (A i AAAA); lista pusta, gdy nazwy nie da się rozwiązać. @return list<string> */
+    private static function resolve(string $host): array
+    {
+        if (filter_var($host, FILTER_VALIDATE_IP)) {
+            return [$host];
+        }
+        $ips = [];
+        foreach (@dns_get_record($host, DNS_A | DNS_AAAA) ?: [] as $r) {
+            $ips[] = $r['ip'] ?? $r['ipv6'] ?? null;
+        }
+        $ips = array_values(array_filter($ips));
+        return $ips !== [] ? $ips : (@gethostbynamel($host) ?: []);
+    }
+
+    /**
+     * Sprawdza adres i wybiera IP, z którym połączymy się bezpośrednio (nazwa jest rozwiązywana raz – DNS rebinding nie pomoże).
+     * @return array{0:?string,1:?string} [błąd, adres IP]
+     */
+    private static function target(string $url): array
     {
         $p = parse_url($url);
         if ($p === false || !in_array($p['scheme'] ?? '', ['http', 'https'], true) || ($p['host'] ?? '') === '') {
-            return t('channels.err_url');
+            return [t('channels.err_url'), null];
         }
         $host = trim($p['host'], '[]');
-        $ips = filter_var($host, FILTER_VALIDATE_IP) ? [$host] : (gethostbynamel($host) ?: []);
+        $ips = self::resolve($host);
         if ($ips === []) {
-            return t('channels.err_resolve', ['host' => $host]);
+            return [t('channels.err_resolve', ['host' => $host]), null];
         }
         foreach ($ips as $ip) {
             if (self::forbiddenIp($ip)) {
-                return t('channels.err_forbidden_ip', ['ip' => $ip]);
+                return [t('channels.err_forbidden_ip', ['ip' => $ip]), null];
             }
         }
-        return null;
+        return [null, $ips[0]];
+    }
+
+    /** Adres http(s) z nazwą hosta; null gdy poprawny, inaczej opis błędu. Adresy loopback i link-local są zablokowane (SSRF), sieć lokalna dozwolona. */
+    public static function checkUrl(string $url): ?string
+    {
+        return self::target($url)[0];
     }
 
     private static function forbiddenIp(string $ip): bool
@@ -51,7 +74,12 @@ final class WebhookChannel implements Channel
     {
         $body = json_encode($msg['data'] + ['text' => $msg['text']], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
         $headers = ['Content-Type: application/json; charset=utf-8', 'User-Agent: smsgui', 'Content-Length: ' . strlen($body)];
-        $secret = Crypto::decrypt((string) ($this->config['secret'] ?? ''));
+        $stored = (string) ($this->config['secret'] ?? '');
+        $secret = Crypto::decrypt($stored);
+        if ($stored !== '' && $secret === '') {
+            // Nie wysyłamy bez podpisu, gdy sekret jest zapisany, ale nie da się go odczytać (zmieniony lub utracony klucz szyfrowania)
+            throw new RuntimeException(t('channels.err_secret'));
+        }
         if ($secret !== '') {
             $headers[] = 'X-Smsgui-Signature: sha256=' . hash_hmac('sha256', $body, $secret);
         }
@@ -61,15 +89,27 @@ final class WebhookChannel implements Channel
     public function send(array $msg): void
     {
         $url = (string) ($this->config['url'] ?? '');
-        if (($err = self::checkUrl($url)) !== null) {
+        [$err, $ip] = self::target($url);
+        if ($err !== null) {
             throw new RuntimeException($err);
         }
         [$body, $headers] = $this->request($msg);
-        $ctx = stream_context_create(['http' => [
-            'method' => 'POST', 'header' => implode("\r\n", $headers), 'content' => $body,
-            'timeout' => 10, 'follow_location' => 0, 'ignore_errors' => true,
-        ]]);
-        $stream = @fopen($url, 'r', false, $ctx);
+        $p = parse_url($url);
+        $host = trim($p['host'], '[]');
+        $hostPort = (str_contains($host, ':') ? "[$host]" : $host) . (isset($p['port']) ? ':' . $p['port'] : '');
+        // Połączenie z już sprawdzonym adresem IP; nazwa trafia do nagłówka Host i do SNI/weryfikacji certyfikatu
+        $target = $p['scheme'] . '://' . (str_contains($ip, ':') ? "[$ip]" : $ip) . (isset($p['port']) ? ':' . $p['port'] : '')
+            . ($p['path'] ?? '/') . (isset($p['query']) ? '?' . $p['query'] : '');
+        $headers[] = 'Host: ' . $hostPort;
+        if (isset($p['user'])) {
+            $headers[] = 'Authorization: Basic ' . base64_encode(rawurldecode($p['user']) . ':' . rawurldecode($p['pass'] ?? ''));
+        }
+        $ctx = stream_context_create([
+            'http' => ['method' => 'POST', 'header' => implode("\r\n", $headers), 'content' => $body,
+                'timeout' => 10, 'follow_location' => 0, 'ignore_errors' => true],
+            'ssl' => ['peer_name' => $host, 'SNI_enabled' => true, 'SNI_server_name' => $host],
+        ]);
+        $stream = @fopen($target, 'r', false, $ctx);
         if ($stream === false) {
             throw new RuntimeException(t('channels.err_connect'));
         }

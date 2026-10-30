@@ -534,7 +534,7 @@ usługę. Gdy w tabeli `phones` zgłoszą się co najmniej dwa modemy, panel pok
 - stan każdego modemu na ekranie Modem oraz alarmy i kontrolę zdrowia osobno dla każdego modemu.
 
 Konfigurację dodatkowego modemu edytujesz ręcznie (`/etc/gammu-smsdrc-<PhoneID>`, potem `sudo systemctl restart gammu-smsd@<PhoneID>`);
-formularz i edytor w panelu dotyczą głównego pliku `/etc/gammu-smsdrc`. Usunięcie modemu:
+formularz i edytor w panelu dotyczą głównego pliku `/etc/gammu-smsdrc`. Skrypt kopiuje z niego także hook odrzucania połączeń i plik czarnej listy w chwili tworzenia; późniejsze zmiany tych opcji w panelu (włączenie odrzucania połączeń, czarna lista) obejmują tylko główny modem – dla pozostałych zmień je ręcznie. Usunięcie modemu:
 `sudo systemctl disable --now gammu-smsd@GSM2 && sudo rm /etc/gammu-smsdrc-GSM2`.
 
 ## Rozwiązywanie problemów

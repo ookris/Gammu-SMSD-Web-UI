@@ -542,7 +542,7 @@ starts the service. Once at least two modems report in the `phones` table, the p
 - the state of every modem on the Modem screen, and alerts and the health check for each modem separately.
 
 You edit an additional modem's configuration by hand (`/etc/gammu-smsdrc-<PhoneID>`, then `sudo systemctl restart gammu-smsd@<PhoneID>`);
-the form and editor in the panel work on the main `/etc/gammu-smsdrc` file. To remove a modem:
+the form and editor in the panel work on the main `/etc/gammu-smsdrc` file. The script copies the call-rejection hook and the blocklist file setting from it when it creates the file; later changes of these options in the panel (enabling call rejection, the blocklist) only affect the main modem – change them by hand for the others. To remove a modem:
 `sudo systemctl disable --now gammu-smsd@GSM2 && sudo rm /etc/gammu-smsdrc-GSM2`.
 
 ## Troubleshooting

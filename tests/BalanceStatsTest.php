@@ -133,3 +133,14 @@ test('Statystyki: limit miesięczny nie liczy wiadomości zaplanowanych na kolej
     Db::insert('messages', ['direction' => 'out', 'phone' => '48601000001', 'body' => 'x', 'status' => 'queued', 'parts' => 1, 'scheduled_at' => $now, 'created_at' => $now, 'updated_at' => $now]);
     assert_same(1, Stats::monthParts());
 });
+
+test('Saldo: nierealnie duża „kwota” nie blokuje synchronizacji', function () {
+    reset_db();
+    assert_same(null, Balance::parse('Konto 1234567890 zl'), 'poza zakresem DECIMAL(10,2) – to nie kwota');
+    Db::insert('ussd_requests', ['code' => '*101#', 'status' => 'answered', 'purpose' => 'balance', 'response' => 'Konto 1234567890 zl', 'created_at' => now_db(), 'answered_at' => now_db(), 'modem' => 'GSM1']);
+    Settings::set('balance_regex', '(\d+)');
+    $r = Sync::run(true);
+    assert_same(0, $r['errors'], 'synchronizacja przeszła');
+    assert_same(1, (int) Db::val('SELECT COUNT(*) FROM balance_log'), 'odpowiedź zapisana (bez kwoty) i nie ponawiana');
+    assert_same(0, Balance::record());
+});

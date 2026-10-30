@@ -112,9 +112,9 @@ final class Setup
      * Deinstalacja: usuwa z gammu-smsdrc tylko ustawienia należące do panelu – hook `smsgui hook call` (wtedy też
      * HangupCalls, które włączył razem z nim) i ExcludeNumbersFile wskazujący plik panelu. Cudze wartości zostają.
      */
-    public static function unhook(): int
+    public static function unhook(?string $path = null): int
     {
-        $path = GammuConf::path();
+        $path ??= GammuConf::path();
         $old = @file_get_contents($path);
         if ($old === false) {
             echo "Brak $path – nic do zmiany.\n";

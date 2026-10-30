@@ -8,7 +8,7 @@ declare(strict_types=1);
  */
 final class Api
 {
-    /** Najwięcej wiadomości na token w ciągu minuty (poza dławieniem wysyłki do wielu odbiorców). */
+    /** Po tylu wiadomościach z jednego tokenu w ciągu minuty kolejne żądania dostają 429 (pojedyncze żądanie może mieć do max_recipients odbiorców). */
     public const PER_MINUTE = 120;
     private const MAX_BODY = 1048576;
 
@@ -18,11 +18,11 @@ final class Api
         $token = self::bearer();
         $auth = ApiTokens::authenticate($token, request_ip());
         if (!is_array($auth)) {
-            if ($token !== '' || $auth === 'invalid') {
-                // Format dla fail2ban (deploy/fail2ban) – jak przy nieudanym logowaniu
+            if ($token !== '') {
+                // Format dla fail2ban (deploy/fail2ban) – jak przy nieudanym logowaniu; brak tokenu to nie próba logowania
                 app_log('auth', 'failed login for user "api" from ' . request_ip());
+                usleep(300000);
             }
-            usleep(300000);
             self::reply($auth === 'ip' ? 403 : 401, ['ok' => false, 'error' => t($auth === 'ip' ? 'api.e_ip' : 'api.e_token')]);
         }
         $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
@@ -97,7 +97,7 @@ final class Api
             self::reply(422, ['ok' => false, 'errors' => $errors]);
         }
         $recent = (int) Db::val('SELECT COUNT(*) FROM messages WHERE api_token_id = ? AND created_at > ?', [$token['id'], now_db(-60)]);
-        if ($recent + $plan['count'] > self::PER_MINUTE) {
+        if ($recent >= self::PER_MINUTE) {
             header('Retry-After: 60');
             self::reply(429, ['ok' => false, 'error' => t('api.e_rate', ['n' => self::PER_MINUTE])]);
         }

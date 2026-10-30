@@ -22,8 +22,23 @@ final class Deliveries
         ]);
     }
 
-    /** Wysyłka zaległych dostarczeń; zwraca liczbę dostarczonych. Wyłączony lub usunięty kanał: wpis czeka (usunięty – znika z kanałem). */
+    /**
+     * Wysyłka zaległych dostarczeń; zwraca liczbę dostarczonych. Własna blokada (nie blokada synchronizacji): wolny serwer SMTP
+     * lub webhook nie wstrzymuje odbioru wiadomości, a dwa procesy nie wyślą tego samego powiadomienia podwójnie.
+     */
     public static function process(int $limit = 20): int
+    {
+        if (!Db::lock('smsgui-deliveries', 0)) {
+            return 0;
+        }
+        try {
+            return self::deliver($limit);
+        } finally {
+            Db::unlock('smsgui-deliveries');
+        }
+    }
+
+    private static function deliver(int $limit): int
     {
         $sent = 0;
         $started = microtime(true);

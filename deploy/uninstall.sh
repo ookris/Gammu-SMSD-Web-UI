@@ -8,6 +8,13 @@ APP="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PURGE=0; [ "${1:-}" = --purge ] && PURGE=1
 
 systemctl disable --now smsgui-worker smsgui-watchdog.timer 2>/dev/null || true
+# Dodatkowe modemy (add-modem.sh): ich konfiguracje mają hook panelu, który przestanie istnieć
+for conf in /etc/gammu-smsdrc-*; do
+    [ -f "$conf" ] || continue
+    case "$conf" in *.smsgui-*) continue ;; esac
+    php "$APP/bin/smsgui" setup unhook --conf="$conf" || echo "Nie udało się zmienić $conf – sprawdź go ręcznie" >&2
+    systemctl try-restart "gammu-smsd@${conf#/etc/gammu-smsdrc-}" 2>/dev/null || true
+done
 rm -f /etc/systemd/system/smsgui-worker.service /etc/systemd/system/smsgui-watchdog.service /etc/systemd/system/smsgui-watchdog.timer /etc/systemd/system/gammu-smsd.service.d/smsgui.conf
 systemctl daemon-reload
 rm -f /etc/nginx/sites-enabled/smsgui /etc/nginx/sites-available/smsgui
@@ -25,6 +32,11 @@ fi
 if [ $PURGE -eq 1 ]; then
     mariadb -e "DROP DATABASE IF EXISTS smsgui; DROP USER IF EXISTS 'smsgui'@'localhost'; DROP USER IF EXISTS 'smsgui_hook'@'localhost';"
     rm -rf /var/lib/smsgui /etc/smsgui
+    # Konfiguracje dodatkowych modemów zawierają hasło do bazy gammu panelu – razem z danymi panelu znikają (usługi: systemctl disable --now gammu-smsd@ID)
+    for conf in /etc/gammu-smsdrc-*; do
+        [ -f "$conf" ] && case "$conf" in *.smsgui-*) ;; *) systemctl disable --now "gammu-smsd@${conf#/etc/gammu-smsdrc-}" 2>/dev/null || true; rm -f "$conf" ;; esac
+    done
+    rm -f /etc/systemd/system/gammu-smsd@.service; rm -rf /etc/systemd/system/gammu-smsd@*.service.d
 fi
 rm -rf "$APP"
 echo "Odinstalowano.$([ $PURGE -eq 1 ] && echo ' Dane panelu usunięte.') Kopie /etc/gammu-smsdrc.smsgui-* zostały."

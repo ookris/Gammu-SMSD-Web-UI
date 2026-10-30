@@ -110,3 +110,10 @@ test('API: /api/status widzi tylko wiadomości własnego tokenu; adres IPv4 w po
     assert_true(ApiTokens::ipAllowed('::ffff:192.168.1.10', '192.168.1.0/24'), 'zmapowany IPv4');
     assert_true(!ApiTokens::ipAllowed('::ffff:10.0.0.1', '192.168.1.0/24'), 'zmapowany IPv4 spoza sieci');
 });
+
+test('API: pojedyncze żądanie z więcej niż 120 odbiorcami jest przyjmowane (limit dotyczy wysłanych w ostatniej minucie)', function () {
+    [, $plain] = api_token();
+    $to = implode(',', array_map(fn ($i) => '6010' . str_pad((string) $i, 5, '0', STR_PAD_LEFT), range(1, 150)));
+    $r = api_call('POST', 'send', $plain, ['to' => $to, 'text' => 'Do wielu']);
+    assert_same([true, 150], [$r['ok'], $r['count']]);
+});

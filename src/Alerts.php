@@ -24,28 +24,39 @@ final class Alerts
      */
     public static function conditions(array $only = self::TYPES): array
     {
-        $c = [];
-        $service = in_array('service', $only, true) || in_array('modem', $only, true) || in_array('signal', $only, true) ? Status::service() : 'active';
-        $c['service'] = $service !== 'active' ? ['state' => $service] : null;
-        // Każdy modem osobno (przy kilku modemach alarm wymienia te, które nie odpowiadają)
-        $modems = Status::modems();
-        $down = array_values(array_filter($modems, static fn ($x) => !Status::modemAvailable($x)));
-        $c['modem'] = $service === 'active' && ($modems === [] || $down !== [])
-            ? ['modem' => $down ? implode(', ', array_column($down, 'modem')) : '-',
-                'ago' => $down && $down[0]['gammu_updated_at'] ? fmt_ago($down[0]['gammu_updated_at']) : t('alerts.never')] : null;
-        $weak = array_values(array_filter($modems, static fn ($x) => Status::modemAvailable($x) && (int) $x['signal_pct'] >= 0 && (int) $x['signal_pct'] < self::LOW_SIGNAL));
-        $c['signal'] = $weak !== [] ? ['modem' => $weak[0]['modem'], 'pct' => (int) $weak[0]['signal_pct']] : null;
-        $stuck = (int) Db::val("SELECT COUNT(*) FROM messages WHERE direction = 'out' AND status = 'queued' AND retries = 0
-            AND COALESCE(scheduled_at, created_at) < ?", [now_db(-900)]);
-        $c['queue'] = $stuck > 0 ? ['n' => $stuck] : null;
-        $last = Db::col("SELECT status FROM messages WHERE direction = 'out' AND source <> 'notify'
-            AND status IN ('sent','delivered','failed','undelivered') AND updated_at > ? ORDER BY updated_at DESC, id DESC LIMIT 3", [now_db(-6 * 3600)]);
-        $c['failures'] = count($last) === 3 && array_unique($last) === ['failed'] ? ['n' => 3] : null;
-        $seen = ts(Settings::get('worker_seen_at'));
-        $c['worker'] = $seen === null || time() - $seen > 120 ? ['ago' => $seen === null ? t('alerts.never') : fmt_ago(Settings::get('worker_seen_at'))] : null;
+        $c = array_fill_keys(self::TYPES, null);
+        $want = static fn (string ...$types) => array_intersect($types, $only) !== [];
+        $service = 'active';
+        if ($want('service', 'modem', 'signal')) {
+            $service = Status::service();
+            $c['service'] = $service !== 'active' ? ['state' => $service] : null;
+        }
+        if ($want('modem', 'signal')) {
+            // Każdy modem osobno (przy kilku modemach alarm wymienia te, które nie odpowiadają)
+            $modems = Status::modems();
+            $down = array_values(array_filter($modems, static fn ($x) => !Status::modemAvailable($x)));
+            $c['modem'] = $service === 'active' && ($modems === [] || $down !== [])
+                ? ['modem' => $down ? implode(', ', array_column($down, 'modem')) : '-',
+                    'ago' => $down && $down[0]['gammu_updated_at'] ? fmt_ago($down[0]['gammu_updated_at']) : t('alerts.never')] : null;
+            $weak = array_values(array_filter($modems, static fn ($x) => Status::modemAvailable($x) && (int) $x['signal_pct'] >= 0 && (int) $x['signal_pct'] < self::LOW_SIGNAL));
+            $c['signal'] = $weak !== [] ? ['modem' => $weak[0]['modem'], 'pct' => (int) $weak[0]['signal_pct']] : null;
+        }
+        if ($want('queue')) {
+            $stuck = (int) Db::val("SELECT COUNT(*) FROM messages WHERE direction = 'out' AND status = 'queued' AND retries = 0
+                AND COALESCE(scheduled_at, created_at) < ?", [now_db(-900)]);
+            $c['queue'] = $stuck > 0 ? ['n' => $stuck] : null;
+        }
+        if ($want('failures')) {
+            $last = Db::col("SELECT status FROM messages WHERE direction = 'out' AND source <> 'notify'
+                AND status IN ('sent','delivered','failed','undelivered') AND updated_at > ? ORDER BY updated_at DESC, id DESC LIMIT 3", [now_db(-6 * 3600)]);
+            $c['failures'] = count($last) === 3 && array_unique($last) === ['failed'] ? ['n' => 3] : null;
+        }
+        if ($want('worker')) {
+            $seen = ts(Settings::get('worker_seen_at'));
+            $c['worker'] = $seen === null || time() - $seen > 120 ? ['ago' => $seen === null ? t('alerts.never') : fmt_ago(Settings::get('worker_seen_at'))] : null;
+        }
         $threshold = (float) Settings::get('balance_threshold');
-        $c['balance'] = null;
-        if (in_array('balance', $only, true) && $threshold > 0) {
+        if ($want('balance') && $threshold > 0) {
             foreach (Balance::modemsWithData() as $name) {
                 $bal = Balance::latest($name);
                 if ($bal !== null && $bal['amount'] !== null && $bal['amount'] < $threshold) {
@@ -110,7 +121,7 @@ final class Alerts
             $s = ($state[$type] ?? []) + ['since' => null, 'notified' => false, 'last_sent' => null];
             if ($params !== null) {
                 $s['since'] ??= $now;
-                if ($now - $s['since'] >= self::GRACE[$type]) {
+                if (($routes[$type] ?? []) !== [] && $now - $s['since'] >= self::GRACE[$type]) { // bez kanału nic nie „zgłaszamy”
                     $wait = $s['notified'] ? self::REMIND : self::COOLDOWN; // pierwsze zgłoszenie po nawrocie – po przerwie godzinnej
                     if ($s['last_sent'] === null || $now - $s['last_sent'] >= $wait) {
                         $queued += self::notify($type, 'problem', $params, $routes[$type] ?? []);
@@ -168,10 +179,10 @@ final class Alerts
         }
         try {
             $queued = self::process(['worker'], null, true);
-            Deliveries::process();
-            return $queued;
         } finally {
             Db::unlock(Sync::LOCK);
         }
+        Deliveries::process();
+        return $queued;
     }
 }

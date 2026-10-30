@@ -10,13 +10,15 @@ VERSION=1.45.1
 SHA256=4003b3df5e4815c36eb4b6614c73ea88d83acd7d5791fdc3fbdab0d3c323c707
 URL="https://github.com/gammu/gammu/archive/refs/tags/$VERSION.tar.gz"
 DROPIN=/etc/systemd/system/gammu-smsd.service.d/gammu-local.conf
+DROPIN_TPL=/etc/systemd/system/gammu-smsd@.service.d/gammu-local.conf
 APP="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 if [ "${1:-}" = --revert ]; then
     systemctl stop gammu-smsd || true
-    rm -f "$DROPIN"
+    rm -f "$DROPIN" "$DROPIN_TPL"
     systemctl daemon-reload
     systemctl start gammu-smsd
+    for u in $(systemctl list-units --plain --no-legend 'gammu-smsd@*' | awk '{print $1}'); do systemctl restart "$u" || true; done
     echo "Przywrócono Gammu z paczki: $(/usr/bin/gammu-smsd --version 2>&1 | head -1)."
     echo "Schemat bazy 18 jest zgodny wstecz z panelem; Gammu 1.42 oczekuje wersji 17 – jeśli odmówi startu, ustaw: UPDATE gammu SET Version = 17;"
     exit 0
@@ -50,8 +52,7 @@ if [ "$VER" = 17 ]; then
         ADD COLUMN IF NOT EXISTS MessageID integer unsigned NOT NULL DEFAULT 0,
         ADD COLUMN IF NOT EXISTS SequencePosition integer NOT NULL DEFAULT 1,
         ADD COLUMN IF NOT EXISTS PartCount integer NOT NULL DEFAULT 1;
-      UPDATE inbox SET MessageID = ID WHERE MessageID = 0;
-      UPDATE inbox SET InsertIntoDB = UpdatedInDB;
+      UPDATE inbox SET MessageID = ID, InsertIntoDB = ReceivingDateTime, UpdatedInDB = UpdatedInDB WHERE MessageID = 0;
       ALTER TABLE outbox ADD COLUMN IF NOT EXISTS SendDays integer NOT NULL DEFAULT 127;
       UPDATE gammu SET Version = 18;"
     mariadb gammu -e "CREATE INDEX IF NOT EXISTS inbox_message ON inbox (MessageID, SequencePosition); CREATE INDEX IF NOT EXISTS inbox_insert ON inbox (InsertIntoDB);"
@@ -68,8 +69,13 @@ cat >"$DROPIN" <<UNIT
 ExecStart=
 ExecStart=/usr/local/bin/gammu-smsd --pid=/run/gammu-smsd.pid --daemon
 UNIT
+if [ -f /etc/systemd/system/gammu-smsd@.service ]; then   # dodatkowe modemy (add-modem.sh) też na nowej wersji
+    install -d "$(dirname "$DROPIN_TPL")"
+    printf '[Service]\nExecStart=\nExecStart=/usr/local/bin/gammu-smsd --config=/etc/gammu-smsdrc-%%i --pid=/run/gammu-smsd-%%i.pid --daemon\n' >"$DROPIN_TPL"
+fi
 systemctl daemon-reload
 systemctl restart gammu-smsd
+for u in $(systemctl list-units --plain --no-legend 'gammu-smsd@*' | awk '{print $1}'); do systemctl restart "$u" || true; done
 sleep 3
 systemctl is-active gammu-smsd
 echo "Gotowe. Sprawdź panel (Pulpit → kontrola zdrowia) i wyślij testowy SMS. Powrót: sudo $APP/deploy/build-gammu.sh --revert"
