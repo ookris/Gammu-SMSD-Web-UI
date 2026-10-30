@@ -186,7 +186,7 @@ final class Rules
             'subject' => t($call ? 'rules.subject_call' : 'rules.subject_sms', ['who' => $who]),
             'text' => $call ? t('rules.call_text', ['who' => $who, 'time' => $when]) . ($modem !== '' ? " ($modem)" : '') : $e['body'] . "\n\n— " . $who . ' · ' . $foot,
             'data' => ['type' => $call ? 'call' : 'sms', 'from' => $unknown ? '' : (Phone::isAlpha($e['phone']) ? $e['phone'] : '+' . $e['phone']), 'name' => $name,
-                'received_at' => $e['at'], 'modem' => $modem !== '' ? $modem : null],
+                'received_at' => $e['at'], 'modem' => $modem !== '' ? $modem : null] + ($call ? [] : ['body' => $e['body']]),
         ];
     }
 

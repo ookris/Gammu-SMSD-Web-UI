@@ -24,6 +24,11 @@ final class Backup
             'session_hours' => $int(1, 720),
             'backup_keep' => $int(1, 500),
             'cleanup_days' => $int(0, 3650),
+            'balance_code' => static fn (mixed $v) => is_string($v) && preg_match('/^([0-9*#+]{1,20})?$/', $v) ? $v : null,
+            'balance_hours' => $int(0, 720),
+            'balance_regex' => static fn (mixed $v) => is_string($v) && Balance::validRegex($v) ? $v : null,
+            'balance_threshold' => static fn (mixed $v) => is_numeric($v) && (float) $v >= 0 && (float) $v <= 100000 ? (string) round((float) $v, 2) : null,
+            'monthly_limit' => $int(0, 1000000),
             'lang' => static fn (mixed $v) => is_string($v) && isset(LANGS[$v]) ? $v : null,
             'ussd_codes' => static function (mixed $v): ?string {
                 $list = is_string($v) ? json_decode($v, true) : null;

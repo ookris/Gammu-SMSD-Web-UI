@@ -97,6 +97,11 @@ test('Kilka modemów: konfiguracja dodatkowego modemu na bazie głównego pliku'
         $again = Setup::modem(['phoneid' => 'GSM2', 'device' => '/dev/ttyUSB7']);
         ob_end_clean();
         assert_same([2, $before], [$again, file_get_contents($new)], 'ponowne uruchomienie nie nadpisuje konfiguracji (kod 2)');
+        @unlink($new);
+        ob_start();
+        Setup::modem(['phoneid' => 'GSM2', 'device' => '/dev/ttyUSB1']);
+        ob_end_clean();
+        assert_same(null, GammuConf::parse((string) file_get_contents($new))->get('smsd', 'pin'), 'PIN głównej karty nie jest kopiowany bez --pin');
         ob_start();
         $same = Setup::modem(['phoneid' => 'GSM1', 'device' => '/dev/ttyUSB1']);
         $bad = Setup::modem(['phoneid' => 'zły id!', 'device' => '/dev/ttyUSB1']);

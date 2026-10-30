@@ -58,10 +58,7 @@ final class WebhookChannel implements Channel
         if ($bin === false) {
             return true;
         }
-        if (strlen($bin) === 16 && str_starts_with($bin, str_repeat("\0", 10) . "\xff\xff")) { // ::ffff:a.b.c.d
-            $ip = inet_ntop(substr($bin, 12)) ?: $ip;
-            $bin = inet_pton($ip);
-        }
+        $bin = Net::unmap($bin);
         if (strlen($bin) === 4) {
             $o = ord($bin[0]);
             return $o === 127 || $o === 0 || ($o === 169 && ord($bin[1]) === 254) || $o >= 224;
@@ -106,7 +103,7 @@ final class WebhookChannel implements Channel
         }
         $ctx = stream_context_create([
             'http' => ['method' => 'POST', 'header' => implode("\r\n", $headers), 'content' => $body,
-                'timeout' => 10, 'follow_location' => 0, 'ignore_errors' => true],
+                'timeout' => 8, 'follow_location' => 0, 'ignore_errors' => true],
             'ssl' => ['peer_name' => $host, 'SNI_enabled' => true, 'SNI_server_name' => $host],
         ]);
         $stream = @fopen($target, 'r', false, $ctx);
@@ -114,8 +111,8 @@ final class WebhookChannel implements Channel
             throw new RuntimeException(t('channels.err_connect'));
         }
         $meta = stream_get_meta_data($stream);
-        fread($stream, 4096); // odpowiedź nieistotna – czytamy tylko tyle, by nie wisieć na dużej treści
-        fclose($stream);
+        @fread($stream, 4096); // odpowiedź nieistotna; reset połączenia po odpowiedzi 2xx nie jest błędem dostarczenia
+        @fclose($stream);
         $code = 0;
         foreach ($meta['wrapper_data'] ?? [] as $h) {
             if (preg_match('#^HTTP/\S+\s+(\d{3})#', $h, $m)) {

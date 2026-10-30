@@ -6,5 +6,5 @@ $tabNames = ['channels' => t('channels.tab_channels'), 'alerts' => t('channels.t
 <?php elseif ($tab === 'rules' || $tab === 'replies'): ?><div class="actions"><a href="<?= e(url('automations', ['tab' => $tab])) ?>" role="button"><?= icon('add-circle') ?><?= e(t($tab === 'rules' ? 'rules.new' : 'replies.new')) ?></a></div><?php endif ?></header>
 <nav class="tabs" aria-label="<?= e(t('channels.tabs')) ?>"><?php foreach ($tabNames as $k => $label): ?><a href="<?= e(url('automations', ['tab' => $k === 'channels' ? null : $k])) ?>"<?= $tab === $k ? ' aria-current="page"' : '' ?>><?= e($label) ?></a><?php endforeach ?></nav>
 <?= flashes_html() ?>
-<?php if ($deliveries['failed'] > 0): ?><?= alert('err', tn('channels.failed_n', $deliveries['failed'])) ?><?php endif ?>
+<?php if ($deliveries['failed_recent'] > 0): ?><?= alert('err', tn('channels.failed_n', $deliveries['failed_recent'])) ?><?php endif ?>
 <?= view('automations-' . $tab, get_defined_vars()) ?>

@@ -1318,4 +1318,8 @@ return [
     'modem.unavailable' => 'unavailable',
     'channels.expired' => 'Expired – not delivered within 48 hours.',
     'channels.err_secret' => 'The saved secret cannot be read (encryption key changed?) – save the channel secret again.',
+    'alerts.limit_full.title' => 'Monthly SMS limit reached',
+    'alerts.limit_full.text' => '{pct}% of the monthly SMS limit used ({used} of {limit}). The limit does not block sending.',
+    'alerts.limit_full.resolved' => 'SMS limit usage dropped below 100%.',
+    'api.e_internal' => 'Internal panel error – see the log.',
 ];

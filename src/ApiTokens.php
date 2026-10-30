@@ -74,9 +74,7 @@ final class ApiTokens
         if ($addr === false) {
             return false;
         }
-        if (strlen($addr) === 16 && str_starts_with($addr, str_repeat("\0", 10) . "\xff\xff")) {
-            $addr = substr($addr, 12); // ::ffff:a.b.c.d to adres IPv4 widziany przez gniazdo dwustosowe
-        }
+        $addr = Net::unmap($addr); // ::ffff:a.b.c.d to adres IPv4 widziany przez gniazdo dwustosowe
         foreach (preg_split('/[\s,;]+/', $list, -1, PREG_SPLIT_NO_EMPTY) as $entry) {
             $c = self::cidr($entry);
             if ($c === null || strlen($c[0]) !== strlen($addr)) {

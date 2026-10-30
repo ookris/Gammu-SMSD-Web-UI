@@ -26,6 +26,18 @@ final class Chart
         return 10 * $pow;
     }
 
+    /** Górna granica osi dla liczb całkowitych: wielokrotność 4, żeby cztery podziałki były całkowite (4, 8, 12, 20, 40, 80, 120, …). */
+    public static function niceCount(float $max): int
+    {
+        for ($pow = 1; ; $pow *= 10) {
+            foreach ([4, 8, 12, 20, 40, 80] as $step) {
+                if ($max <= $step * $pow) {
+                    return $step * $pow;
+                }
+            }
+        }
+    }
+
     private static function f(float $v): string
     {
         return rtrim(rtrim(number_format($v, 1, '.', ''), '0'), '.');
@@ -55,7 +67,7 @@ final class Chart
         foreach ($series as $vals) {
             $max = max($max, ...($vals ?: [0]));
         }
-        $top = self::niceMax((float) $max);
+        $top = (float) self::niceCount((float) $max);
         $w = self::W - self::ML - self::MR;
         $h = self::H - self::MT - self::MB;
         $svg = self::frame($title, $desc, $top, '%g');

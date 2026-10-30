@@ -46,7 +46,7 @@ final class MailChannel implements Channel
                 default => '',
             };
             $m->SMTPAutoTLS = $s['secure'] !== '';
-            $m->Timeout = 15;
+            $m->Timeout = 8;
             if ($s['user'] !== '') {
                 $m->SMTPAuth = true;
                 $m->Username = $s['user'];
@@ -55,7 +55,8 @@ final class MailChannel implements Channel
         } else {
             $m->isSendmail();
         }
-        $from = $s['from'] !== '' ? $s['from'] : 'smsgui@' . (gethostname() ?: 'localhost');
+        $host = gethostname() ?: 'localhost';
+        $from = $s['from'] !== '' ? $s['from'] : 'smsgui@' . (str_contains($host, '.') ? $host : $host . '.local'); // adres bez kropki w domenie jest odrzucany
         $m->setFrom($from, $s['from_name'] !== '' ? $s['from_name'] : t('app.name'));
         foreach ($to as $a) {
             $m->addAddress($a);

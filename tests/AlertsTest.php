@@ -142,3 +142,12 @@ test('Webhook: zapisany, ale nieodczytywalny sekret blokuje wysyłkę zamiast wy
     }
     assert_true($threw, 'wyjątek');
 });
+
+test('Alerty: nieudane autoodpowiedzi nie liczą się do alarmu błędów wysyłki', function () {
+    alerts_setup();
+    foreach ([1, 2, 3] as $i) {
+        Db::insert('messages', ['direction' => 'out', 'phone' => '4860123456' . $i, 'body' => 'x', 'status' => 'failed', 'source' => 'autoreply', 'created_at' => now_db(), 'updated_at' => now_db()]);
+    }
+    assert_same(null, Alerts::conditions(['failures'])['failures']);
+    Channels::$factory = null;
+});

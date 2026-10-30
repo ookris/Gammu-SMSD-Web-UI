@@ -144,3 +144,14 @@ test('Saldo: nierealnie duża „kwota” nie blokuje synchronizacji', function 
     assert_same(1, (int) Db::val('SELECT COUNT(*) FROM balance_log'), 'odpowiedź zapisana (bez kwoty) i nie ponawiana');
     assert_same(0, Balance::record());
 });
+
+test('Wykresy: oś liczb całkowitych ma całkowite podziałki; limit 100 % to osobny alarm', function () {
+    assert_same([4, 4, 8, 12, 20, 40, 80, 120, 200], array_map([Chart::class, 'niceCount'], [0, 3, 5, 9, 13, 21, 77, 81, 150]));
+    $svg = Chart::bars('t', 'd', ['a'], ['x' => [3]]);
+    assert_true(!str_contains($svg, '1.25') && !str_contains($svg, '0.75'), 'bez ułamków na osi');
+    reset_db();
+    Settings::set('monthly_limit', 4);
+    Db::insert('messages', ['direction' => 'out', 'phone' => '48601000001', 'body' => 'x', 'status' => 'sent', 'parts' => 4, 'sent_at' => now_db(), 'created_at' => now_db(), 'updated_at' => now_db()]);
+    $c = Alerts::conditions(['limit', 'limit_full']);
+    assert_same([null, 100], [$c['limit'], $c['limit_full']['pct']]);
+});

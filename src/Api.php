@@ -26,11 +26,17 @@ final class Api
             self::reply($auth === 'ip' ? 403 : 401, ['ok' => false, 'error' => t($auth === 'ip' ? 'api.e_ip' : 'api.e_token')]);
         }
         $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
-        match ($route) {
-            'send' => $method === 'POST' ? self::send($auth) : self::reply(405, ['ok' => false, 'error' => t('api.e_method')]),
-            'status' => $method === 'GET' ? self::status($auth) : self::reply(405, ['ok' => false, 'error' => t('api.e_method')]),
-            default => self::reply(404, ['ok' => false, 'error' => t('api.e_route')]),
-        };
+        try {
+            match ($route) {
+                'send' => $method === 'POST' ? self::send($auth) : self::reply(405, ['ok' => false, 'error' => t('api.e_method')]),
+                'status' => $method === 'GET' ? self::status($auth) : self::reply(405, ['ok' => false, 'error' => t('api.e_method')]),
+                default => self::reply(404, ['ok' => false, 'error' => t('api.e_route')]),
+            };
+        } catch (Throwable $e) {
+            // Klient API oczekuje JSON, nie strony błędu HTML
+            app_log('error', 'API ' . $route . ': ' . $e::class . ': ' . $e->getMessage());
+            self::reply(500, ['ok' => false, 'error' => t('api.e_internal')]);
+        }
     }
 
     private static function bearer(): string

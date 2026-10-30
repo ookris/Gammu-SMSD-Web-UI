@@ -441,6 +441,10 @@ final class Db
                     KEY schedules_due (enabled, next_run_at)
                 ) $t",
             ],
+            // Limit wiadomości na token API liczy wiersze po (api_token_id, created_at)
+            10 => [
+                'ALTER TABLE messages ADD INDEX IF NOT EXISTS messages_api (api_token_id, created_at)',
+            ],
         ];
     }
 }

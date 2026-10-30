@@ -1318,4 +1318,8 @@ return [
     'modem.unavailable' => 'niedostępny',
     'channels.expired' => 'Wygasło – nie dostarczono w ciągu 48 godzin.',
     'channels.err_secret' => 'Nie można odczytać zapisanego sekretu (zmieniony klucz szyfrowania?) – zapisz sekret kanału ponownie.',
+    'alerts.limit_full.title' => 'Wyczerpany limit SMS w miesiącu',
+    'alerts.limit_full.text' => 'Wykorzystano {pct}% miesięcznego limitu SMS ({used} z {limit}). Limit nie blokuje wysyłki.',
+    'alerts.limit_full.resolved' => 'Zużycie limitu SMS spadło poniżej 100 %.',
+    'api.e_internal' => 'Błąd wewnętrzny panelu – szczegóły w logu.',
 ];

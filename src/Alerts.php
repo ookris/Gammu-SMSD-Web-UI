@@ -8,9 +8,9 @@ declare(strict_types=1);
  */
 final class Alerts
 {
-    public const TYPES = ['service', 'modem', 'signal', 'queue', 'failures', 'worker', 'balance', 'limit'];
+    public const TYPES = ['service', 'modem', 'signal', 'queue', 'failures', 'worker', 'balance', 'limit', 'limit_full'];
     /** Karencja w sekundach: jak długo stan musi trwać, zanim zostanie zgłoszony. */
-    private const GRACE = ['service' => 60, 'modem' => 180, 'signal' => 900, 'queue' => 0, 'failures' => 0, 'worker' => 120, 'balance' => 0, 'limit' => 0];
+    private const GRACE = ['service' => 60, 'modem' => 180, 'signal' => 900, 'queue' => 0, 'failures' => 0, 'worker' => 120, 'balance' => 0, 'limit' => 0, 'limit_full' => 0];
     private const COOLDOWN = 3600;
     private const REMIND = 21600;
     private const LOW_SIGNAL = 15;
@@ -47,7 +47,7 @@ final class Alerts
             $c['queue'] = $stuck > 0 ? ['n' => $stuck] : null;
         }
         if ($want('failures')) {
-            $last = Db::col("SELECT status FROM messages WHERE direction = 'out' AND source <> 'notify'
+            $last = Db::col("SELECT status FROM messages WHERE direction = 'out' AND source NOT IN ('notify', 'autoreply')
                 AND status IN ('sent','delivered','failed','undelivered') AND updated_at > ? ORDER BY updated_at DESC, id DESC LIMIT 3", [now_db(-6 * 3600)]);
             $c['failures'] = count($last) === 3 && array_unique($last) === ['failed'] ? ['n' => 3] : null;
         }
@@ -66,8 +66,9 @@ final class Alerts
                 }
             }
         }
-        $lim = in_array('limit', $only, true) ? Stats::limit() : null;
-        $c['limit'] = $lim !== null && $lim['pct'] >= 80 ? ['pct' => $lim['pct'], 'used' => $lim['used'], 'limit' => $lim['limit']] : null;
+        $lim = $want('limit', 'limit_full') ? Stats::limit() : null;
+        $c['limit'] = $lim !== null && $lim['pct'] >= 80 && $lim['pct'] < 100 ? ['pct' => $lim['pct'], 'used' => $lim['used'], 'limit' => $lim['limit']] : null;
+        $c['limit_full'] = $lim !== null && $lim['pct'] >= 100 ? ['pct' => $lim['pct'], 'used' => $lim['used'], 'limit' => $lim['limit']] : null;
         return array_intersect_key($c, array_flip($only));
     }
 
@@ -174,13 +175,15 @@ final class Alerts
     {
         // Ta sama blokada co synchronizacja: strażnik nie działa równolegle z procesem w tle (podwójne wysyłki, nadpisany stan alarmów).
         // Zajęta blokada = proces w tle właśnie pracuje, więc żyje.
-        if (!Db::lock(Sync::LOCK, 0)) {
+        $locked = Db::lock(Sync::LOCK, 0);
+        // Blokada zajęta, a ostatni sygnał życia procesu w tle jest stary = proces zawisł w środku synchronizacji; wtedy też zgłaszamy
+        if (!$locked && self::conditions(['worker'])['worker'] === null) {
             return 0;
         }
         try {
             $queued = self::process(['worker'], null, true);
         } finally {
-            Db::unlock(Sync::LOCK);
+            $locked && Db::unlock(Sync::LOCK);
         }
         Deliveries::process();
         return $queued;

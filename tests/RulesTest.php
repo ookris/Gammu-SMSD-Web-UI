@@ -222,3 +222,12 @@ test('Autoodpowiedzi: odpowiedź idzie modemem, który odebrał wiadomość', fu
     assert_same(1, Rules::process());
     assert_same('GSM2', Db::val("SELECT SenderID FROM {g}.outbox WHERE ID = (SELECT gammu_id FROM messages WHERE direction = 'out')"));
 });
+
+test('Przekazywanie: webhook dostaje surową treść SMS w polu body', function () {
+    rules_setup();
+    $m = Rules::format(['event' => 'sms', 'phone' => '48601111111', 'body' => 'Kod 123456', 'modem' => 'GSM1', 'at' => now_db()]);
+    assert_same('Kod 123456', $m['data']['body']);
+    assert_true(str_starts_with($m['text'], 'Kod 123456') && $m['text'] !== 'Kod 123456', 'tekst ze stopką');
+    assert_true(!isset(Rules::format(['event' => 'call', 'phone' => '48601111111', 'body' => '', 'modem' => '', 'at' => now_db()])['data']['body']), 'połączenie bez body');
+    Channels::$factory = null;
+});

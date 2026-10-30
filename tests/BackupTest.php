@@ -55,3 +55,14 @@ test('kopia danych: zły plik, zła wersja i nieprawidłowe pozycje', function (
     assert_same('30', Settings::get('cleanup_days'));
     assert_same('10', Settings::get('throttle_per_min'));
 });
+
+test('kopia danych: ustawienia salda i limitu przechodzą przez eksport i import', function () {
+    reset_db();
+    foreach (['balance_code' => '*101#', 'balance_hours' => '6', 'balance_regex' => 'Saldo:\s*([0-9,]+)', 'balance_threshold' => '5.5', 'monthly_limit' => '300'] as $k => $v) {
+        Settings::set($k, $v);
+    }
+    $json = Backup::export();
+    reset_db();
+    Backup::import($json);
+    assert_same(['*101#', '6', 'Saldo:\s*([0-9,]+)', '5.5', '300'], array_map([Settings::class, 'get'], ['balance_code', 'balance_hours', 'balance_regex', 'balance_threshold', 'monthly_limit']));
+});

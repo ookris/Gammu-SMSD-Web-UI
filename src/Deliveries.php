@@ -8,7 +8,7 @@ final class Deliveries
     private const BACKOFF = [60, 300, 900, 3600]; // s po 1., 2., 3., 4. nieudanej próbie
     private const KEEP_DAYS = 30;
     /** Łączny czas jednego przebiegu (s) – martwy serwer nie może zatrzymać synchronizacji na minuty. */
-    private const BUDGET = 20;
+    private const BUDGET = 15;
     /** Po tylu godzinach oczekujące dostarczenie wygasa (np. kanał długo wyłączony) zamiast wysłać się masowo po włączeniu. */
     private const EXPIRE_HOURS = 48;
 
@@ -74,7 +74,10 @@ final class Deliveries
 
     public static function counts(): array
     {
-        return array_column(Db::all('SELECT status, COUNT(*) AS n FROM deliveries GROUP BY status'), 'n', 'status') + ['pending' => 0, 'sent' => 0, 'failed' => 0];
+        $counts = array_column(Db::all('SELECT status, COUNT(*) AS n FROM deliveries GROUP BY status'), 'n', 'status') + ['pending' => 0, 'sent' => 0, 'failed' => 0];
+        // Baner o błędach dotyczy ostatnich 3 dni – dawna awaria nie świeci się miesiąc po naprawie
+        $counts['failed_recent'] = (int) Db::val("SELECT COUNT(*) FROM deliveries WHERE status = 'failed' AND created_at > ?", [now_db(-3 * 86400)]);
+        return $counts;
     }
 
     /** Raz na dobę usuwa zakończone dostarczenia starsze niż 30 dni. */

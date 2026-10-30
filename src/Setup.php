@@ -91,6 +91,10 @@ final class Setup
         $conf->set('smsd', 'logfile', '/var/log/gammu-smsd/' . $id . '.log');
         if (isset($o['pin'])) {
             $conf->set('smsd', 'pin', $o['pin'] === '' ? null : (string) $o['pin']);
+        } elseif ($conf->get('smsd', 'pin') !== null) {
+            // PIN głównej karty SIM nie pasuje do innej – zła próba przy starcie, a po trzech blokada karty
+            $conf->set('smsd', 'pin', null);
+            echo "PIN skopiowany z głównej konfiguracji został usunięty – jeśli karta ma PIN, podaj go opcją --pin=… .\n";
         }
         if ($conf->get('smsd', 'runonincomingcall') !== null) {
             $conf->set('smsd', 'runonincomingcall', cfg('hook.command') . ' --phone=' . escapeshellarg($id));

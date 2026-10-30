@@ -63,6 +63,9 @@ final class Sync
         // Wysyłka powiadomień po zwolnieniu blokady synchronizacji – sieć (SMTP, webhook) nie może jej przetrzymywać
         try {
             $r['deliveries'] = Deliveries::process();
+            if ($r['deliveries'] > 0) {
+                Settings::set('last_sync_result', $r);
+            }
         } catch (PDOException $e) {
             throw $e;
         } catch (Throwable $e) {
@@ -106,6 +109,7 @@ final class Sync
         app_log('info', 'proces w tle: start (co ' . $interval . ' s)');
         while (!$stop) {
             try {
+                Settings::set('worker_seen_at', now_db()); // także przed pracą – wolna wysyłka powiadomień nie może wyglądać jak awaria procesu
                 self::run();
                 Settings::set('worker_seen_at', now_db());
             } catch (PDOException $e) {

@@ -144,8 +144,11 @@ final class Schedules
                 if ($plan['errors'] !== []) {
                     throw new RuntimeException(implode(' ', $plan['errors']));
                 }
-                Compose::send($in, $plan);
-                Db::update('schedules', ['last_run_at' => now_db(), 'runs' => $s['runs'] + 1, 'last_error' => null, 'next_run_at' => $next], 'id = ?', [$s['id']]);
+                // Wysyłka i przesunięcie terminu w jednej transakcji – błąd między nimi nie powtórzy wiadomości
+                Db::tx(static function () use ($in, $plan, $s, $next): void {
+                    Compose::send($in, $plan);
+                    Db::update('schedules', ['last_run_at' => now_db(), 'runs' => $s['runs'] + 1, 'last_error' => null, 'next_run_at' => $next], 'id = ?', [$s['id']]);
+                });
                 $n++;
             } catch (Throwable $e) {
                 if ($e instanceof PDOException) {

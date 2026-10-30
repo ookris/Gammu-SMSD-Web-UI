@@ -65,6 +65,9 @@ final class Channels
             if ($p === false || !in_array($p['scheme'] ?? '', ['http', 'https'], true) || ($p['host'] ?? '') === '' || mb_strlen($url) > 500) {
                 return [null, t('channels.err_url')];
             }
+            if (filter_var(trim($p['host'], '[]'), FILTER_VALIDATE_IP) && ($bad = WebhookChannel::checkUrl($url)) !== null) {
+                return [null, $bad]; // adres IP zablokowany (loopback, link-local) – od razu przy zapisie
+            }
             $secret = $old ? (self::config($old)['secret'] ?? '') : '';
             if (!empty($in['secret_clear'])) {
                 $secret = '';
