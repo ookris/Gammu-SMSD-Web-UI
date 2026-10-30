@@ -25,7 +25,7 @@ $rest = flashes_html();
 <button type="button" data-nav-toggle aria-controls="sidebar" aria-expanded="false" aria-label="<?= e(t('layout.menu')) ?>"><?= icon('hamburger-menu', 'icon-lg') ?></button>
 <strong><?= e($title ?? '') ?></strong><span class="dot dot-<?= e($status['level']) ?>"></span><span class="muted small"><?= e($status['modem']) ?></span>
 </header>
-<nav class="sidebar" id="sidebar" aria-label="<?= e(t('layout.main_menu')) ?>" hx-get="<?= e(url('nav', ['cur' => $nav])) ?>" hx-trigger="every 15s" hx-swap="innerHTML">
+<nav class="sidebar" id="sidebar" aria-label="<?= e(t('layout.main_menu')) ?>" hx-get="<?= e(url('nav', ['cur' => $nav, 'poll' => 1])) ?>" hx-trigger="every 15s" hx-swap="innerHTML">
 <?= view('partials/nav', ['nav' => $nav, 'status' => $status]) ?>
 </nav>
 <main class="main" id="main">

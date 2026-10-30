@@ -536,3 +536,37 @@ a.tile:hover { border-color: var(--c-accent); }
 .side-user .logout-form { margin: 0; }
 .side-user button.logout { display: flex; align-items: center; min-height: 44px; margin: 0; padding: 0; background: none; border: 0; box-shadow: none; color: var(--c-side-text); cursor: pointer; }
 .side-user button.logout:hover, .side-user button.logout:focus-visible { color: #FFFFFF; background: none; }
+
+/* ---------- Odebrane (rozmowy + filtry + akcje zbiorcze) ---------- */
+.thread-list .filters { margin: 0.5rem 0 0; }
+.thread-list .filters summary { cursor: pointer; font-size: 0.9rem; color: var(--c-muted); }
+.thread-list .filters .field, .thread-list .filters > label { margin-top: 0.5rem; }
+.thread-list .filters .row { gap: 0.5rem; margin-top: 0.5rem; }
+.thread-list .filters button, .thread-list .filters [role="button"] { margin: 0; width: auto; }
+.thread-bulk { display: flex; flex-direction: column; min-height: 0; margin: 0; }
+.thread-bulk .bulkbar { padding: 0.5rem 0.875rem; }
+.thread-list li { display: flex; align-items: center; }
+.thread-list li > input[type="checkbox"] { margin: 0 0 0 0.875rem; flex: none; }
+.thread-list li > a { flex: 1; min-width: 0; }
+.msg-actions { display: inline-flex; gap: 0.125rem; margin-left: auto; opacity: 0; }
+.msg:hover .msg-actions, .msg-actions:focus-within { opacity: 1; }
+.msg-actions form { margin: 0; }
+.msg-actions .icon-btn { width: 28px; height: 28px; }
+@media (hover: none) { .msg-actions { opacity: 1; } }
+
+/* ---------- Odebrane (rozmowy + filtry + akcje zbiorcze) ---------- */
+.thread-list .filters { margin: 0.5rem 0 0; }
+.thread-list .filters summary { cursor: pointer; font-size: 0.9rem; color: var(--c-muted); }
+.thread-list .filters .field, .thread-list .filters > label { margin-top: 0.5rem; }
+.thread-list .filters .row { gap: 0.5rem; margin-top: 0.5rem; }
+.thread-list .filters button, .thread-list .filters [role="button"] { margin: 0; width: auto; }
+.thread-bulk { display: flex; flex-direction: column; min-height: 0; margin: 0; }
+.thread-bulk .bulkbar { padding: 0.5rem 0.875rem; }
+.thread-list li { display: flex; align-items: center; }
+.thread-list li > input[type="checkbox"] { margin: 0 0 0 0.875rem; flex: none; }
+.thread-list li > a { flex: 1; min-width: 0; }
+.msg-actions { display: inline-flex; gap: 0.125rem; margin-left: auto; opacity: 0; }
+.msg:hover .msg-actions, .msg-actions:focus-within { opacity: 1; }
+.msg-actions form { margin: 0; }
+.msg-actions .icon-btn { width: 28px; height: 28px; }
+@media (hover: none) { .msg-actions { opacity: 1; } }

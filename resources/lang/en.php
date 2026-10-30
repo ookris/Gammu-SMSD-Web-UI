@@ -7,7 +7,6 @@ return [
     // Menu
     'nav.compose' => 'New message',
     'nav.dashboard' => 'Dashboard',
-    'nav.threads' => 'Conversations',
     'nav.inbox' => 'Inbox',
     'nav.sent' => 'Sent',
     'nav.contacts' => 'Contacts',
@@ -363,6 +362,14 @@ return [
     'inbox.block_q' => 'Block {who}?',
     'inbox.block_text' => 'SMS from this sender will not reach the panel – Gammu will delete them from the modem.',
     'inbox.block' => 'Block',
+    'inbox.threads_deleted' => ['Deleted {n} conversation.', 'Deleted {n} conversations.'],
+    'inbox.delete_threads' => 'Delete the selected conversations?',
+    'inbox.delete_threads_text' => 'All messages and calls with these numbers will be deleted (except those waiting in the queue).',
+    'inbox.delete_msg' => 'Delete message',
+    'inbox.delete_msg_q' => 'Delete this message?',
+    'inbox.delete_msg_text' => 'The message will disappear from the panel.',
+    'inbox.delete_pending' => 'A message waiting in the queue cannot be deleted – cancel it first.',
+    'inbox.threads_kept' => ['Kept {n} conversation with messages in the queue.', 'Kept {n} conversations with messages in the queue.'],
     'inbox.deleted' => ['Deleted {n} message.', 'Deleted {n} messages.'],
     'inbox.block_note' => 'from inbox',
 
@@ -476,6 +483,7 @@ return [
     'blocklist.not_blocked' => 'Not blocked.',
     'blocklist.blocked' => 'Blocked {who}.',
     'blocklist.not_written' => 'The number was added to the list, but the file was not written.',
+    'blocklist.change_not_written' => 'The change was saved, but the file was not written.',
     'blocklist.backup_note' => 'blocklist',
 
     // File errors
@@ -596,6 +604,7 @@ return [
     'contacts.imported' => 'Contacts imported.',
     'contacts.imported_text' => 'New: {new}, updated: {updated}.',
     'contacts.imported_skipped' => 'New: {new}, updated: {updated}, invalid rows skipped: {invalid}.',
+    'contacts.group_gone' => 'That group has already been deleted.',
     'contacts.added_to_group' => ['Added to the group: {n} contact.', 'Added to the group: {n} contacts.'],
     'contacts.removed_from_group' => ['Removed from the group: {n} contact.', 'Removed from the group: {n} contacts.'],
     'contacts.deleted' => ['Deleted {n} contact.', 'Deleted {n} contacts.'],
@@ -935,6 +944,8 @@ return [
     'conf.device_missing' => 'No device parameter in the [gammu] section',
     'conf.device_ok' => 'The modem port exists',
     'conf.device_bad' => 'The modem port {device} does not exist',
+    'conf.port_ignored' => 'port = {port} – old name of the device parameter, ignored by Gammu – remove this line',
+    'conf.port_used' => 'port = {port} – old name of the device parameter – replace this line with device = …',
     'conf.drd' => 'deliveryreportdelay = {value} – at least 3600 recommended, ideally 172800',
     'conf.drd_default' => '600 (default)',
     'conf.lines_ok' => 'All lines understood',

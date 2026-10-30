@@ -1,5 +1,5 @@
 <?php /** @var array $modems */ $device ??= GammuConf::load()?->get('gammu', 'device'); ?>
-<section class="card" id="modem-state" hx-get="<?= e(url('modem', ['fragment' => 'state'])) ?>" hx-trigger="every 15s" hx-swap="outerHTML">
+<section class="card" id="modem-state" hx-get="<?= e(url('modem', ['fragment' => 'state', 'poll' => 1])) ?>" hx-trigger="every 15s" hx-swap="outerHTML">
 <header><h2><?= e(t('modem.state')) ?></h2></header>
 <?php if ($modems === []): ?>
 <?= Ui::empty('sim-card', t('modem.not_reported'), t('modem.not_reported_text'), '<a href="' . e(url('config', ['tab' => 'service'])) . '" role="button" class="secondary">' . e(t('modem.service')) . '</a>') ?>

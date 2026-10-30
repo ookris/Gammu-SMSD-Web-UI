@@ -91,6 +91,14 @@ final class GammuConfForm
                 $changes[] = $key . ' ' . $show($old) . ' → ' . $show($value === '' ? null : $value);
             }
         }
+        $device = $copy->get('gammu', 'device');
+        $port = $copy->dropLegacyPort();
+        if ($port !== null) {
+            $changes[] = 'port ' . $port . ' → ' . t('config.default_value');
+            if ($copy->get('gammu', 'device') !== $device) {
+                $changes[] = 'device ' . ($device ?: t('config.default_value')) . ' → ' . $copy->get('gammu', 'device');
+            }
+        }
         return [$copy, $changes, $errors];
     }
 }

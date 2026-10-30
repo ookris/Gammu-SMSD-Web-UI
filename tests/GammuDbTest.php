@@ -99,6 +99,20 @@ test('synchronizacja: wiadomość zewnętrzna (CreatorID ≠ smsgui)', function 
     assert_same(1, (int) Db::val('SELECT COUNT(*) FROM messages'));
 });
 
+test('synchronizacja: usunięta wiadomość zewnętrzna i wątek nie wracają', function () {
+    reset_db();
+    gammu_sent(901, 1, 'SendingOKNoReport', ['CreatorID' => 'inject', 'TextDecoded' => 'A']);
+    gammu_sent(902, 1, 'SendingOKNoReport', ['CreatorID' => 'inject', 'TextDecoded' => 'B', 'DestinationNumber' => '+48500100200']);
+    Sync::run();
+    $id = (int) Db::val('SELECT id FROM messages WHERE gammu_id = 901');
+    assert_same(1, Messages::delete([$id], 'out'));
+    Sync::run();
+    assert_same(0, (int) Db::val('SELECT COUNT(*) FROM messages WHERE gammu_id = 901'));
+    Threads::delete('48500100200');
+    Sync::run();
+    assert_same(0, (int) Db::val('SELECT COUNT(*) FROM messages'));
+});
+
 test('import inbox: części sklejone przez Gammu i niesklejone, niekompletne, flash', function () {
     reset_db();
     gammu_inbox('+48601234567', 'Całość długiej wiadomości', '0500031A0201');

@@ -1,5 +1,5 @@
 <?php /** @var ?array $current */ ?>
-<div id="ussd-box"<?= $current && in_array($current['status'], ['queued', 'sent'], true) ? ' hx-get="' . e(url('modem', ['fragment' => 'ussd', 'ussd' => $current['id']])) . '" hx-trigger="every 2s" hx-swap="outerHTML"' : '' ?>>
+<div id="ussd-box"<?= $current && in_array($current['status'], ['queued', 'sent'], true) ? ' hx-get="' . e(url('modem', ['fragment' => 'ussd', 'ussd' => $current['id'], 'poll' => 1])) . '" hx-trigger="every 2s" hx-swap="outerHTML"' : '' ?>>
 <?php if ($current === null): ?>
 <?php elseif (in_array($current['status'], ['queued', 'sent'], true)): ?>
 <div class="ussd-wait" role="status"><?= icon('hourglass') ?><div><strong><?= e(t('modem.waiting')) ?></strong>

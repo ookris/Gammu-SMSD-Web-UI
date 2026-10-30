@@ -67,7 +67,10 @@ final class Auth
             self::endSession();
             return null;
         }
-        $_SESSION['last_seen'] = time();
+        // Automatyczne odświeżanie fragmentów (?poll=1: menu, rozmowa, postęp) nie przedłuża sesji – inaczej otwarta karta nigdy by nie wygasła
+        if (!isset($_GET['poll'])) {
+            $_SESSION['last_seen'] = time();
+        }
         return self::$user;
     }
 

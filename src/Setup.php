@@ -27,6 +27,7 @@ final class Setup
             $conf->set($section, $key, $value);
         };
         $set('gammu', 'device', $o['device'] ?? null);
+        $conf->dropLegacyPort();
         $set('gammu', 'connection', $o['connection'] ?? 'at', !isset($o['connection']));
         $set('smsd', 'service', 'sql');
         $set('smsd', 'driver', 'native_mysql');

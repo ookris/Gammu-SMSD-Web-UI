@@ -7,7 +7,6 @@ return [
     // Menu
     'nav.compose' => 'Nowa wiadomość',
     'nav.dashboard' => 'Pulpit',
-    'nav.threads' => 'Rozmowy',
     'nav.inbox' => 'Odebrane',
     'nav.sent' => 'Wysłane',
     'nav.contacts' => 'Kontakty',
@@ -363,6 +362,14 @@ return [
     'inbox.block_q' => 'Zablokować {who}?',
     'inbox.block_text' => 'SMS od tego nadawcy nie będą trafiać do panelu – Gammu usunie je z modemu.',
     'inbox.block' => 'Zablokuj',
+    'inbox.threads_deleted' => ['Usunięto {n} rozmowę.', 'Usunięto {n} rozmowy.', 'Usunięto {n} rozmów.'],
+    'inbox.delete_threads' => 'Usunąć zaznaczone rozmowy?',
+    'inbox.delete_threads_text' => 'Usunięte zostaną wszystkie wiadomości i połączenia z tymi numerami (poza czekającymi w kolejce).',
+    'inbox.delete_msg' => 'Usuń wiadomość',
+    'inbox.delete_msg_q' => 'Usunąć wiadomość?',
+    'inbox.delete_msg_text' => 'Wiadomość zniknie z panelu.',
+    'inbox.delete_pending' => 'Wiadomości czekającej w kolejce nie można usunąć – najpierw ją anuluj.',
+    'inbox.threads_kept' => ['Rozmów z wiadomościami w kolejce nie usunięto: {n}.', 'Rozmów z wiadomościami w kolejce nie usunięto: {n}.', 'Rozmów z wiadomościami w kolejce nie usunięto: {n}.'],
     'inbox.deleted' => ['Usunięto {n} wiadomość.', 'Usunięto {n} wiadomości.', 'Usunięto {n} wiadomości.'],
     'inbox.block_note' => 'z odebranych',
 
@@ -476,6 +483,7 @@ return [
     'blocklist.not_blocked' => 'Nie zablokowano.',
     'blocklist.blocked' => 'Zablokowano {who}.',
     'blocklist.not_written' => 'Numer dodany do listy, ale pliku nie zapisano.',
+    'blocklist.change_not_written' => 'Zmiana zapisana w bazie, ale pliku nie zapisano.',
     'blocklist.backup_note' => 'czarna lista',
 
     // Błędy plików
@@ -596,6 +604,7 @@ return [
     'contacts.imported' => 'Zaimportowano kontakty.',
     'contacts.imported_text' => 'Nowe: {new}, zaktualizowane: {updated}.',
     'contacts.imported_skipped' => 'Nowe: {new}, zaktualizowane: {updated}, pominięte błędne wiersze: {invalid}.',
+    'contacts.group_gone' => 'Ta grupa została już usunięta.',
     'contacts.added_to_group' => ['Dodano do grupy: {n} kontakt.', 'Dodano do grupy: {n} kontakty.', 'Dodano do grupy: {n} kontaktów.'],
     'contacts.removed_from_group' => ['Usunięto z grupy: {n} kontakt.', 'Usunięto z grupy: {n} kontakty.', 'Usunięto z grupy: {n} kontaktów.'],
     'contacts.deleted' => ['Usunięto {n} kontakt.', 'Usunięto {n} kontakty.', 'Usunięto {n} kontaktów.'],
@@ -935,6 +944,8 @@ return [
     'conf.device_missing' => 'Brak parametru device w sekcji [gammu]',
     'conf.device_ok' => 'Port modemu istnieje',
     'conf.device_bad' => 'Port modemu {device} nie istnieje',
+    'conf.port_ignored' => 'port = {port} – stara nazwa parametru device, Gammu ją pomija – usuń tę linię',
+    'conf.port_used' => 'port = {port} – stara nazwa parametru device – zamień tę linię na device = …',
     'conf.drd' => 'deliveryreportdelay = {value} – zalecane co najmniej 3600, najlepiej 172800',
     'conf.drd_default' => '600 (domyślnie)',
     'conf.lines_ok' => 'Wszystkie linie zrozumiałe',

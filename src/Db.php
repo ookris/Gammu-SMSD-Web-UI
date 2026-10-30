@@ -9,12 +9,17 @@ declare(strict_types=1);
 final class Db
 {
     private static ?PDO $pdo = null;
+    private static string $tzOffset = '';
 
     public static function pdo(): PDO
     {
         if (self::$pdo === null) {
             self::$pdo = self::connect();
             self::migrate();
+        } elseif (self::$tzOffset !== '' && self::$tzOffset !== date('P')) {
+            // Zmiana czasu (DST) w trakcie życia połączenia procesu w tle – odśwież strefę sesji.
+            self::$pdo->exec("SET time_zone = '" . date('P') . "'");
+            self::$tzOffset = date('P');
         }
         return self::$pdo;
     }
@@ -32,6 +37,7 @@ final class Db
         // Przesunięcie zamiast nazwy strefy: działa także bez załadowanych tabel stref w MariaDB.
         $pdo->exec("SET NAMES utf8mb4, time_zone = '" . date('P') . "', "
             . "sql_mode = 'STRICT_ALL_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION'");
+        self::$tzOffset = date('P');
         return $pdo;
     }
 
@@ -311,6 +317,14 @@ final class Db
                     ip VARCHAR(45) NOT NULL,
                     attempted_at DATETIME NOT NULL,
                     KEY attempts_ip (ip, attempted_at)
+                ) $t",
+            ],
+            // Znaczniki usuniętych wiadomości zewnętrznych – Sync::external() nie importuje ich ponownie
+            2 => [
+                "CREATE TABLE IF NOT EXISTS deleted_external (
+                    gammu_id INT UNSIGNED NOT NULL PRIMARY KEY,
+                    deleted_at DATETIME NOT NULL,
+                    KEY deleted_external_at (deleted_at)
                 ) $t",
             ],
         ];
