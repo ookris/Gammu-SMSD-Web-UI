@@ -214,3 +214,34 @@ test('formularz i setup gammu usuwają port = /dev/null z szablonu Ubuntu', func
         unlink($b);
     }
 });
+
+test('Odebrane: filtry listy rozmów, prawdziwa ostatnia wiadomość, nieprzeczytane', function () {
+    reset_db();
+    $in = static fn (string $phone, string $body, int $read, string $at) => Db::insert('messages', [
+        'direction' => 'in', 'status' => 'received', 'phone' => $phone, 'body' => $body, 'is_read' => $read, 'received_at' => $at, 'created_at' => $at, 'updated_at' => $at]);
+    $in('48601234567', 'stara nieprzeczytana', 0, now_db(-86400 * 10));
+    Outbox::create(['phone' => '48601234567', 'body' => 'moja odpowiedź']);
+    $in('48700000000', 'przeczytana', 1, now_db(-60));
+
+    assert_same(2, count(Threads::list([])));
+    $unread = Threads::list(['unread' => '1']);
+    assert_same(1, count($unread));
+    assert_same('48601234567', $unread[0]['phone']);
+    assert_same('moja odpowiedź', $unread[0]['body']); // nie ostatnia nieprzeczytana, tylko prawdziwa ostatnia
+    assert_same(1, $unread[0]['unread']);
+    assert_same(2, count(Threads::list(['from' => date('Y-m-d')])), 'dziś: obie rozmowy (odpowiedź wysłana dziś)');
+    assert_same(1, count(Threads::list(['to' => date('Y-m-d', time() - 86400 * 5)])), 'do sprzed 5 dni: tylko stara wiadomość');
+
+    // „nieprzeczytane” po przeczytaniu i ponownie
+    Threads::markRead('48601234567');
+    assert_same(0, count(Threads::list(['unread' => '1'])));
+    Threads::markUnread(['48601234567', '48999999999']);
+    assert_same(1, Threads::list(['unread' => '1'])[0]['unread']);
+});
+
+test('usuwanie wiadomości z zakresem numeru nie rusza innych rozmów', function () {
+    reset_db();
+    $id = Db::insert('messages', ['direction' => 'in', 'status' => 'received', 'phone' => '48601234567', 'body' => 'x', 'received_at' => now_db(), 'created_at' => now_db(), 'updated_at' => now_db()]);
+    assert_same(0, Messages::delete([$id], null, '48700000000'));
+    assert_same(1, Messages::delete([$id], null, '48601234567'));
+});
