@@ -34,13 +34,14 @@ final class Channels
         return match ($row['type']) {
             'email' => new MailChannel($c),
             'webhook' => new WebhookChannel($c),
+            'sms' => new SmsChannel($c),
             default => throw new InvalidArgumentException('channel type ' . $row['type']),
         };
     }
 
     /**
      * Zapis kanału z formularza. Zwraca [id|null, błąd|null]. Pusty sekret przy edycji zostawia dotychczasowy (chyba że secret_clear).
-     * @param array{name:string,to?:string,url?:string,secret?:string,secret_clear?:bool} $in
+     * @param array{name:string,to?:string,number?:string,url?:string,secret?:string,secret_clear?:bool} $in
      */
     public static function save(?int $id, string $type, array $in): array
     {
@@ -72,6 +73,12 @@ final class Channels
                 $secret = Crypto::encrypt($in['secret']);
             }
             $config = ['url' => $url, 'secret' => $secret];
+        } elseif ($type === 'sms') {
+            $phone = Phone::normalize($in['number'] ?? '');
+            if ($phone === null) {
+                return [null, t('channels.err_number')];
+            }
+            $config = ['number' => $phone];
         } else {
             return [null, t('channels.err_missing')];
         }

@@ -11,6 +11,10 @@ if (is_post()) {
             flash('ok', t('channels.mail_saved'));
             redirect(url('automations'));
         }
+    } elseif (isset($_POST['alerts_save'])) {
+        Alerts::saveRoutes(is_array($_POST['route'] ?? null) ? $_POST['route'] : []);
+        flash('ok', t('alerts.saved'));
+        redirect(url('automations'));
     } elseif (isset($_POST['test']) && $id > 0) {
         $err = Channels::test($id);
         $err === null ? flash('ok', t('channels.test_ok')) : flash('err', t('channels.test_failed'), $err);
@@ -28,9 +32,9 @@ if (is_post()) {
         if ($existing !== null) {
             $type = $existing['type'];
         }
-        [$saved, $error] = in_array($type, ['email', 'webhook'], true)
+        [$saved, $error] = in_array($type, ['email', 'webhook', 'sms'], true)
             ? Channels::save($existing ? $id : null, $type, [
-                'name' => input('name'), 'to' => input('to'), 'url' => input('url'), 'secret' => (string) ($_POST['secret'] ?? ''),
+                'name' => input('name'), 'to' => input('to'), 'url' => input('url'), 'number' => input('number'), 'secret' => (string) ($_POST['secret'] ?? ''),
                 'secret_clear' => isset($_POST['secret_clear']),
             ])
             : [null, t('channels.err_missing')];
@@ -44,10 +48,12 @@ if (is_post()) {
 $current = $id > 0 ? Channels::find($id) : null;
 $cfg = $current ? Channels::config($current) : [];
 $form = is_post() && $error !== null
-    ? ['type' => input('type'), 'name' => input('name'), 'to' => input('to'), 'url' => input('url')]
-    : ['type' => $current['type'] ?? 'email', 'name' => $current['name'] ?? '', 'to' => $cfg['to'] ?? '', 'url' => $cfg['url'] ?? ''];
+    ? ['type' => input('type'), 'name' => input('name'), 'to' => input('to'), 'url' => input('url'), 'number' => input('number')]
+    : ['type' => $current['type'] ?? 'email', 'name' => $current['name'] ?? '', 'to' => $cfg['to'] ?? '', 'url' => $cfg['url'] ?? '',
+        'number' => isset($cfg['number']) ? Phone::format($cfg['number']) : ''];
 render('automations', [
     'title' => t('nav.automations'), 'nav' => 'automations', 'channels' => Channels::all(), 'id' => $current ? $id : 0, 'form' => $form,
     'hasSecret' => ($cfg['secret'] ?? '') !== '', 'error' => $error, 'mailError' => $mailError, 'deliveries' => Deliveries::counts(),
+    'routes' => Alerts::routes(), 'alertState' => Alerts::state(),
     'mail' => is_post() && $mailError !== null ? $_POST + Channels::mailSettings() : Channels::mailSettings(),
 ]);

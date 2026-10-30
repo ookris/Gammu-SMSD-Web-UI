@@ -106,6 +106,11 @@ switch ($cmd) {
         Sync::worker();
         break;
 
+    case 'watchdog':
+        // Z timera systemd: powiadomienie, gdy proces w tle nie działa (on sam tego nie zgłosi)
+        Alerts::watchdog();
+        break;
+
     case 'hook':
         if (($pos[0] ?? '') !== 'call') {
             fwrite(STDERR, "Użycie: smsgui hook call --phone=<PhoneID> [numer]\n");
@@ -135,6 +140,7 @@ switch ($cmd) {
 
           worker                        proces w tle (synchronizacja co worker_interval s)
           sync                          jednorazowa synchronizacja
+          watchdog                      kontrola procesu w tle i powiadomienie o awarii (timer systemd)
           hook call --phone=ID [numer]  zapis połączenia przychodzącego (RunOnIncomingCall)
           passwd [login]                ustawienie loginu i hasła konta
           check [--quiet]               diagnostyka; kod wyjścia ≠ 0 przy błędzie

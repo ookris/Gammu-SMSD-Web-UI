@@ -7,8 +7,8 @@ set -euo pipefail
 APP="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PURGE=0; [ "${1:-}" = --purge ] && PURGE=1
 
-systemctl disable --now smsgui-worker 2>/dev/null || true
-rm -f /etc/systemd/system/smsgui-worker.service /etc/systemd/system/gammu-smsd.service.d/smsgui.conf
+systemctl disable --now smsgui-worker smsgui-watchdog.timer 2>/dev/null || true
+rm -f /etc/systemd/system/smsgui-worker.service /etc/systemd/system/smsgui-watchdog.service /etc/systemd/system/smsgui-watchdog.timer /etc/systemd/system/gammu-smsd.service.d/smsgui.conf
 systemctl daemon-reload
 rm -f /etc/nginx/sites-enabled/smsgui /etc/nginx/sites-available/smsgui
 nginx -t -q 2>/dev/null && systemctl reload nginx || true

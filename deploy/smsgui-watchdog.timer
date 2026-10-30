@@ -1,0 +1,10 @@
+[Unit]
+Description=Gammu SMSD Web UI – co minutę sprawdza, czy proces w tle działa
+
+[Timer]
+OnBootSec=3min
+OnUnitActiveSec=1min
+AccuracySec=10s
+
+[Install]
+WantedBy=timers.target

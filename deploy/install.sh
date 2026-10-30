@@ -294,8 +294,11 @@ say "Tabele panelu i proces w tle"
 sudo -u www-data php "$APP/bin/smsgui" setup db
 mariadb -e "GRANT INSERT (phone, raw_number, modem, received_at) ON smsgui.calls TO 'smsgui_hook'@'localhost'; FLUSH PRIVILEGES;"
 sed "s#__ROOT__#$APP#g" "$APP/deploy/smsgui-worker.service" >/etc/systemd/system/smsgui-worker.service
+sed "s#__ROOT__#$APP#g" "$APP/deploy/smsgui-watchdog.service" >/etc/systemd/system/smsgui-watchdog.service
+install -m 0644 "$APP/deploy/smsgui-watchdog.timer" /etc/systemd/system/smsgui-watchdog.timer
 systemctl daemon-reload
 systemctl enable --now smsgui-worker >/dev/null
+systemctl enable --now smsgui-watchdog.timer >/dev/null
 systemctl restart smsgui-worker
 
 say "Serwer WWW"

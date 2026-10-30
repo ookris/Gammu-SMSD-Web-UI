@@ -1,4 +1,4 @@
-<?php /** @var array $channels @var int $id @var array $form @var bool $hasSecret @var ?string $error @var ?string $mailError @var array $deliveries @var array $mail */ ?>
+<?php /** @var array $channels @var int $id @var array $form @var bool $hasSecret @var ?string $error @var ?string $mailError @var array $deliveries @var array $mail @var array $routes @var array $alertState */ ?>
 <header class="page-head"><div><h1><?= e(t('nav.automations')) ?></h1><p class="sub"><?= e(t('channels.sub')) ?></p></div>
 <div class="actions"><a href="<?= e(url('automations')) ?>" role="button"><?= icon('add-circle') ?><?= e(t('channels.new')) ?></a></div></header>
 <?= flashes_html() ?>
@@ -14,7 +14,7 @@
 <button type="submit" name="test" value="1" class="icon-btn" aria-label="<?= e(t('channels.test')) ?>" title="<?= e(t('channels.test')) ?>"><?= icon('play') ?></button>
 <button type="submit" name="toggle" value="<?= $c['enabled'] ? '0' : '1' ?>" class="icon-btn" aria-label="<?= e(t($c['enabled'] ? 'channels.disable' : 'channels.enable')) ?>" title="<?= e(t($c['enabled'] ? 'channels.disable' : 'channels.enable')) ?>"><?= icon($c['enabled'] ? 'forbidden-circle' : 'check-circle') ?></button>
 <button type="submit" name="delete" value="1" class="icon-btn danger" aria-label="<?= e(t('common.delete')) ?>" title="<?= e(t('common.delete')) ?>"<?= Ui::confirm(t('channels.delete_q', ['name' => $c['name']]), t('channels.delete_text'), t('common.delete')) ?>><?= icon('trash-bin-trash') ?></button></form></header>
-<p class="mono"><?= e($c['type'] === 'email' ? ($cc['to'] ?? '') : ($cc['url'] ?? '')) ?></p>
+<p class="mono"><?= e(match ($c['type']) { 'email' => $cc['to'] ?? '', 'sms' => Phone::format($cc['number'] ?? ''), default => $cc['url'] ?? '' }) ?></p>
 <footer><span class="muted small"><?= $c['last_error'] ? e(t('channels.last_error', ['error' => $c['last_error']])) : ($c['last_ok_at'] ? e(t('channels.last_ok', ['time' => fmt_when($c['last_ok_at'])])) : e(t('channels.never_used'))) ?></span></footer>
 </article>
 <?php endforeach ?>
@@ -26,15 +26,34 @@
 <?php if ($error): ?><?= alert('err', '', $error) ?><?php endif ?>
 <div class="field"><label for="ch-type"><?= e(t('channels.type')) ?></label>
 <select id="ch-type" name="type" data-type-switch<?= $id ? ' disabled' : '' ?>>
-<?php foreach (['email', 'webhook'] as $ty): ?><option value="<?= $ty ?>"<?= $form['type'] === $ty ? ' selected' : '' ?>><?= e(t('channels.type_' . $ty)) ?></option><?php endforeach ?></select>
+<?php foreach (['email', 'webhook', 'sms'] as $ty): ?><option value="<?= $ty ?>"<?= $form['type'] === $ty ? ' selected' : '' ?>><?= e(t('channels.type_' . $ty)) ?></option><?php endforeach ?></select>
 <?php if ($id): ?><input type="hidden" name="type" value="<?= e($form['type']) ?>"><?php endif ?></div>
 <div class="field"><label for="ch-name"><?= e(t('channels.name')) ?></label><input id="ch-name" name="name" type="text" value="<?= e($form['name']) ?>" required></div>
 <div class="field" data-show-for="email"<?= $form['type'] === 'email' ? '' : ' hidden' ?>><label for="ch-to"><?= e(t('channels.to')) ?></label><input id="ch-to" name="to" type="text" value="<?= e($form['to']) ?>" placeholder="ktos@example.com"><small><?= e(t('channels.to_hint')) ?></small></div>
+<div class="field" data-show-for="sms"<?= $form['type'] === 'sms' ? '' : ' hidden' ?>><label for="ch-number"><?= e(t('channels.number')) ?></label><input id="ch-number" name="number" type="tel" value="<?= e($form['number']) ?>"><small><?= e(t('channels.number_hint')) ?></small></div>
 <div class="field" data-show-for="webhook"<?= $form['type'] === 'webhook' ? '' : ' hidden' ?>><label for="ch-url"><?= e(t('channels.url')) ?></label><input id="ch-url" name="url" type="url" value="<?= e($form['url']) ?>" placeholder="https://"><small><?= e(t('channels.url_hint')) ?></small></div>
 <div class="field" data-show-for="webhook"<?= $form['type'] === 'webhook' ? '' : ' hidden' ?>><label for="ch-secret"><?= e(t('channels.secret')) ?></label><input id="ch-secret" name="secret" type="password" autocomplete="new-password" placeholder="<?= e($hasSecret ? t('channels.secret_kept') : '') ?>"><small><?= e(t('channels.secret_hint')) ?></small>
 <?php if ($hasSecret): ?><label><input type="checkbox" name="secret_clear" value="1"> <span><?= e(t('channels.secret_clear')) ?></span></label><?php endif ?></div>
 <div class="row"><button type="submit"><?= icon('diskette') ?><?= e(t('channels.save')) ?></button><a href="<?= e(url('automations')) ?>" role="button" class="secondary outline"><?= e(t('common.cancel')) ?></a></div>
 </form>
+</section>
+<section class="card">
+<header><h2><?= e(t('alerts.title')) ?></h2></header>
+<p class="muted small"><?= e(t('alerts.hint')) ?></p>
+<?php if ($channels === []): ?><p class="muted"><?= e(t('alerts.no_channels')) ?></p><?php else: ?>
+<form method="post" action="<?= e(url('automations')) ?>"><?= csrf_field() ?>
+<div class="table-wrap"><table>
+<thead><tr><th scope="col"><?= e(t('alerts.event')) ?></th><?php foreach ($channels as $c): ?><th scope="col"><?= e($c['name']) ?></th><?php endforeach ?></tr></thead>
+<tbody>
+<?php foreach (Alerts::TYPES as $type): ?>
+<tr><th scope="row"><?= e(t("alerts.$type.title")) ?><?= !empty($alertState[$type]['since']) ? ' <span class="badge badge-warn">' . e(t('alerts.active')) . '</span>' : '' ?></th>
+<?php foreach ($channels as $c): ?><td><input type="checkbox" name="route[<?= e($type) ?>][]" value="<?= (int) $c['id'] ?>" aria-label="<?= e(t("alerts.$type.title") . ' → ' . $c['name']) ?>"<?= in_array((int) $c['id'], $routes[$type] ?? [], true) ? ' checked' : '' ?>></td><?php endforeach ?></tr>
+<?php endforeach ?>
+</tbody></table></div>
+<p class="muted small"><?= e(t('alerts.sms_note')) ?></p>
+<div class="row"><button type="submit" name="alerts_save" value="1"><?= icon('diskette') ?><?= e(t('channels.save')) ?></button></div>
+</form>
+<?php endif ?>
 </section>
 <section class="card">
 <header><h2><?= e(t('channels.mail')) ?></h2></header>
