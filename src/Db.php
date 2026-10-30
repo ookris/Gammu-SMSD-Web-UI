@@ -331,6 +331,35 @@ final class Db
             3 => [
                 'ALTER TABLE messages ADD COLUMN IF NOT EXISTS validity_min INT UNSIGNED NULL AFTER priority',
             ],
+            // Kanały powiadomień (e-mail, webhook, SMS) i kolejka dostarczeń z ponawianiem
+            4 => [
+                "CREATE TABLE IF NOT EXISTS channels (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    type ENUM('email','webhook','sms') NOT NULL,
+                    name VARCHAR(120) NOT NULL,
+                    config TEXT NOT NULL,
+                    enabled TINYINT(1) NOT NULL DEFAULT 1,
+                    last_ok_at DATETIME NULL,
+                    last_error VARCHAR(255) NULL,
+                    created_at DATETIME NOT NULL
+                ) $t",
+                "CREATE TABLE IF NOT EXISTS deliveries (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    channel_id INT NOT NULL,
+                    kind VARCHAR(16) NOT NULL,
+                    subject VARCHAR(255) NOT NULL,
+                    body MEDIUMTEXT NOT NULL,
+                    status ENUM('pending','sent','failed') NOT NULL DEFAULT 'pending',
+                    attempts TINYINT UNSIGNED NOT NULL DEFAULT 0,
+                    next_try_at DATETIME NOT NULL,
+                    last_error VARCHAR(255) NULL,
+                    created_at DATETIME NOT NULL,
+                    sent_at DATETIME NULL,
+                    KEY deliveries_due (status, next_try_at),
+                    KEY deliveries_channel (channel_id),
+                    CONSTRAINT deliveries_channel_fk FOREIGN KEY (channel_id) REFERENCES channels (id) ON DELETE CASCADE
+                ) $t",
+            ],
         ];
     }
 }

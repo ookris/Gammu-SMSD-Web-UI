@@ -21,6 +21,7 @@ $link = static function (string $page, string $iconName, string $label, int $cou
 <?= $link('modem', 'sim-card', t('nav.modem')) ?>
 <?= $link('calls', 'end-call', t('nav.calls'), $calls) ?>
 <?= $link('blocklist', 'forbidden-circle', t('nav.blocklist')) ?>
+<?= $link('automations', 'plain', t('nav.automations')) ?>
 <div class="nav-group"><?= e(t('nav.system')) ?></div>
 <?= $link('config', 'tuning-2', t('nav.config')) ?>
 <?= $link('log', 'code-square', t('nav.log')) ?>

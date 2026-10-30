@@ -187,6 +187,9 @@ chown -R root:root "$APP"
 install -d -o www-data -g www-data -m 0750 "$DATA" "$DATA/backups" "$DATA/sessions"
 touch "$DATA/exclude-numbers.txt" "$DATA/smsgui.log"   # log tworzony z góry – CLI uruchamiane jako root nie może go przejąć
 chown www-data:www-data "$DATA/exclude-numbers.txt" "$DATA/smsgui.log" && chmod 0644 "$DATA/exclude-numbers.txt" && chmod 0640 "$DATA/smsgui.log"
+# Klucz szyfrowania sekretów (hasło SMTP, sekrety webhooków) – tworzony z góry, żeby CLI uruchomione jako root nie założyło go z błędnym właścicielem
+if [ ! -s "$DATA/secret.key" ]; then ( umask 0077; openssl rand -hex 32 >"$DATA/secret.key" ); fi
+chown www-data:www-data "$DATA/secret.key" && chmod 0640 "$DATA/secret.key"
 install -d -m 0750 -g www-data /var/log/gammu-smsd
 CONFIG="$APP/config/config.php"
 if [ ! -f "$CONFIG" ]; then

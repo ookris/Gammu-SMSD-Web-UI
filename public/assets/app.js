@@ -138,6 +138,13 @@
     area.dispatchEvent(new Event('input', { bubbles: true }));
   });
 
+  // Pola zależne od wybranej opcji: <select data-type-switch> pokazuje elementy [data-show-for="wartość"] w tym samym formularzu
+  document.addEventListener('change', (e) => {
+    const sel = e.target.closest('select[data-type-switch]');
+    if (!sel || !sel.form) return;
+    sel.form.querySelectorAll('[data-show-for]').forEach((el) => { el.hidden = el.dataset.showFor !== sel.value; });
+  });
+
   // Kopiowanie kodu z wiadomości: data-copy="123456" data-copied="Skopiowano"
   document.addEventListener('click', (e) => {
     const b = e.target.closest('[data-copy]');

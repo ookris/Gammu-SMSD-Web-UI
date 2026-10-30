@@ -64,7 +64,7 @@ and other national characters (ą→a, ł→l).
   invalid numbers
 - live character and part counter explaining the encoding (GSM / Unicode), automatic splitting into up to 10 parts,
   optional replacement of national characters (a longer message fits in one SMS)
-- delivery report, flash SMS, scheduled sending, priority sending
+- delivery report, flash SMS, scheduled sending, priority sending, message validity (the network stops delivering after that time)
 - templates and personalisation (`{nazwa}` – full name, `{imie}` – first name; the same placeholders in both languages) with preview
 - throttling (N SMS per minute) and a sending time window for bulk messages
 - bulk sending report with a progress bar, “Retry failed”, “Cancel remaining”
@@ -75,6 +75,7 @@ and other national characters (ą→a, ł→l).
   with a description of the network error code
 - retrying and cancelling queued messages
 - SMS sent by other means (e.g. `gammu-smsd-inject`) are shown too
+- one-time codes in received SMS with a “Copy” button, text search with date and direction filters
 - unread counter in the menu, optional automatic removal of history older than N days
 
 **Contacts**
@@ -97,9 +98,11 @@ and other national characters (ą→a, ł→l).
 - Polish and English interface, light and dark theme, works on phones
 - a single account with lockout after 5 failed logins, “Remember me”, session expiry
 - access from the local network only by default
+- panel data backup (contacts, groups, templates, blocklist, settings) in a single JSON file
+- Automations screen: e-mail (sendmail or SMTP) and webhook (HMAC signature) channels with a retry queue
 
-**Planned (after 1.0):** forwarding SMS and calls to e-mail and webhooks, HTTP API, auto-replies,
-periodic balance checks, admin notifications, statistics, multiple modems.
+**Planned (after 1.0):** admin notifications, forwarding SMS and calls, HTTP API, auto-replies,
+periodic balance checks, statistics, multiple modems.
 
 ## Screenshots
 
@@ -532,7 +535,8 @@ Gammu SMSD Web UI is free software: you can redistribute it and/or modify it und
 [GNU General Public License version 3](LICENSE) (GPL-3.0) as published by the Free Software Foundation.
 This program is distributed without any warranty – see the [LICENSE](LICENSE) file for details.
 
-Bundled libraries: [htmx](https://htmx.org) (0BSD), [Pico.css](https://picocss.com) (MIT), IBM Plex fonts (OFL).
+Bundled libraries: [htmx](https://htmx.org) (0BSD), [Pico.css](https://picocss.com) (MIT), IBM Plex fonts (OFL),
+[PHPMailer](https://github.com/PHPMailer/PHPMailer) (LGPL-2.1, `src/vendor/PHPMailer/`).
 The database schema `deploy/sql/gammu-mysql-17.sql` is based on Gammu (GPL-2.0).
 
 **Icons:** [Solar Icon Set](https://icon-sets.iconify.design/solar/) by 480 Design, licensed under

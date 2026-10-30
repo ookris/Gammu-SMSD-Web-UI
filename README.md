@@ -59,7 +59,7 @@ wiadomości zapisanych w bazie, a przy kodowaniu GSM po cichu zamienia polskie z
 - do jednego lub wielu odbiorców: grupy, kontakty i numery wpisane ręcznie – bez duplikatów, z listą błędnych numerów
 - licznik znaków i części na żywo z wyjaśnieniem kodowania (GSM / Unicode), automatyczny podział do 10 części,
   opcjonalna zamiana polskich znaków (dłuższa wiadomość w jednym SMS)
-- raport doręczenia, SMS flash, wysyłka planowana, wysyłka priorytetowa
+- raport doręczenia, SMS flash, wysyłka planowana, wysyłka priorytetowa, ważność wiadomości (po czasie sieć nie doręcza SMS)
 - szablony i personalizacja (`{nazwa}`, `{imie}`) z podglądem
 - dławienie (N SMS na minutę) i okno godzinowe wysyłki do wielu odbiorców
 - raport wysyłki z paskiem postępu, „Ponów nieudane”, „Anuluj pozostałe”
@@ -70,6 +70,7 @@ wiadomości zapisanych w bazie, a przy kodowaniu GSM po cichu zamienia polskie z
   z opisem kodu błędu sieci
 - ponawianie i anulowanie wiadomości z kolejki
 - widoczne są też SMS wysłane innymi drogami (np. `gammu-smsd-inject`)
+- kody jednorazowe w odebranych SMS z przyciskiem „Kopiuj”, wyszukiwanie w treści z filtrem dat i kierunku
 - licznik nieprzeczytanych w menu, automatyczne czyszczenie historii starszej niż N dni (opcjonalnie)
 
 **Kontakty**
@@ -92,9 +93,11 @@ wiadomości zapisanych w bazie, a przy kodowaniu GSM po cichu zamienia polskie z
 - interfejs po polsku i angielsku, jasny i ciemny motyw, działa na telefonie
 - jedno konto z blokadą po 5 nieudanych logowaniach, „Zapamiętaj mnie”, wygasanie sesji
 - dostęp domyślnie tylko z sieci lokalnej
+- kopia danych panelu (kontakty, grupy, szablony, czarna lista, ustawienia) w jednym pliku JSON
+- ekran Automatyzacje: kanały e-mail (sendmail lub SMTP) i webhook (podpis HMAC) z kolejką ponawiania
 
-**Planowane (po wersji 1.0):** przekazywanie SMS i połączeń na e-mail i webhook, HTTP API, autoodpowiedzi,
-cykliczne sprawdzanie salda, powiadomienia administracyjne, statystyki, obsługa kilku modemów.
+**Planowane (po wersji 1.0):** powiadomienia administracyjne, przekazywanie SMS i połączeń, HTTP API, autoodpowiedzi,
+cykliczne sprawdzanie salda, statystyki, obsługa kilku modemów.
 
 ## Zrzuty ekranu
 
@@ -525,7 +528,8 @@ Gammu SMSD Web UI jest wolnym oprogramowaniem: możesz je rozpowszechniać i mod
 [Powszechnej Licencji Publicznej GNU w wersji 3](LICENSE) (GPL-3.0) opublikowanej przez Free Software Foundation.
 Program jest rozpowszechniany bez jakiejkolwiek gwarancji – szczegóły w pliku [LICENSE](LICENSE).
 
-Dołączone biblioteki: [htmx](https://htmx.org) (0BSD), [Pico.css](https://picocss.com) (MIT), czcionki IBM Plex (OFL).
+Dołączone biblioteki: [htmx](https://htmx.org) (0BSD), [Pico.css](https://picocss.com) (MIT), czcionki IBM Plex (OFL),
+[PHPMailer](https://github.com/PHPMailer/PHPMailer) (LGPL-2.1, `src/vendor/PHPMailer/`).
 Schemat bazy `deploy/sql/gammu-mysql-17.sql` na podstawie Gammu (GPL-2.0).
 
 **Ikony:** [Solar Icon Set](https://icon-sets.iconify.design/solar/) – autor 480 Design, licencja
