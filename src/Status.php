@@ -22,6 +22,24 @@ final class Status
         return self::$memo['modems'] ??= Db::all('SELECT * FROM modem_status ORDER BY modem');
     }
 
+    /** Nazwy modemów znanych panelowi (z tabeli phones). */
+    public static function modemIds(): array
+    {
+        return array_column(self::modems(), 'modem');
+    }
+
+    /** Czy wybór modemu ma sens (więcej niż jeden modem zgłosił się do Gammu). */
+    public static function multiModem(): bool
+    {
+        return count(self::modems()) > 1;
+    }
+
+    /** Nazwa modemu z żądania, jeśli jest znana panelowi; inaczej null (= dowolny). */
+    public static function validModem(mixed $name): ?string
+    {
+        return is_string($name) && $name !== '' && in_array($name, self::modemIds(), true) ? $name : null;
+    }
+
     public static function modem(): ?array
     {
         return self::modems()[0] ?? null;

@@ -7,7 +7,8 @@ if (is_post()) {
     }
     $parent = (int) input('parent');
     $code = input($parent > 0 ? 'reply' : 'code');
-    [$id, $err] = Ussd::send($code, Status::modem()['modem'] ?? null, $parent > 0 ? $parent : null);
+    $modem = $parent > 0 ? (Ussd::get($parent)['modem'] ?? null) : Status::validModem(input('modem'));
+    [$id, $err] = Ussd::send($code, $modem ?? Status::modem()['modem'] ?? null, $parent > 0 ? $parent : null);
     if ($err !== null) {
         flash('err', $err);
         redirect(url('modem'));

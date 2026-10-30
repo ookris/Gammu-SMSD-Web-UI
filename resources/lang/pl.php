@@ -1312,4 +1312,8 @@ return [
     'schedules.err_weekdays' => 'Zaznacz co najmniej jeden dzień tygodnia.',
     'schedules.err_month_day' => 'Dzień miesiąca musi być z zakresu 1–31.',
     'schedules.err_missing' => 'Nie ma takiego harmonogramu.',
+    'compose.modem' => 'Wyślij przez',
+    'compose.modem_any' => 'dowolny modem',
+    'api.e_modem' => 'Nieznany modem: {modem}.',
+    'modem.unavailable' => 'niedostępny',
 ];

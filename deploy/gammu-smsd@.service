@@ -1,0 +1,15 @@
+[Unit]
+Description=SMS daemon for Gammu (modem %i) – dodatkowy modem Gammu SMSD Web UI
+Documentation=man:gammu-smsd(1)
+After=mysql.service mariadb.service network-online.target
+
+[Service]
+EnvironmentFile=-/etc/default/gammu-smsd
+ExecStart=/usr/bin/gammu-smsd --config=/etc/gammu-smsdrc-%i --pid=/run/gammu-smsd-%i.pid --daemon
+ExecReload=/bin/kill -HUP $MAINPID
+ExecStopPost=/bin/rm -f /run/gammu-smsd-%i.pid
+Type=forking
+PIDFile=/run/gammu-smsd-%i.pid
+
+[Install]
+WantedBy=multi-user.target

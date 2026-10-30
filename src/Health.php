@@ -104,12 +104,16 @@ final class Health
             $add('sync', 'warn', t('health.sync', ['error' => $err]), t('health.sync_hint'));
         }
 
-        $m = Status::modem();
-        if (!Status::modemAvailable($m)) {
-            $add('modem', 'warn', $m === null ? t('health.modem_never')
-                : t('health.modem_down', ['modem' => $m['modem'], 'ago' => fmt_ago($m['gammu_updated_at'])]), t('health.modem_hint'));
-        } elseif ($environment) {
-            $add('modem', 'ok', t('health.modem_ok', ['modem' => $m['modem'], 'pct' => $m['signal_pct']]));
+        $modems = Status::modems();
+        if ($modems === []) {
+            $add('modem', 'warn', t('health.modem_never'), t('health.modem_hint'));
+        }
+        foreach ($modems as $m) {
+            if (!Status::modemAvailable($m)) {
+                $add('modem', 'warn', t('health.modem_down', ['modem' => $m['modem'], 'ago' => fmt_ago($m['gammu_updated_at'])]), t('health.modem_hint'));
+            } elseif ($environment) {
+                $add('modem', 'ok', t('health.modem_ok', ['modem' => $m['modem'], 'pct' => $m['signal_pct']]));
+            }
         }
 
         $stuck = (int) Db::val("SELECT COUNT(*) FROM messages WHERE direction = 'out' AND status = 'queued' AND retries = 0

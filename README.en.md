@@ -36,6 +36,7 @@ the modem and finishes with a health check.
 - [Updating, backups, uninstalling](#updating-backups-uninstalling)
 - [Console tool](#console-tool)
 - [HTTP API](#http-api)
+- [Multiple modems](#multiple-modems)
 - [Troubleshooting](#troubleshooting)
 - [Development and tests](#development-and-tests)
 - [License](#license)
@@ -110,8 +111,9 @@ and other national characters (ą→a, ł→l).
 - recurring messages (daily, on selected weekdays, monthly) to groups and numbers
 - SMS auto-replies: keyword, hours (e.g. outside 8–16 on weekdays) or a rejected call; loop protection
   (one reply per number per hour, none to alphanumeric senders and short numbers)
+- multiple modems: modem choice when sending, in USSD and in the API, replies through the same modem, alerts for each modem
 
-**Planned (after 1.0):** multiple modems.
+**Planned (after 1.0):** editing the configuration of additional modems from the panel.
 
 ## Screenshots
 
@@ -522,6 +524,26 @@ rest_command:
     content_type: "application/json"
     payload: '{"to": "{{ to }}", "text": "{{ text }}"}'
 ```
+
+## Multiple modems
+
+The panel supports several modems working on one `gammu` database. Each modem is a separate Gammu process with its own
+configuration (`/etc/gammu-smsdrc-<PhoneID>`) and a `gammu-smsd@<PhoneID>` service. You add one with a script (as root – the
+panel does not create files in `/etc` or system services from the web interface):
+
+```bash
+sudo /opt/smsgui/deploy/add-modem.sh GSM2 /dev/serial/by-id/usb-HUAWEI_MOBILE_…-if01-port0 --pin=1234
+```
+
+The script copies the main configuration, changes the device, `PhoneID` and log file, installs the `gammu-smsd@.service` template and
+starts the service. Once at least two modems report in the `phones` table, the panel shows:
+- a “Send via” choice in the new message form, in USSD and in the API (`"modem": "GSM2"`; empty = any modem);
+- replies in a conversation going out through the modem that received the last message from that number (when it is available);
+- the state of every modem on the Modem screen, and alerts and the health check for each modem separately.
+
+You edit an additional modem's configuration by hand (`/etc/gammu-smsdrc-<PhoneID>`, then `sudo systemctl restart gammu-smsd@<PhoneID>`);
+the form and editor in the panel work on the main `/etc/gammu-smsdrc` file. To remove a modem:
+`sudo systemctl disable --now gammu-smsd@GSM2 && sudo rm /etc/gammu-smsdrc-GSM2`.
 
 ## Troubleshooting
 

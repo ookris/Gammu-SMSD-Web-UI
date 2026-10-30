@@ -60,7 +60,7 @@ if (is_post() && $phone !== '') {
     } else {
         try {
             Outbox::create(['phone' => $phone, 'body' => $text, 'report' => Settings::bool('report_default'),
-                'translit' => isset($_POST['translit']), 'priority' => Outbox::PRIORITY_SINGLE]);
+                'translit' => isset($_POST['translit']), 'priority' => Outbox::PRIORITY_SINGLE, 'modem' => Threads::replyModem($phone)]);
         } catch (InvalidArgumentException $e) {
             $error = $e->getMessage();
         }

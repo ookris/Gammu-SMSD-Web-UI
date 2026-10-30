@@ -55,6 +55,21 @@ final class Threads
         return $rows;
     }
 
+    /** Modem, który odebrał ostatnią wiadomość od numeru – odpowiedź idzie tą samą drogą (tylko gdy jest kilka modemów i ten jest dostępny). */
+    public static function replyModem(string $phone): ?string
+    {
+        if (!Status::multiModem()) {
+            return null;
+        }
+        $modem = Db::val("SELECT modem FROM messages WHERE phone = ? AND direction = 'in' AND modem IS NOT NULL ORDER BY id DESC LIMIT 1", [$phone]);
+        foreach (Status::modems() as $m) {
+            if ($m['modem'] === $modem && Status::modemAvailable($m)) {
+                return $modem;
+            }
+        }
+        return null;
+    }
+
     /** Oś czasu: wiadomości i odrzucone połączenia z numerem, od najstarszych. */
     public static function timeline(string $phone, int $limit = 200): array
     {

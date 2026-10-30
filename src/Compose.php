@@ -18,6 +18,7 @@ final class Compose
             'priority' => isset($_POST['priority']),
             'send_at' => input('send_at'),
             'validity' => Outbox::validity(input('validity')),
+            'modem' => Status::validModem(input('modem')),
             'skip_window' => isset($_POST['skip_window']),
             'template' => input('template'),
         ];
@@ -27,7 +28,7 @@ final class Compose
     {
         return ['groups' => [], 'contacts' => [], 'numbers' => '', 'text' => '', 'translit' => Settings::bool('translit_default'),
             'report' => Settings::bool('report_default'), 'flash' => false, 'priority' => false, 'send_at' => '',
-            'validity' => Outbox::validity(Settings::get('validity_default')), 'skip_window' => false,
+            'validity' => Outbox::validity(Settings::get('validity_default')), 'modem' => null, 'skip_window' => false,
             'template' => ''];
     }
 
@@ -124,6 +125,7 @@ final class Compose
                     'send_at' => $times[$i] > now_db() ? $times[$i] : null,
                     'priority' => $priority,
                     'validity' => $in['validity'],
+                    'modem' => $in['modem'] ?? null,
                     'window' => $plan['window'],
                     'batch_id' => $batch,
                     'source' => $in['source'] ?? 'gui',

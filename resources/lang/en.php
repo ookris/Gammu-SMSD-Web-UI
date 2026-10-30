@@ -1312,4 +1312,8 @@ return [
     'schedules.err_weekdays' => 'Select at least one weekday.',
     'schedules.err_month_day' => 'The day of the month must be between 1 and 31.',
     'schedules.err_missing' => 'No such schedule.',
+    'compose.modem' => 'Send via',
+    'compose.modem_any' => 'any modem',
+    'api.e_modem' => 'Unknown modem: {modem}.',
+    'modem.unavailable' => 'unavailable',
 ];

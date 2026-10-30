@@ -82,8 +82,12 @@ final class Api
             'priority' => ($d['priority'] ?? 'normal') === 'high',
             'send_at' => is_scalar($d['send_at'] ?? null) ? (string) $d['send_at'] : '',
             'validity' => Outbox::validity($d['valid_for'] ?? Settings::get('validity_default')),
+            'modem' => Status::validModem($d['modem'] ?? null),
             'skip_window' => false, 'template' => '', 'source' => 'api', 'api_token_id' => (int) $token['id'],
         ];
+        if (isset($d['modem']) && $d['modem'] !== '' && $in['modem'] === null) {
+            self::reply(422, ['ok' => false, 'errors' => [t('api.e_modem', ['modem' => is_scalar($d['modem']) ? (string) $d['modem'] : '?'])]]);
+        }
         $plan = Compose::plan($in);
         if ($plan['errors'] !== []) {
             $errors = $plan['errors'];

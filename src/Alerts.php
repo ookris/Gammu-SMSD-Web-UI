@@ -27,11 +27,14 @@ final class Alerts
         $c = [];
         $service = in_array('service', $only, true) || in_array('modem', $only, true) || in_array('signal', $only, true) ? Status::service() : 'active';
         $c['service'] = $service !== 'active' ? ['state' => $service] : null;
-        $m = Status::modem();
-        $available = Status::modemAvailable($m);
-        $c['modem'] = $service === 'active' && !$available
-            ? ['modem' => $m['modem'] ?? '-', 'ago' => $m && $m['gammu_updated_at'] ? fmt_ago($m['gammu_updated_at']) : t('alerts.never')] : null;
-        $c['signal'] = $available && (int) $m['signal_pct'] >= 0 && (int) $m['signal_pct'] < self::LOW_SIGNAL ? ['modem' => $m['modem'], 'pct' => (int) $m['signal_pct']] : null;
+        // Każdy modem osobno (przy kilku modemach alarm wymienia te, które nie odpowiadają)
+        $modems = Status::modems();
+        $down = array_values(array_filter($modems, static fn ($x) => !Status::modemAvailable($x)));
+        $c['modem'] = $service === 'active' && ($modems === [] || $down !== [])
+            ? ['modem' => $down ? implode(', ', array_column($down, 'modem')) : '-',
+                'ago' => $down && $down[0]['gammu_updated_at'] ? fmt_ago($down[0]['gammu_updated_at']) : t('alerts.never')] : null;
+        $weak = array_values(array_filter($modems, static fn ($x) => Status::modemAvailable($x) && (int) $x['signal_pct'] >= 0 && (int) $x['signal_pct'] < self::LOW_SIGNAL));
+        $c['signal'] = $weak !== [] ? ['modem' => $weak[0]['modem'], 'pct' => (int) $weak[0]['signal_pct']] : null;
         $stuck = (int) Db::val("SELECT COUNT(*) FROM messages WHERE direction = 'out' AND status = 'queued' AND retries = 0
             AND COALESCE(scheduled_at, created_at) < ?", [now_db(-900)]);
         $c['queue'] = $stuck > 0 ? ['n' => $stuck] : null;

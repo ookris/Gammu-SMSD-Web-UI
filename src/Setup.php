@@ -59,6 +59,52 @@ final class Setup
     }
 
     /**
+     * Konfiguracja dodatkowego modemu: kopia /etc/gammu-smsdrc z własnym urządzeniem, PhoneID i logiem, zapisana jako
+     * /etc/gammu-smsdrc-<PhoneID> (prawa 0660, grupa www-data). Uruchamia ją usługa gammu-smsd@<PhoneID> (deploy/add-modem.sh).
+     * Opcje: --phoneid, --device, --connection, --pin.
+     */
+    public static function modem(array $o): int
+    {
+        $id = (string) ($o['phoneid'] ?? '');
+        $device = (string) ($o['device'] ?? '');
+        if (!preg_match('/^[A-Za-z0-9_-]{1,20}$/', $id) || $device === '' || !str_starts_with($device, '/')) {
+            fwrite(STDERR, "Użycie: smsgui setup modem --phoneid=ID (litery, cyfry, _ -) --device=/dev/… [--connection=at] [--pin=…]\n");
+            return 1;
+        }
+        $base = GammuConf::path();
+        $text = @file_get_contents($base);
+        if ($text === false) {
+            fwrite(STDERR, "Nie można odczytać $base\n");
+            return 1;
+        }
+        $conf = GammuConf::parse($text);
+        if (strcasecmp((string) $conf->get('smsd', 'phoneid'), $id) === 0) {
+            fwrite(STDERR, "PhoneID $id ma już główny modem ($base).\n");
+            return 1;
+        }
+        $conf->set('gammu', 'device', $device);
+        $conf->dropLegacyPort();
+        if (isset($o['connection'])) {
+            $conf->set('gammu', 'connection', (string) $o['connection']);
+        }
+        $conf->set('smsd', 'phoneid', $id);
+        $conf->set('smsd', 'logfile', '/var/log/gammu-smsd/' . $id . '.log');
+        if (isset($o['pin'])) {
+            $conf->set('smsd', 'pin', $o['pin'] === '' ? null : (string) $o['pin']);
+        }
+        if ($conf->get('smsd', 'runonincomingcall') !== null) {
+            $conf->set('smsd', 'runonincomingcall', cfg('hook.command') . ' --phone=' . escapeshellarg($id));
+        }
+        $path = $base . '-' . $id;
+        GammuConf::createFile($path, $conf->text(), 0660);
+        if (function_exists('posix_getgrnam') && ($g = posix_getgrnam('www-data')) !== false) {
+            @chgrp($path, $g['gid']);
+        }
+        echo "Zapisano $path\n";
+        return 0;
+    }
+
+    /**
      * Deinstalacja: usuwa z gammu-smsdrc tylko ustawienia należące do panelu – hook `smsgui hook call` (wtedy też
      * HangupCalls, które włączył razem z nim) i ExcludeNumbersFile wskazujący plik panelu. Cudze wartości zostają.
      */

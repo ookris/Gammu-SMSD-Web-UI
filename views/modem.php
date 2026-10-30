@@ -9,6 +9,7 @@
 <?php if ($codes): ?><p class="small"><strong><?= e(t('modem.quick_codes')) ?></strong></p>
 <div class="chips"><?php foreach ($codes as $c): ?><button type="button" class="secondary outline btn-sm" data-fill="ussd-code" data-value="<?= e($c['code']) ?>"><?= e($c['name']) ?> · <?= e($c['code']) ?></button><?php endforeach ?></div><?php endif ?>
 <form class="row row-end gap-lg" method="post" action="<?= e(url('modem')) ?>"><?= csrf_field() ?>
+<?php if (Status::multiModem()): ?><div class="field"><label for="ussd-modem"><?= e(t('compose.modem')) ?></label><select id="ussd-modem" name="modem"><?php foreach (Status::modems() as $m): ?><option value="<?= e($m['modem']) ?>"><?= e($m['modem']) ?></option><?php endforeach ?></select></div><?php endif ?>
 <div class="field grow-1"><label for="ussd-code"><?= e(t('settings.ussd_code')) ?></label><input id="ussd-code" name="code" class="mono-input" value="<?= e($codes[0]['code'] ?? '*101#') ?>" required pattern="[0-9*#+]+"></div>
 <button type="submit"><?= icon('plain') ?><?= e(t('compose.send')) ?></button></form>
 <?= view('modem-ussd', ['current' => $current]) ?>

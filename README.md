@@ -33,6 +33,7 @@ i kończy diagnostyką.
 - [Aktualizacja, kopie zapasowe, odinstalowanie](#aktualizacja-kopie-zapasowe-odinstalowanie)
 - [Narzędzie konsolowe](#narzędzie-konsolowe)
 - [HTTP API](#http-api)
+- [Kilka modemów](#kilka-modemów)
 - [Rozwiązywanie problemów](#rozwiązywanie-problemów)
 - [Rozwój i testy](#rozwój-i-testy)
 - [Licencje](#licencje)
@@ -105,8 +106,9 @@ wiadomości zapisanych w bazie, a przy kodowaniu GSM po cichu zamienia polskie z
 - wiadomości cykliczne (codziennie, w wybrane dni tygodnia, raz w miesiącu) do grup i numerów
 - autoodpowiedzi SMS: słowo kluczowe, godziny (np. poza 8–16 w dni robocze) albo odrzucone połączenie; blokada pętli
   (jedna odpowiedź na numer na godzinę, bez odpowiedzi nadawcom alfanumerycznym i numerom skróconym)
+- kilka modemów: wybór modemu przy wysyłce, USSD i w API, odpowiedź tym samym modemem, alarmy osobno dla każdego
 
-**Planowane (po wersji 1.0):** obsługa kilku modemów.
+**Planowane (po wersji 1.0):** edycja konfiguracji dodatkowych modemów z poziomu panelu.
 
 ## Zrzuty ekranu
 
@@ -514,6 +516,26 @@ rest_command:
     content_type: "application/json"
     payload: '{"to": "{{ to }}", "text": "{{ text }}"}'
 ```
+
+## Kilka modemów
+
+Panel obsługuje kilka modemów pracujących na jednej bazie `gammu`. Każdy modem to osobny proces Gammu z własną konfiguracją
+(`/etc/gammu-smsdrc-<PhoneID>`) i usługą `gammu-smsd@<PhoneID>`. Dodajesz go skryptem (jako root – panel z poziomu WWW
+nie tworzy plików w `/etc` ani usług systemowych):
+
+```bash
+sudo /opt/smsgui/deploy/add-modem.sh GSM2 /dev/serial/by-id/usb-HUAWEI_MOBILE_…-if01-port0 --pin=1234
+```
+
+Skrypt kopiuje główną konfigurację, zmienia urządzenie, `PhoneID` i plik logu, instaluje szablon `gammu-smsd@.service` i uruchamia
+usługę. Gdy w tabeli `phones` zgłoszą się co najmniej dwa modemy, panel pokazuje:
+- wybór „Wyślij przez” w formularzu nowej wiadomości, w USSD i w API (`"modem": "GSM2"`; pusty = dowolny modem);
+- odpowiedź w rozmowie wychodzącą tym modemem, który odebrał ostatnią wiadomość od danego numeru (gdy jest dostępny);
+- stan każdego modemu na ekranie Modem oraz alarmy i kontrolę zdrowia osobno dla każdego modemu.
+
+Konfigurację dodatkowego modemu edytujesz ręcznie (`/etc/gammu-smsdrc-<PhoneID>`, potem `sudo systemctl restart gammu-smsd@<PhoneID>`);
+formularz i edytor w panelu dotyczą głównego pliku `/etc/gammu-smsdrc`. Usunięcie modemu:
+`sudo systemctl disable --now gammu-smsd@GSM2 && sudo rm /etc/gammu-smsdrc-GSM2`.
 
 ## Rozwiązywanie problemów
 
