@@ -358,6 +358,8 @@ return [
     'inbox.incomplete' => 'incomplete',
     'inbox.reply' => 'Reply',
     'inbox.forward' => 'Forward',
+    'inbox.copy_code' => 'Copy code {code}',
+    'inbox.copied' => 'Copied',
     'inbox.block_sender' => 'Block sender',
     'inbox.block_q' => 'Block {who}?',
     'inbox.block_text' => 'SMS from this sender will not reach the panel – Gammu will delete them from the modem.',

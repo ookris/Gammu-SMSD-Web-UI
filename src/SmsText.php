@@ -128,6 +128,28 @@ final class SmsText
     }
 
     /**
+     * Kody jednorazowe w treści (4–8 cyfr, także „123 456”, „123-456”, „G-123456”). Szukane tylko w wiadomości ze słowem
+     * kluczowym (kod, code, hasło, PIN, weryfikac…, autoryzac…, potwierdz…, OTP, token…), żeby nie brać kwot, dat i numerów.
+     * @return list<string> najwyżej 2 kody, bez spacji i myślników
+     */
+    public static function codes(string $text): array
+    {
+        if (!preg_match('/kod|code|has[łl]o|password|\bpin\b|\botp\b|\btoken|weryfik|verif|autoryz|authori|potwierdz|confirm|logowan|login/iu', $text)) {
+            return [];
+        }
+        $found = [];
+        // (?<![\d.,+\-\/]) – bez środka większych liczb, kwot, dat i numerów telefonów; G- to prefiks kodów Google
+        preg_match_all('/(?<![\d.,+\/])(?<!\d-)(?:G-)?(\d{3}[ -]\d{3}|\d{4,8})(?![\d\/]|[.,]\d|\s?(?:zł|pln|eur|usd|%|gr\b))/iu', $text, $m);
+        foreach ($m[1] as $c) {
+            $c = str_replace([' ', '-'], '', $c);
+            if (!in_array($c, $found, true)) {
+                $found[] = $c;
+            }
+        }
+        return array_slice($found, 0, 2);
+    }
+
+    /**
      * Nagłówek łączenia części z UDH (IEI 00 – 8-bitowy numer, IEI 08 – 16-bitowy).
      * @return array{ref:int,total:int,seq:int}|null
      */

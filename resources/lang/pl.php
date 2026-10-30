@@ -358,6 +358,8 @@ return [
     'inbox.incomplete' => 'niekompletna',
     'inbox.reply' => 'Odpowiedz',
     'inbox.forward' => 'Przekaż dalej',
+    'inbox.copy_code' => 'Kopiuj kod {code}',
+    'inbox.copied' => 'Skopiowano',
     'inbox.block_sender' => 'Zablokuj nadawcę',
     'inbox.block_q' => 'Zablokować {who}?',
     'inbox.block_text' => 'SMS od tego nadawcy nie będą trafiać do panelu – Gammu usunie je z modemu.',

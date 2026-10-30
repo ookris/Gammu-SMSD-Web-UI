@@ -138,6 +138,34 @@
     area.dispatchEvent(new Event('input', { bubbles: true }));
   });
 
+  // Kopiowanie kodu z wiadomości: data-copy="123456" data-copied="Skopiowano"
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-copy]');
+    if (!b) return;
+    const text = b.dataset.copy;
+    const done = () => {
+      const label = b.querySelector('span');
+      if (!label || b.dataset.busy) return;
+      const old = label.textContent;
+      b.dataset.busy = '1';
+      label.textContent = b.dataset.copied;
+      setTimeout(() => { label.textContent = old; delete b.dataset.busy; }, 1500);
+    };
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(done, () => {});
+      return;
+    }
+    // Panel w sieci lokalnej bez HTTPS: schowek tylko przez zaznaczenie ukrytego pola
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { if (document.execCommand('copy')) done(); } finally { ta.remove(); }
+  });
+
   // Szablon: <select data-template-target="idTextarea">, opcje z data-body
   document.addEventListener('change', (e) => {
     const sel = e.target.closest('select[data-template-target]');

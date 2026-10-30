@@ -538,6 +538,7 @@ a.tile:hover { border-color: var(--c-accent); }
 .side-user button.logout:hover, .side-user button.logout:focus-visible { color: #FFFFFF; background: none; }
 
 /* ---------- Odebrane (rozmowy + filtry + akcje zbiorcze) ---------- */
+.copy-code { width: auto; margin: 0.25rem 0 0; align-self: flex-start; display: inline-flex; align-items: center; gap: 0.375rem; }
 .thread-list .filters { margin: 0.5rem 0 0; }
 .thread-list .filters summary { cursor: pointer; font-size: 0.9rem; color: var(--c-muted); }
 .thread-list .filters .field, .thread-list .filters > label { margin-top: 0.5rem; }
