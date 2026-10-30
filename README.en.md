@@ -86,6 +86,8 @@ and other national characters (ą→a, ł→l).
 
 **Modem and Gammu**
 - modem status: signal, operator, last update; detection of an unavailable modem
+- periodic balance checks (USSD every N hours), a 30-day chart and a low-balance alert; monthly SMS limit with a warning
+- statistics: SMS per day and per month, delivery rate, most active numbers, rejected calls
 - on-demand USSD (e.g. account balance) with operator menu support and quick codes
 - rejecting incoming calls, with a call list and entries in conversations
 - number blocklist (Gammu rejects messages from blocked numbers)
@@ -106,7 +108,7 @@ and other national characters (ą→a, ł→l).
 - forwarding received SMS and rejected calls by rules (all / from number / from group / text contains)
 - HTTP API with tokens (`POST /api/send`, `GET /api/status`) for Zabbix, Home Assistant and scripts
 
-**Planned (after 1.0):** auto-replies, periodic balance checks, statistics, multiple modems.
+**Planned (after 1.0):** auto-replies, multiple modems.
 
 ## Screenshots
 
