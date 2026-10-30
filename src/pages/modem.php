@@ -29,7 +29,10 @@ if (input('fragment') === 'state') {
     echo view('modem-state', ['modems' => Status::modems()]);
     exit;
 }
-$balance = ['latest' => Balance::latest(), 'series' => Balance::series(30), 'enabled' => Balance::enabled()];
+$balance = ['enabled' => Balance::enabled(), 'by' => []];
+foreach (Balance::modemsWithData() as $name) {
+    $balance['by'][$name] = ['latest' => Balance::latest($name), 'series' => Balance::series(30, $name)];
+}
 render('modem', ['balance' => $balance,'title' => t('nav.modem'), 'nav' => 'modem', 'modems' => Status::modems(), 'current' => $current,
     'codes' => Settings::json('ussd_codes'), 'history' => Ussd::history(20),
     'device' => GammuConf::load()?->get('gammu', 'device')]);

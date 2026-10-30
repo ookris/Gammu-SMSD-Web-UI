@@ -92,16 +92,11 @@ test('Kilka modemów: konfiguracja dodatkowego modemu na bazie głównego pliku'
             $conf->get('smsd', 'logfile'), $conf->get('smsd', 'service'), $conf->get('smsd', 'pin')]);
         assert_true(str_contains((string) $conf->get('smsd', 'runonincomingcall'), "--phone='GSM2'"), 'hook połączeń z PhoneID nowego modemu');
         assert_same('0660', substr(sprintf('%o', fileperms($new)), -4));
-        $threw = false;
-        try {
-            ob_start();
-            Setup::modem(['phoneid' => 'GSM2', 'device' => '/dev/ttyUSB1']);
-        } catch (RuntimeException) {
-            $threw = true;
-        } finally {
-            ob_end_clean();
-        }
-        assert_true($threw, 'nie nadpisuje istniejącej konfiguracji');
+        $before = file_get_contents($new);
+        ob_start();
+        $again = Setup::modem(['phoneid' => 'GSM2', 'device' => '/dev/ttyUSB7']);
+        ob_end_clean();
+        assert_same([2, $before], [$again, file_get_contents($new)], 'ponowne uruchomienie nie nadpisuje konfiguracji (kod 2)');
         ob_start();
         $same = Setup::modem(['phoneid' => 'GSM1', 'device' => '/dev/ttyUSB1']);
         $bad = Setup::modem(['phoneid' => 'zły id!', 'device' => '/dev/ttyUSB1']);

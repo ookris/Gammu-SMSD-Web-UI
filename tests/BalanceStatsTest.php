@@ -4,6 +4,8 @@ test('Saldo: odczyt kwoty z odpowiedzi operatora', function () {
         ['Stan konta: 12,34 zl. Wazne do 31.12.2026', 12.34],
         ['Twoje saldo to 123,45 zł. Konto ważne do 31.12.2026', 123.45],
         ['Saldo 5.20PLN', 5.2],
+        ['Saldo: 1 234,50 zł', 1234.5],
+        ["Saldo: 12\u{00A0}345,00 zł", 12345.0],
         ['Na koncie masz 5 zl 20 gr', 5.2],
         ['Masz 7 zł', 7.0],
         ['Stan konta 0,00', 0.0],
@@ -45,12 +47,12 @@ test('Saldo: zlecenie zapytania, zapis odpowiedzi, brak duplikatów i alarm nisk
     assert_same(['Stan konta: 4,20 zl', '4.20'], [$m['balance'], $m['balance_value']]);
     assert_same(4.2, Balance::latest()['amount']);
     assert_same(1, count(Balance::series(30)));
-    assert_same(['amount' => '4,20', 'threshold' => '10,00'], Alerts::conditions(['balance'])['balance']);
+    assert_same(['modem' => 'GSM1', 'amount' => '4,20', 'threshold' => '10,00'], Alerts::conditions(['balance'])['balance']);
     Settings::set('balance_threshold', '3');
     assert_same(null, Alerts::conditions(['balance'])['balance']);
 
     // brak odpowiedzi po 15 min – ponowna próba
-    Settings::set('balance_requested_at', now_db(-1000));
+    Settings::set('balance_requested', ['GSM1' => now_db(-1000)]);
     Db::update('ussd_requests', ['status' => 'timeout'], 'id = ?', [$req['id']]);
     Db::exec("DELETE FROM ussd_requests WHERE purpose = 'balance'");
     Db::exec('DELETE FROM balance_log');
@@ -98,4 +100,36 @@ test('Wykresy SVG: oś, słupki, linia, ładna wartość maksymalna', function (
     assert_same(2, substr_count($line, '<circle '));
     assert_true(str_contains($line, 'chart-limit') && str_contains($line, '<polyline'), 'linia i próg');
     assert_true(!str_contains(Chart::line('x', 'y', [], 0, 10), '<polyline'), 'pusty wykres');
+});
+
+test('Saldo: każdy modem pytany osobno, po jednym USSD na przebieg, alarm wskazuje modem', function () {
+    reset_db();
+    Settings::set('service_status', 'active');
+    Settings::set('service_checked_at', now_db());
+    foreach (['GSM1', 'GSM2'] as $id) {
+        Db::insert('modem_status', ['modem' => $id, 'signal_pct' => 80, 'gammu_updated_at' => now_db(), 'updated_at' => now_db()]);
+    }
+    Status::forget();
+    Settings::set('balance_code', '*101#');
+    Settings::set('balance_hours', 6);
+    Settings::set('balance_threshold', '10');
+    Balance::process();
+    assert_same(['GSM1'], Db::col("SELECT modem FROM ussd_requests WHERE purpose = 'balance'"), 'pierwszy modem');
+    Db::update('ussd_requests', ['status' => 'answered', 'response' => '20,00 zl', 'answered_at' => now_db()], "purpose = 'balance'");
+    Balance::process();
+    assert_same(['GSM1', 'GSM2'], Db::col("SELECT modem FROM ussd_requests WHERE purpose = 'balance' ORDER BY id"), 'drugi modem w następnym przebiegu');
+    Db::update('ussd_requests', ['status' => 'answered', 'response' => '3,00 zl', 'answered_at' => now_db()], "modem = 'GSM2'");
+    Balance::record();
+    assert_same(['GSM1', 'GSM2'], Balance::modemsWithData());
+    assert_same([20.0, 3.0], [Balance::latest('GSM1')['amount'], Balance::latest('GSM2')['amount']]);
+    assert_same('GSM2', Alerts::conditions(['balance'])['balance']['modem'], 'niskie saldo tylko w drugim modemie');
+    assert_same(1, count(Balance::series(30, 'GSM2')));
+});
+
+test('Statystyki: limit miesięczny nie liczy wiadomości zaplanowanych na kolejny miesiąc', function () {
+    reset_db();
+    $now = now_db();
+    Db::insert('messages', ['direction' => 'out', 'phone' => '48601000001', 'body' => 'x', 'status' => 'scheduled', 'parts' => 3, 'scheduled_at' => date('Y-m-d H:i:s', strtotime('first day of next month 10:00')), 'created_at' => $now, 'updated_at' => $now]);
+    Db::insert('messages', ['direction' => 'out', 'phone' => '48601000001', 'body' => 'x', 'status' => 'queued', 'parts' => 1, 'scheduled_at' => $now, 'created_at' => $now, 'updated_at' => $now]);
+    assert_same(1, Stats::monthParts());
 });

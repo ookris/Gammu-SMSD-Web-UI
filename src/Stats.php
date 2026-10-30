@@ -64,7 +64,8 @@ final class Stats
     public static function monthParts(): int
     {
         return (int) Db::val("SELECT COALESCE(SUM(parts), 0) FROM messages WHERE direction = 'out'
-            AND status IN ('queued','scheduled','sent','delivered','undelivered') AND COALESCE(sent_at, scheduled_at, created_at) >= ?", [date('Y-m-01 00:00:00')]);
+            AND status IN ('queued','scheduled','sent','delivered','undelivered') AND COALESCE(sent_at, scheduled_at, created_at) >= ?
+            AND COALESCE(sent_at, scheduled_at, created_at) < ?", [date('Y-m-01 00:00:00'), date('Y-m-01 00:00:00', strtotime('first day of next month'))]);
     }
 
     /** Miesięczny limit z ustawień: ['limit' => int, 'used' => int, 'pct' => int] albo null, gdy wyłączony. */

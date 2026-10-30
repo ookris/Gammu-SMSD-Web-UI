@@ -132,3 +132,14 @@ test('Poczta: ustawienia SMTP, szyfrowanie hasła, walidacja', function () {
     assert_true(Channels::saveMail(['mode' => 'sendmail', 'from' => 'zły']) !== null, 'zły nadawca');
     assert_same(null, Channels::saveMail(['mode' => 'sendmail']));
 });
+
+test('Dostarczenia: oczekujące dłużej niż 48 h wygasają zamiast wysłać się masowo po włączeniu kanału', function () {
+    $ch = fake_channel();
+    $old = Deliveries::enqueue($ch, 'alert', ['subject' => 'stare', 'text' => 'x']);
+    Db::update('deliveries', ['created_at' => now_db(-49 * 3600)], 'id = ?', [$old]);
+    $fresh = Deliveries::enqueue($ch, 'alert', ['subject' => 'świeże', 'text' => 'x']);
+    assert_same(1, Deliveries::process());
+    assert_same('failed', Db::val('SELECT status FROM deliveries WHERE id = ?', [$old]));
+    assert_same(['świeże'], array_column(FakeChannel::$sent, 'subject'));
+    Channels::$factory = null;
+});

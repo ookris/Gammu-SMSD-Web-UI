@@ -212,3 +212,13 @@ test('Autoodpowiedzi: dwie bramki odpowiadające sobie nie wpadają w pętlę', 
     assert_same(1, (int) Db::val("SELECT COUNT(*) FROM messages WHERE direction = 'out' AND source = 'autoreply'"));
     Channels::$factory = null;
 });
+
+test('Autoodpowiedzi: odpowiedź idzie modemem, który odebrał wiadomość', function () {
+    modems_setup();
+    Channels::$factory = null;
+    Rules::save(null, ['name' => 'R', 'event' => 'sms', 'cond_type' => 'all', 'reply_text' => 'ok'], 'autoreply');
+    Db::insert('messages', ['direction' => 'in', 'phone' => '48601234567', 'body' => 'x', 'status' => 'received', 'modem' => 'GSM2', 'is_read' => 0,
+        'received_at' => now_db(), 'created_at' => now_db(), 'updated_at' => now_db()]);
+    assert_same(1, Rules::process());
+    assert_same('GSM2', Db::val("SELECT SenderID FROM {g}.outbox WHERE ID = (SELECT gammu_id FROM messages WHERE direction = 'out')"));
+});

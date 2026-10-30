@@ -28,7 +28,7 @@ final class Api
         $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
         match ($route) {
             'send' => $method === 'POST' ? self::send($auth) : self::reply(405, ['ok' => false, 'error' => t('api.e_method')]),
-            'status' => $method === 'GET' ? self::status() : self::reply(405, ['ok' => false, 'error' => t('api.e_method')]),
+            'status' => $method === 'GET' ? self::status($auth) : self::reply(405, ['ok' => false, 'error' => t('api.e_method')]),
             default => self::reply(404, ['ok' => false, 'error' => t('api.e_route')]),
         };
     }
@@ -106,10 +106,10 @@ final class Api
             'start' => $plan['delayed'] ? date('c', $plan['start']) : null]);
     }
 
-    private static function status(): never
+    private static function status(array $token): never
     {
         $m = Db::row("SELECT id, phone, status, parts, error, status_code, scheduled_at, sent_at, delivered_at, created_at FROM messages
-            WHERE id = ? AND direction = 'out' AND api_token_id IS NOT NULL", [(int) ($_GET['id'] ?? 0)]);
+            WHERE id = ? AND direction = 'out' AND api_token_id = ?", [(int) ($_GET['id'] ?? 0), $token['id']]);
         if ($m === null) {
             self::reply(404, ['ok' => false, 'error' => t('api.e_notfound')]);
         }

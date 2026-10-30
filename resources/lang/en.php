@@ -1253,7 +1253,7 @@ return [
     'balance.no_data' => 'No balance readings stored.',
     'balance.chart_desc' => 'SIM card balance over the last 30 days.',
     'alerts.balance.title' => 'Low balance',
-    'alerts.balance.text' => 'The SIM card balance is {amount} PLN (threshold: {threshold} PLN).',
+    'alerts.balance.text' => 'The SIM card balance (modem {modem}) is {amount} PLN (threshold: {threshold} PLN).',
     'alerts.balance.resolved' => 'The SIM card balance is above the threshold.',
     'alerts.limit.title' => 'Monthly SMS limit',
     'alerts.limit.text' => '{pct}% of the monthly SMS limit used ({used} of {limit}).',
@@ -1316,4 +1316,5 @@ return [
     'compose.modem_any' => 'any modem',
     'api.e_modem' => 'Unknown modem: {modem}.',
     'modem.unavailable' => 'unavailable',
+    'channels.expired' => 'Expired – not delivered within 48 hours.',
 ];

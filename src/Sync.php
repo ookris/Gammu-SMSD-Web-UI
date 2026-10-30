@@ -7,7 +7,7 @@ declare(strict_types=1);
  */
 final class Sync
 {
-    private const LOCK = 'smsgui-sync';
+    public const LOCK = 'smsgui-sync';
 
     /** Jeden przebieg; null = inny proces właśnie synchronizuje. */
     public static function run(bool $wait = false): ?array

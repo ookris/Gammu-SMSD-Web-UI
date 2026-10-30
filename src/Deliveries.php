@@ -7,6 +7,10 @@ final class Deliveries
     public const MAX_ATTEMPTS = 5;
     private const BACKOFF = [60, 300, 900, 3600]; // s po 1., 2., 3., 4. nieudanej próbie
     private const KEEP_DAYS = 30;
+    /** Łączny czas jednego przebiegu (s) – martwy serwer nie może zatrzymać synchronizacji na minuty. */
+    private const BUDGET = 20;
+    /** Po tylu godzinach oczekujące dostarczenie wygasa (np. kanał długo wyłączony) zamiast wysłać się masowo po włączeniu. */
+    private const EXPIRE_HOURS = 48;
 
     /** @param array{subject:string,text:string,data?:array<string,mixed>} $msg */
     public static function enqueue(int $channelId, string $kind, array $msg): int
@@ -22,9 +26,15 @@ final class Deliveries
     public static function process(int $limit = 20): int
     {
         $sent = 0;
+        $started = microtime(true);
+        Db::exec("UPDATE deliveries SET status = 'failed', last_error = ? WHERE status = 'pending' AND created_at < ?",
+            [t('channels.expired'), date('Y-m-d H:i:s', time() - self::EXPIRE_HOURS * 3600)]);
         $rows = Db::all("SELECT d.*, c.type, c.name, c.config FROM deliveries d JOIN channels c ON c.id = d.channel_id
             WHERE d.status = 'pending' AND d.next_try_at <= ? AND c.enabled = 1 ORDER BY d.id LIMIT " . (int) $limit, [now_db()]);
         foreach ($rows as $d) {
+            if (microtime(true) - $started > self::BUDGET) {
+                break; // reszta w następnym przebiegu
+            }
             $body = json_decode((string) $d['body'], true) ?: [];
             try {
                 Channels::make($d)->send(['subject' => $d['subject'], 'text' => (string) ($body['text'] ?? ''), 'data' => (array) ($body['data'] ?? [])]);

@@ -250,7 +250,8 @@ final class Rules
         }
         try {
             Outbox::create(['phone' => $phone, 'body' => Recipients::personalize((string) $rule['reply_text'], Contacts::name($phone)),
-                'translit' => Settings::bool('translit_default'), 'source' => 'autoreply', 'priority' => Outbox::PRIORITY_SINGLE]);
+                'translit' => Settings::bool('translit_default'), 'source' => 'autoreply', 'priority' => Outbox::PRIORITY_SINGLE,
+                'modem' => Threads::replyModem($phone)]);
         } catch (InvalidArgumentException $ex) {
             Db::update('rules', ['last_error' => mb_substr($ex->getMessage(), 0, 250)], 'id = ?', [$rule['id']]);
             return false;

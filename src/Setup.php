@@ -96,6 +96,10 @@ final class Setup
             $conf->set('smsd', 'runonincomingcall', cfg('hook.command') . ' --phone=' . escapeshellarg($id));
         }
         $path = $base . '-' . $id;
+        if (file_exists($path)) {
+            echo "$path już istnieje – zostawiam bez zmian (edytuj ręcznie).\n";
+            return 2;
+        }
         GammuConf::createFile($path, $conf->text(), 0660);
         if (function_exists('posix_getgrnam') && ($g = posix_getgrnam('www-data')) !== false) {
             @chgrp($path, $g['gid']);

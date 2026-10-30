@@ -1253,7 +1253,7 @@ return [
     'balance.no_data' => 'Brak zapisanych odczytów salda.',
     'balance.chart_desc' => 'Saldo karty SIM w ostatnich 30 dniach.',
     'alerts.balance.title' => 'Niskie saldo',
-    'alerts.balance.text' => 'Saldo karty SIM wynosi {amount} zł (próg: {threshold} zł).',
+    'alerts.balance.text' => 'Saldo karty SIM (modem {modem}) wynosi {amount} zł (próg: {threshold} zł).',
     'alerts.balance.resolved' => 'Saldo karty SIM jest powyżej progu.',
     'alerts.limit.title' => 'Limit SMS w miesiącu',
     'alerts.limit.text' => 'Wykorzystano {pct}% miesięcznego limitu SMS ({used} z {limit}).',
@@ -1316,4 +1316,5 @@ return [
     'compose.modem_any' => 'dowolny modem',
     'api.e_modem' => 'Nieznany modem: {modem}.',
     'modem.unavailable' => 'niedostępny',
+    'channels.expired' => 'Wygasło – nie dostarczono w ciągu 48 godzin.',
 ];

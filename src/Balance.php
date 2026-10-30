@@ -5,7 +5,7 @@ declare(strict_types=1);
 final class Balance
 {
     /** Domyślny wzorzec: kwota przed „zł” / „PLN” („12,34 zł”, „Saldo: 5.20PLN”), a gdy go brak – pierwsza liczba z groszami. */
-    private const DEFAULT_PATTERNS = ['/(\d{1,6}(?:[.,]\d{1,2})?)\s*(?:zł|zl|pln)/iu', '/(\d{1,6}[.,]\d{2})(?!\d)/u'];
+    private const DEFAULT_PATTERNS = ['/((?:\d{1,3}(?:[\s\x{00A0}]\d{3})+|\d{1,9})(?:[.,]\d{1,2})?)\s*(?:zł|zl|pln)/iu', '/(\d{1,9}[.,]\d{2})(?!\d)/u'];
     /** Najwcześniej po tylu sekundach od poprzedniego zapytania (także nieudanego) próbujemy ponownie. */
     private const RETRY = 900;
 
@@ -23,7 +23,7 @@ final class Balance
         $patterns = $custom !== '' ? ['/' . str_replace('/', '\\/', $custom) . '/iu'] : self::DEFAULT_PATTERNS;
         foreach ($patterns as $re) {
             if (@preg_match($re, $response, $m) === 1 && isset($m[1])) {
-                $num = str_replace([' ', ','], ['', '.'], $m[1]);
+                $num = str_replace(',', '.', preg_replace('/\s+/u', '', $m[1]));
                 if (is_numeric($num)) {
                     return round((float) $num, 2);
                 }
@@ -38,30 +38,40 @@ final class Balance
         return $custom === '' || (@preg_match('/' . str_replace('/', '\\/', $custom) . '/iu', '') !== false && substr_count($custom, '(') >= 1);
     }
 
-    /** Krok synchronizacji: zlecenie zapytania, gdy minął odstęp (albo poprzednie zostało bez odpowiedzi), i zapis nadesłanych odpowiedzi. */
+    /** Krok synchronizacji: zlecenie zapytań (po jednym na przebieg, każdy modem we własnym rytmie) i zapis nadesłanych odpowiedzi. */
     public static function process(): int
     {
         $n = self::record();
-        if (!self::enabled()) {
+        if (!self::enabled() || Status::service() !== 'active') {
             return $n;
         }
-        $last = ts(Settings::get('balance_requested_at'));
-        $due = $last === null || time() - $last >= Settings::int('balance_hours') * 3600
-            || (time() - $last >= self::RETRY && !self::answeredSince($last));
-        $m = Status::modem();
-        if ($due && Status::service() === 'active' && Status::modemAvailable($m) && Ussd::pending() === null) {
-            Settings::set('balance_requested_at', now_db());
-            [, $err] = Ussd::send((string) Settings::get('balance_code'), $m['modem'] ?? null, null, 'balance', false);
-            if ($err !== null) {
-                app_log('warning', 'saldo: ' . $err);
+        $requested = Settings::json('balance_requested');
+        foreach (Status::modems() as $m) {
+            $name = (string) $m['modem'];
+            if (!Status::modemAvailable($m) || Ussd::pending($name) !== null) {
+                continue;
             }
+            $last = ts($requested[$name] ?? null);
+            $due = $last === null || time() - $last >= Settings::int('balance_hours') * 3600
+                || (time() - $last >= self::RETRY && !self::answeredSince($name, $last));
+            if (!$due) {
+                continue;
+            }
+            $requested[$name] = now_db();
+            Settings::set('balance_requested', $requested);
+            [, $err] = Ussd::send((string) Settings::get('balance_code'), $name, null, 'balance', false);
+            if ($err !== null) {
+                app_log('warning', "saldo ($name): $err");
+            }
+            break; // następny modem w kolejnym przebiegu – nie dwa USSD naraz
         }
         return $n;
     }
 
-    private static function answeredSince(int $since): bool
+    private static function answeredSince(string $modem, int $since): bool
     {
-        return Db::val("SELECT 1 FROM ussd_requests WHERE purpose = 'balance' AND status = 'answered' AND created_at >= ? LIMIT 1", [date('Y-m-d H:i:s', $since)]) !== null;
+        return Db::val("SELECT 1 FROM ussd_requests WHERE purpose = 'balance' AND modem = ? AND status = 'answered' AND created_at >= ? LIMIT 1",
+            [$modem, date('Y-m-d H:i:s', $since)]) !== null;
     }
 
     /** Zapis odpowiedzi na zapytania o saldo, których jeszcze nie ma w historii. */
@@ -84,17 +94,24 @@ final class Balance
         return $n;
     }
 
-    /** Ostatni znany odczyt: ['amount' => ?float, 'at' => string] albo null. */
-    public static function latest(): ?array
+    /** Ostatni znany odczyt (modemu albo najnowszy w ogóle): ['amount' => ?float, 'at' => string] albo null. */
+    public static function latest(?string $modem = null): ?array
     {
-        $r = Db::row('SELECT amount, created_at FROM balance_log ORDER BY id DESC LIMIT 1');
+        $r = Db::row('SELECT amount, created_at FROM balance_log' . ($modem !== null ? ' WHERE modem = ?' : '') . ' ORDER BY id DESC LIMIT 1', $modem !== null ? [$modem] : []);
         return $r === null ? null : ['amount' => $r['amount'] === null ? null : (float) $r['amount'], 'at' => $r['created_at']];
     }
 
     /** Punkty wykresu z ostatnich $days dni: list<array{at:string,amount:float}> (tylko odczyty z rozpoznaną kwotą). */
-    public static function series(int $days = 30): array
+    public static function series(int $days = 30, ?string $modem = null): array
     {
         return array_map(static fn ($r) => ['at' => $r['created_at'], 'amount' => (float) $r['amount']],
-            Db::all('SELECT created_at, amount FROM balance_log WHERE amount IS NOT NULL AND created_at >= ? ORDER BY created_at', [date('Y-m-d H:i:s', time() - $days * 86400)]));
+            Db::all('SELECT created_at, amount FROM balance_log WHERE amount IS NOT NULL AND created_at >= ?' . ($modem !== null ? ' AND modem = ?' : '') . ' ORDER BY created_at',
+                $modem !== null ? [date('Y-m-d H:i:s', time() - $days * 86400), $modem] : [date('Y-m-d H:i:s', time() - $days * 86400)]));
+    }
+
+    /** Modemy z zapisanym saldem (kolejność alfabetyczna). @return list<string> */
+    public static function modemsWithData(): array
+    {
+        return Db::col('SELECT DISTINCT modem FROM balance_log WHERE modem IS NOT NULL ORDER BY modem');
     }
 }

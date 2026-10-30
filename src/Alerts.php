@@ -44,9 +44,17 @@ final class Alerts
         $seen = ts(Settings::get('worker_seen_at'));
         $c['worker'] = $seen === null || time() - $seen > 120 ? ['ago' => $seen === null ? t('alerts.never') : fmt_ago(Settings::get('worker_seen_at'))] : null;
         $threshold = (float) Settings::get('balance_threshold');
-        $bal = in_array('balance', $only, true) && $threshold > 0 ? Balance::latest() : null;
-        $c['balance'] = $bal !== null && $bal['amount'] !== null && $bal['amount'] < $threshold
-            ? ['amount' => number_format($bal['amount'], 2, lang() === 'pl' ? ',' : '.', ''), 'threshold' => number_format($threshold, 2, lang() === 'pl' ? ',' : '.', '')] : null;
+        $c['balance'] = null;
+        if (in_array('balance', $only, true) && $threshold > 0) {
+            foreach (Balance::modemsWithData() as $name) {
+                $bal = Balance::latest($name);
+                if ($bal !== null && $bal['amount'] !== null && $bal['amount'] < $threshold) {
+                    $fmt = static fn (float $v) => number_format($v, 2, lang() === 'pl' ? ',' : '.', '');
+                    $c['balance'] = ['modem' => $name, 'amount' => $fmt($bal['amount']), 'threshold' => $fmt($threshold)];
+                    break;
+                }
+            }
+        }
         $lim = in_array('limit', $only, true) ? Stats::limit() : null;
         $c['limit'] = $lim !== null && $lim['pct'] >= 80 ? ['pct' => $lim['pct'], 'used' => $lim['used'], 'limit' => $lim['limit']] : null;
         return array_intersect_key($c, array_flip($only));
@@ -153,8 +161,17 @@ final class Alerts
     /** Strażnik uruchamiany z timera systemd: gdy proces w tle nie działa, sam ocenia alarm „worker” i wysyła zaległe powiadomienia. */
     public static function watchdog(): int
     {
-        $queued = self::process(['worker'], null, true);
-        Deliveries::process();
-        return $queued;
+        // Ta sama blokada co synchronizacja: strażnik nie działa równolegle z procesem w tle (podwójne wysyłki, nadpisany stan alarmów).
+        // Zajęta blokada = proces w tle właśnie pracuje, więc żyje.
+        if (!Db::lock(Sync::LOCK, 0)) {
+            return 0;
+        }
+        try {
+            $queued = self::process(['worker'], null, true);
+            Deliveries::process();
+            return $queued;
+        } finally {
+            Db::unlock(Sync::LOCK);
+        }
     }
 }

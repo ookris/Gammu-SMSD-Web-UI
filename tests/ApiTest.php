@@ -100,3 +100,13 @@ test('API: wielu odbiorców (dławienie i partia), błędy walidacji, uwierzytel
     }
     assert_same(false, api_call('POST', 'send', $plain, ['to' => '601234567', 'text' => 'x'], '10.1.1.1')['ok'], 'limit na minutę');
 });
+
+test('API: /api/status widzi tylko wiadomości własnego tokenu; adres IPv4 w postaci ::ffff:a.b.c.d pasuje do listy IPv4', function () {
+    [$a, $plainA] = api_token();
+    [, $plainB] = ApiTokens::create('Drugi', '');
+    $r = api_call('POST', 'send', $plainA, ['to' => '601234567', 'text' => 'x']);
+    assert_same(true, api_call('GET', 'status', $plainA, ['id' => (string) $r['ids'][0]])['ok']);
+    assert_same(false, api_call('GET', 'status', $plainB, ['id' => (string) $r['ids'][0]])['ok'], 'cudza wiadomość');
+    assert_true(ApiTokens::ipAllowed('::ffff:192.168.1.10', '192.168.1.0/24'), 'zmapowany IPv4');
+    assert_true(!ApiTokens::ipAllowed('::ffff:10.0.0.1', '192.168.1.0/24'), 'zmapowany IPv4 spoza sieci');
+});
