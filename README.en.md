@@ -107,6 +107,7 @@ and other national characters (ą→a, ł→l).
   (systemd watchdog), with a grace period, reminders and a “resolved” message
 - forwarding received SMS and rejected calls by rules (all / from number / from group / text contains)
 - HTTP API with tokens (`POST /api/send`, `GET /api/status`) for Zabbix, Home Assistant and scripts
+- recurring messages (daily, on selected weekdays, monthly) to groups and numbers
 - SMS auto-replies: keyword, hours (e.g. outside 8–16 on weekdays) or a rejected call; loop protection
   (one reply per number per hour, none to alphanumeric senders and short numbers)
 

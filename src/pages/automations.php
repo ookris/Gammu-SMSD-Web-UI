@@ -1,10 +1,11 @@
 <?php
 // Automatyzacje: kanały powiadomień (e-mail, webhook) i ustawienia poczty
-$tab = in_array(input('tab'), ['channels', 'alerts', 'rules', 'replies', 'api'], true) ? input('tab') : 'channels';
+$tab = in_array(input('tab'), ['channels', 'alerts', 'rules', 'replies', 'schedules', 'api'], true) ? input('tab') : 'channels';
 $id = (int) input('id');
 $error = null;
 $mailError = null;
 $ruleError = null;
+$schedError = null;
 
 if (is_post()) {
     if (isset($_POST['mail_save'])) {
@@ -34,6 +35,25 @@ if (is_post()) {
             }
         }
         redirect(url('automations', ['tab' => 'api']));
+    } elseif ($tab === 'schedules') {
+        $sid = (int) input('sched');
+        if (isset($_POST['sched_toggle']) && $sid > 0) {
+            Schedules::setEnabled($sid, input('sched_toggle') === '1');
+            redirect(url('automations', ['tab' => 'schedules']));
+        } elseif (isset($_POST['sched_delete']) && $sid > 0) {
+            Schedules::delete($sid);
+            flash('ok', t('schedules.deleted'));
+            redirect(url('automations', ['tab' => 'schedules']));
+        }
+        [$saved, $schedError] = Schedules::save($sid > 0 ? $sid : null, [
+            'name' => input('name'), 'groups' => input_ids('groups'), 'numbers' => input('numbers'), 'text' => (string) ($_POST['text'] ?? ''),
+            'translit' => isset($_POST['translit']), 'report' => isset($_POST['report']), 'flash' => isset($_POST['flash']), 'frequency' => input('frequency'),
+            'weekdays' => array_map('intval', input_list('weekdays')), 'month_day' => (int) input('month_day'), 'time' => input('time'),
+        ]);
+        if ($saved !== null) {
+            flash('ok', t('schedules.saved'));
+            redirect(url('automations', ['tab' => 'schedules']));
+        }
     } elseif (in_array($tab, ['rules', 'replies'], true) && is_post()) {
         $kind = $tab === 'replies' ? 'autoreply' : 'forward';
         $rid = (int) input('rule');
@@ -117,10 +137,21 @@ if ($tab === 'api' && isset($_SESSION['api_new_token'])) {
     $newToken = $_SESSION['api_new_token'];
     unset($_SESSION['api_new_token']);
 }
+$sched = $tab === 'schedules' && (int) input('sched') > 0 ? Schedules::find((int) input('sched')) : null;
+$schedForm = is_post() && $schedError !== null
+    ? ['name' => input('name'), 'groups' => input_ids('groups'), 'numbers' => input('numbers'), 'text' => (string) ($_POST['text'] ?? ''), 'translit' => isset($_POST['translit']),
+        'report' => isset($_POST['report']), 'flash' => isset($_POST['flash']), 'frequency' => input('frequency'), 'weekdays' => array_map('intval', input_list('weekdays')),
+        'month_day' => (int) input('month_day') ?: 1, 'time' => input('time')]
+    : ['name' => $sched['name'] ?? '', 'groups' => json_decode((string) ($sched['groups_json'] ?? '[]'), true) ?: [], 'numbers' => $sched['numbers'] ?? '',
+        'text' => $sched['body'] ?? '', 'translit' => (bool) ($sched['translit'] ?? Settings::bool('translit_default')), 'report' => (bool) ($sched['report'] ?? false),
+        'flash' => (bool) ($sched['flash'] ?? false), 'frequency' => $sched['frequency'] ?? 'daily',
+        'weekdays' => array_map('intval', array_filter(explode(',', (string) ($sched['weekdays'] ?? '1,2,3,4,5')))), 'month_day' => (int) ($sched['month_day'] ?? 1),
+        'time' => substr((string) ($sched['at_time'] ?? '08:00'), 0, 5)];
 render('automations', [
+    'schedules' => $tab === 'schedules' ? Schedules::all() : [], 'schedId' => $sched ? (int) $sched['id'] : 0, 'schedForm' => $schedForm, 'schedError' => $schedError,
     'tokens' => $tab === 'api' ? ApiTokens::all() : [], 'newToken' => $newToken,
     'rules' => $ruleTab ? Rules::all($tab === 'replies' ? 'autoreply' : 'forward') : [], 'ruleId' => $rule ? $ruleId : 0, 'ruleForm' => $ruleForm, 'ruleError' => $ruleError,
-    'groups' => $ruleTab ? Contacts::groups() : [],
+    'groups' => $ruleTab || $tab === 'schedules' ? Contacts::groups() : [],
     'tab' => $tab,
     'title' => t('nav.automations'), 'nav' => 'automations', 'channels' => Channels::all(), 'id' => $current ? $id : 0, 'form' => $form,
     'hasSecret' => ($cfg['secret'] ?? '') !== '', 'error' => $error, 'mailError' => $mailError, 'deliveries' => Deliveries::counts(),

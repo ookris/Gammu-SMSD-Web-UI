@@ -102,6 +102,7 @@ wiadomości zapisanych w bazie, a przy kodowaniu GSM po cichu zamienia polskie z
   (strażnik systemd), z karencją, przypomnieniami i wiadomością „ustąpiło”
 - przekazywanie odebranych SMS i odrzuconych połączeń wg reguł (wszystkie / od numeru / od grupy / treść zawiera)
 - HTTP API z tokenami (`POST /api/send`, `GET /api/status`) dla Zabbixa, Home Assistanta i skryptów
+- wiadomości cykliczne (codziennie, w wybrane dni tygodnia, raz w miesiącu) do grup i numerów
 - autoodpowiedzi SMS: słowo kluczowe, godziny (np. poza 8–16 w dni robocze) albo odrzucone połączenie; blokada pętli
   (jedna odpowiedź na numer na godzinę, bez odpowiedzi nadawcom alfanumerycznym i numerom skróconym)
 

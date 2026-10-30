@@ -417,6 +417,30 @@ final class Db
                 'ALTER TABLE rules ADD COLUMN IF NOT EXISTS hours_to TIME NULL AFTER hours_from',
                 'ALTER TABLE rules ADD COLUMN IF NOT EXISTS workdays_only TINYINT(1) NOT NULL DEFAULT 0 AFTER hours_to',
             ],
+            // Wiadomości cykliczne (codziennie / co tydzień / co miesiąc)
+            9 => [
+                "CREATE TABLE IF NOT EXISTS schedules (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    name VARCHAR(120) NOT NULL,
+                    groups_json VARCHAR(255) NOT NULL DEFAULT '[]',
+                    numbers TEXT NOT NULL,
+                    body TEXT NOT NULL,
+                    translit TINYINT(1) NOT NULL DEFAULT 0,
+                    report TINYINT(1) NOT NULL DEFAULT 0,
+                    flash TINYINT(1) NOT NULL DEFAULT 0,
+                    frequency ENUM('daily','weekly','monthly') NOT NULL DEFAULT 'daily',
+                    weekdays VARCHAR(20) NOT NULL DEFAULT '',
+                    month_day TINYINT UNSIGNED NOT NULL DEFAULT 1,
+                    at_time TIME NOT NULL,
+                    enabled TINYINT(1) NOT NULL DEFAULT 1,
+                    next_run_at DATETIME NULL,
+                    last_run_at DATETIME NULL,
+                    runs INT UNSIGNED NOT NULL DEFAULT 0,
+                    last_error VARCHAR(255) NULL,
+                    created_at DATETIME NOT NULL,
+                    KEY schedules_due (enabled, next_run_at)
+                ) $t",
+            ],
         ];
     }
 }
