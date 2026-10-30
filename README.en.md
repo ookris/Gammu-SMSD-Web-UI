@@ -10,8 +10,9 @@ One-command installation: the script installs and configures Gammu SMSD, MariaDB
 the modem and finishes with a health check.
 
 > **Project status:** version 1.0.0-beta.1. The panel is feature-complete and tested on the Gammu simulator and on
-> a clean Ubuntu Server 26.04.1 (installation, diagnostics, panel, automated tests). Sending and receiving SMS have been
-> verified on a real modem (Huawei E3372 in "stick" mode); USSD, delivery report and call tests are in progress.
+> a clean Ubuntu Server 26.04.1 (installation, diagnostics, panel, automated tests). Verified on a real modem (Huawei E3372 in
+> "stick" mode): sending, receiving, long SMS and delivery reports – also on Gammu 1.45.1. USSD and call tests are in progress;
+> features added after the beta (automations, API, balance, statistics, multiple modems) have automated tests and await real-world testing.
 >
 > The user interface is available in Polish and English (switchable in the panel settings). The installer and the
 > console tool currently print messages in Polish.
@@ -142,7 +143,7 @@ Screenshots show the Polish interface (English is available in the panel setting
 
 | Layer | Technology |
 |-------|------------|
-| SMS gateway | Gammu SMSD 1.42 with the SQL backend (`native_mysql`), database schema version 17 or 18 (Gammu 1.44+) |
+| SMS gateway | Gammu SMSD 1.42 (from Ubuntu) or 1.44+ (e.g. 1.45.1 built by a script – see below) with the SQL backend (`native_mysql`), database schema version 17 or 18 (Gammu 1.44+) |
 | Database | MariaDB (InnoDB tables – transactions when writing multipart messages) |
 | Application | PHP 8.5 without a framework and without Composer; PDO, database migrations built into the panel |
 | User interface | [htmx](https://htmx.org) 2, [Pico.css](https://picocss.com) 2, IBM Plex fonts, [Solar](https://icon-sets.iconify.design/solar/) icons – all bundled locally, no npm and no build step |
@@ -454,6 +455,15 @@ sudo -u www-data php /opt/smsgui/bin/smsgui check     # database migrations run 
 ```
 
 The background process restarts itself when files change. `config.php` and data are not overwritten.
+
+**Newer Gammu (optional):** Ubuntu 26.04 ships Gammu 1.42.0. A script builds 1.45.1 from source (among others a hook security
+fix and better handling of delivery reports and multipart SMS) – it installs it to `/usr/local`, changes the `gammu` database schema
+from 17 to 18 and switches the service with a systemd drop-in (the Ubuntu package stays):
+
+```bash
+sudo /opt/smsgui/deploy/build-gammu.sh            # build, database migration, service restart
+sudo /opt/smsgui/deploy/build-gammu.sh --revert   # back to the packaged Gammu (then in the gammu database: UPDATE gammu SET Version = 17)
+```
 
 **Backups:**
 
