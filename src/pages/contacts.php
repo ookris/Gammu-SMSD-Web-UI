@@ -44,8 +44,11 @@ if (is_post()) {
             redirect(url('compose', ['contacts' => $ids]));
         case 'add_group':
             if ($gid > 0) {
-                Contacts::addToGroup($ids, $gid);
-                flash('ok', tn('contacts.added_to_group', $n));
+                if (Contacts::addToGroup($ids, $gid)) {
+                    flash('ok', tn('contacts.added_to_group', $n));
+                } else {
+                    flash('warn', t('contacts.group_gone'));
+                }
             }
             break;
         case 'remove_group':

@@ -103,7 +103,7 @@ final class Blocklist
         try {
             return self::apply();
         } catch (Throwable $e) {
-            return t('blocklist.not_written') . ': ' . $e->getMessage();
+            return t('blocklist.change_not_written') . ' ' . $e->getMessage();
         }
     }
 

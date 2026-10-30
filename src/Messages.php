@@ -37,7 +37,9 @@ final class Messages
     {
         $before = now_db(-$days * 86400);
         $keep = "created_at < ? AND NOT (direction = 'out' AND status IN ('scheduled','queued'))";
-        self::tombstone($keep, [$before]);
+        if ($days < 7) { // Sync::external() patrzy 7 dni wstecz – przy dłuższej retencji sentitems znika razem z wiadomością
+            self::tombstone($keep, [$before]);
+        }
         $m = Db::exec("DELETE FROM messages WHERE $keep", [$before]);
         Db::exec('DELETE FROM deleted_external WHERE deleted_at < ?', [now_db(-30 * 86400)]);
         $c = Db::exec('DELETE FROM calls WHERE received_at < ?', [$before]);

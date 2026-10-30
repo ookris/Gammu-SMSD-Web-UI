@@ -483,6 +483,7 @@ return [
     'blocklist.not_blocked' => 'Not blocked.',
     'blocklist.blocked' => 'Blocked {who}.',
     'blocklist.not_written' => 'The number was added to the list, but the file was not written.',
+    'blocklist.change_not_written' => 'The change was saved, but the file was not written.',
     'blocklist.backup_note' => 'blocklist',
 
     // File errors
@@ -603,6 +604,7 @@ return [
     'contacts.imported' => 'Contacts imported.',
     'contacts.imported_text' => 'New: {new}, updated: {updated}.',
     'contacts.imported_skipped' => 'New: {new}, updated: {updated}, invalid rows skipped: {invalid}.',
+    'contacts.group_gone' => 'That group has already been deleted.',
     'contacts.added_to_group' => ['Added to the group: {n} contact.', 'Added to the group: {n} contacts.'],
     'contacts.removed_from_group' => ['Removed from the group: {n} contact.', 'Removed from the group: {n} contacts.'],
     'contacts.deleted' => ['Deleted {n} contact.', 'Deleted {n} contacts.'],

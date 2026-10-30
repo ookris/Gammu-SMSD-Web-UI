@@ -146,14 +146,16 @@ final class Contacts
         return [$rows, $total];
     }
 
-    public static function addToGroup(array $ids, int $groupId): void
+    /** false = grupa już nie istnieje (usunięta w innej karcie), nic nie dodano. */
+    public static function addToGroup(array $ids, int $groupId): bool
     {
         if (!Db::val('SELECT 1 FROM `groups` WHERE id = ?', [$groupId])) {
-            return; // grupa usunięta w innej karcie
+            return false;
         }
         foreach ($ids as $id) {
             Db::exec('INSERT IGNORE INTO contact_group_members (contact_id, group_id) VALUES (?, ?)', [$id, $groupId]);
         }
+        return true;
     }
 
     public static function removeFromGroup(array $ids, int $groupId): void
@@ -199,7 +201,9 @@ final class Contacts
         $content = str_replace("\r\n", "\n", $content);
         // Najpierw kodowanie (preg_replace z /u zwraca null dla bajtów spoza UTF-8); Windows-1250 zna iconv, mbstring go nie ma
         if (!mb_check_encoding($content, 'UTF-8')) {
-            $content = (string) @iconv('CP1250', 'UTF-8//IGNORE', $content);
+            $content = function_exists('iconv')
+                ? (string) @iconv('CP1250', 'UTF-8//IGNORE', $content)
+                : mb_convert_encoding($content, 'UTF-8', 'ISO-8859-2'); // bez iconv: najbliższe polskim literom
         }
         $content = preg_replace('/^\x{FEFF}/u', '', $content) ?? $content;
         $first = strtok($content, "\n") ?: '';

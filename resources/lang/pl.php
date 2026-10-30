@@ -483,6 +483,7 @@ return [
     'blocklist.not_blocked' => 'Nie zablokowano.',
     'blocklist.blocked' => 'Zablokowano {who}.',
     'blocklist.not_written' => 'Numer dodany do listy, ale pliku nie zapisano.',
+    'blocklist.change_not_written' => 'Zmiana zapisana w bazie, ale pliku nie zapisano.',
     'blocklist.backup_note' => 'czarna lista',
 
     // Błędy plików
@@ -603,6 +604,7 @@ return [
     'contacts.imported' => 'Zaimportowano kontakty.',
     'contacts.imported_text' => 'Nowe: {new}, zaktualizowane: {updated}.',
     'contacts.imported_skipped' => 'Nowe: {new}, zaktualizowane: {updated}, pominięte błędne wiersze: {invalid}.',
+    'contacts.group_gone' => 'Ta grupa została już usunięta.',
     'contacts.added_to_group' => ['Dodano do grupy: {n} kontakt.', 'Dodano do grupy: {n} kontakty.', 'Dodano do grupy: {n} kontaktów.'],
     'contacts.removed_from_group' => ['Usunięto z grupy: {n} kontakt.', 'Usunięto z grupy: {n} kontakty.', 'Usunięto z grupy: {n} kontaktów.'],
     'contacts.deleted' => ['Usunięto {n} kontakt.', 'Usunięto {n} kontakty.', 'Usunięto {n} kontaktów.'],
