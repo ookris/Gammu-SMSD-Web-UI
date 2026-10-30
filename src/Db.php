@@ -409,6 +409,14 @@ final class Db
                     KEY balance_created (created_at)
                 ) $t",
             ],
+            // Autoodpowiedzi: dopasowanie „równa się / zaczyna się” oraz warunek godzin (kind = 'autoreply' w tabeli rules)
+            8 => [
+                "ALTER TABLE rules MODIFY cond_type ENUM('all','number','group','text','equals','starts') NOT NULL DEFAULT 'all'",
+                "ALTER TABLE rules ADD COLUMN IF NOT EXISTS hours_mode ENUM('any','outside','inside') NOT NULL DEFAULT 'any' AFTER cond_value",
+                'ALTER TABLE rules ADD COLUMN IF NOT EXISTS hours_from TIME NULL AFTER hours_mode',
+                'ALTER TABLE rules ADD COLUMN IF NOT EXISTS hours_to TIME NULL AFTER hours_from',
+                'ALTER TABLE rules ADD COLUMN IF NOT EXISTS workdays_only TINYINT(1) NOT NULL DEFAULT 0 AFTER hours_to',
+            ],
         ];
     }
 }

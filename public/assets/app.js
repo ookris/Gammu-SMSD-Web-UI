@@ -143,7 +143,7 @@
     const sel = e.target.closest('select[data-type-switch]');
     if (!sel || !sel.form) return;
     sel.form.querySelectorAll('[data-show-for]').forEach((el) => {
-      if (!el.dataset.showBy || el.dataset.showBy === sel.name) el.hidden = el.dataset.showFor !== sel.value;
+      if (!el.dataset.showBy || el.dataset.showBy === sel.name) el.hidden = !el.dataset.showFor.split(' ').includes(sel.value);
     });
   });
 

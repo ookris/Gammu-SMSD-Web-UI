@@ -115,3 +115,100 @@ test('Reguły: „Wyślij test” wysyła przykładowe zdarzenie do kanału', fu
     assert_same('nie działa', Rules::find($id)['last_error']);
     Channels::$factory = null;
 });
+
+test('Autoodpowiedzi: walidacja zapisu', function () {
+    rules_setup();
+    $ok = ['name' => '', 'event' => 'sms', 'cond_type' => 'equals', 'text' => 'info', 'reply_text' => 'Godziny: 8-16'];
+    [$id, $err] = Rules::save(null, $ok, 'autoreply');
+    assert_same(null, $err);
+    $r = Rules::find($id);
+    assert_same(['autoreply', 'equals', 'info', null], [$r['kind'], $r['cond_type'], $r['cond_value'], $r['channel_id']]);
+    assert_true(Rules::save(null, ['reply_text' => ' '] + $ok, 'autoreply')[1] !== null, 'pusta odpowiedź');
+    assert_true(Rules::save(null, ['reply_text' => str_repeat('x', 1700)] + $ok, 'autoreply')[1] !== null, 'za długa');
+    assert_true(Rules::save(null, ['hours_mode' => 'outside', 'hours_from' => '08:00', 'hours_to' => '08:00'] + $ok, 'autoreply')[1] !== null, 'puste okno');
+    assert_true(Rules::save(null, ['hours_mode' => 'outside', 'hours_from' => 'x', 'hours_to' => '16:00'] + $ok, 'autoreply')[1] !== null, 'zła godzina');
+    assert_true(Rules::save(null, ['event' => 'call', 'cond_type' => 'starts'] + $ok, 'autoreply')[1] !== null, 'treść przy połączeniu');
+    [$h] = Rules::save(null, ['hours_mode' => 'outside', 'hours_from' => '08:00', 'hours_to' => '16:00', 'workdays' => true] + $ok, 'autoreply');
+    $hr = Rules::find($h);
+    assert_same(['outside', '08:00:00', '16:00:00', 1], [$hr['hours_mode'], $hr['hours_from'], $hr['hours_to'], (int) $hr['workdays_only']]);
+    assert_same(0, count(Rules::all('forward')), 'osobne listy');
+    assert_same(2, count(Rules::all('autoreply')));
+    Channels::$factory = null;
+});
+
+test('Reguły: dopasowanie „równa się / zaczyna się” i godziny (poza, w, przez północ, dni robocze)', function () {
+    rules_setup();
+    $rule = static fn (string $type, string $v) => ['event' => 'sms', 'cond_type' => $type, 'cond_value' => $v, 'hours_mode' => 'any'];
+    $sms = static fn (string $body) => ['event' => 'sms', 'phone' => '48601111111', 'body' => $body, 'at' => now_db()];
+    assert_true(Rules::matches($rule('equals', 'Info'), $sms('  INFO ')), 'równa się bez względu na wielkość i spacje');
+    assert_true(!Rules::matches($rule('equals', 'info'), $sms('info proszę')), 'nie równa się');
+    assert_true(Rules::matches($rule('starts', 'info'), $sms('Info o ofercie')), 'zaczyna się');
+    assert_true(!Rules::matches($rule('starts', 'info'), $sms('proszę o info')), 'nie zaczyna się');
+
+    $mon = strtotime('2026-11-02 12:00:00'); // poniedziałek
+    $sat = strtotime('2026-11-07 12:00:00');
+    $h = static fn (string $mode, string $from, string $to, int $work = 0) => ['hours_mode' => $mode, 'hours_from' => $from, 'hours_to' => $to, 'workdays_only' => $work];
+    assert_true(Rules::inHours($h('inside', '08:00:00', '16:00:00'), $mon), 'w godzinach');
+    assert_true(!Rules::inHours($h('outside', '08:00:00', '16:00:00'), $mon), 'nie poza godzinami');
+    assert_true(Rules::inHours($h('outside', '08:00:00', '12:00:00'), $mon), 'granica „do” wyłączona');
+    assert_true(Rules::inHours($h('outside', '08:00:00', '16:00:00', 1), $sat), 'weekend = poza godzinami');
+    assert_true(!Rules::inHours($h('inside', '08:00:00', '16:00:00', 1), $sat), 'weekend nie jest „w godzinach”');
+    assert_true(Rules::inHours($h('inside', '08:00:00', '16:00:00', 0), $sat), 'bez dni roboczych sobota też');
+    $night = $h('inside', '22:00:00', '06:00:00');
+    assert_true(Rules::inHours($night, strtotime('2026-11-02 23:30:00')) && Rules::inHours($night, strtotime('2026-11-02 05:59:00')), 'przez północ');
+    assert_true(!Rules::inHours($night, $mon), 'południe poza oknem nocnym');
+    assert_true(Rules::inHours(['hours_mode' => 'any'], $mon), 'bez warunku');
+    Channels::$factory = null;
+});
+
+test('Autoodpowiedzi: wysyłka SMS, personalizacja, jedna odpowiedź na zdarzenie i pauza godzinna', function () {
+    [$ch, $contact] = rules_setup();
+    Rules::save(null, ['name' => 'Info', 'event' => 'sms', 'cond_type' => 'equals', 'text' => 'info', 'reply_text' => 'Cześć {imie}, godziny: 8-16'], 'autoreply');
+    Rules::save(null, ['name' => 'Reszta', 'event' => 'sms', 'cond_type' => 'all', 'reply_text' => 'Odezwiemy się'], 'autoreply');
+    Rules::save(null, ['name' => 'Połączenie', 'event' => 'call', 'cond_type' => 'all', 'reply_text' => 'Przepraszamy, oddzwonimy'], 'autoreply');
+
+    rules_msg('48601111111', 'INFO');
+    assert_same(1, Rules::process());
+    $o = Db::row("SELECT phone, body, source, status, report FROM messages WHERE direction = 'out'");
+    assert_same(['48601111111', 'Cześć Jan, godziny: 8-16', 'autoreply', 'queued', 0], [$o['phone'], $o['body'], $o['source'], $o['status'], (int) $o['report']]);
+
+    rules_msg('48601111111', 'info');
+    assert_same(0, Rules::process(), 'pauza godzinna dla tego numeru');
+    rules_msg('48602222222', 'info');
+    rules_msg('48603333333', 'cokolwiek');
+    assert_same(2, Rules::process(), 'jedna odpowiedź na wiadomość (pasuje „info” albo „reszta”)');
+    assert_same('Odezwiemy się', Db::val("SELECT body FROM messages WHERE direction = 'out' AND phone = '48603333333'"));
+    assert_same('Cześć , godziny: 8-16', Db::val("SELECT body FROM messages WHERE direction = 'out' AND phone = '48602222222'"));
+
+    Db::insert('calls', ['phone' => '48604444444', 'raw_number' => '', 'modem' => 'GSM1', 'received_at' => now_db()]);
+    assert_same(1, Rules::process());
+    assert_same('Przepraszamy, oddzwonimy', Db::val("SELECT body FROM messages WHERE direction = 'out' AND phone = '48604444444'"));
+    Channels::$factory = null;
+});
+
+test('Autoodpowiedzi: bez odpowiedzi nadawcom alfanumerycznym, skróconym, ukrytym i zablokowanym', function () {
+    rules_setup();
+    Rules::save(null, ['name' => 'Wszystko', 'event' => 'sms', 'cond_type' => 'all', 'reply_text' => 'x'], 'autoreply');
+    Rules::save(null, ['name' => 'Połączenia', 'event' => 'call', 'cond_type' => 'all', 'reply_text' => 'x'], 'autoreply');
+    rules_msg('ORANGE', 'promocja');
+    rules_msg('8080', 'kod');
+    Blocklist::add('48605555555');
+    rules_msg('48605555555', 'zablokowany');
+    Db::insert('calls', ['phone' => '', 'raw_number' => '', 'modem' => 'GSM1', 'received_at' => now_db()]);
+    assert_same(0, Rules::process());
+    assert_same(0, (int) Db::val("SELECT COUNT(*) FROM messages WHERE direction = 'out'"));
+    Channels::$factory = null;
+});
+
+test('Autoodpowiedzi: dwie bramki odpowiadające sobie nie wpadają w pętlę', function () {
+    rules_setup();
+    Rules::save(null, ['name' => 'Wszystko', 'event' => 'sms', 'cond_type' => 'all', 'reply_text' => 'Dziękujemy'], 'autoreply');
+    rules_msg('48606666666', 'Dzień dobry');
+    assert_same(1, Rules::process(), 'pierwsza odpowiedź');
+    for ($i = 0; $i < 5; $i++) {
+        rules_msg('48606666666', 'Dziękujemy'); // druga bramka odpowiada automatem
+        assert_same(0, Rules::process(), "odpowiedź na automat #$i zablokowana");
+    }
+    assert_same(1, (int) Db::val("SELECT COUNT(*) FROM messages WHERE direction = 'out' AND source = 'autoreply'"));
+    Channels::$factory = null;
+});

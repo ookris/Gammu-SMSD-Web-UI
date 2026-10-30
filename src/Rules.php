@@ -5,7 +5,11 @@ declare(strict_types=1);
 final class Rules
 {
     public const EVENTS = ['sms', 'call'];
-    public const CONDITIONS = ['all', 'number', 'group', 'text'];
+    public const CONDITIONS = ['all', 'number', 'group', 'text', 'equals', 'starts'];
+    /** Warunki dotyczące treści – tylko dla SMS. */
+    private const TEXT_CONDITIONS = ['text', 'equals', 'starts'];
+    /** Najwyżej jedna autoodpowiedź do tego samego numeru w tym czasie (s). */
+    private const REPLY_PAUSE = 3600;
     private const BATCH = 200;
 
     public static function all(string $kind = 'forward'): array
@@ -19,18 +23,32 @@ final class Rules
     }
 
     /**
-     * Zapis reguły przekazywania. Zwraca [id|null, błąd|null].
-     * @param array{name:string,event:string,cond_type:string,number?:string,group?:int,text?:string,channel_id:int} $in
+     * Zapis reguły. Zwraca [id|null, błąd|null]. Przekazywanie wymaga kanału, autoodpowiedź – treści odpowiedzi.
+     * @param array{name:string,event:string,cond_type:string,number?:string,group?:int,text?:string,channel_id?:int,reply_text?:string,
+     *   hours_mode?:string,hours_from?:string,hours_to?:string,workdays?:bool} $in
      */
-    public static function save(?int $id, array $in): array
+    public static function save(?int $id, array $in, string $kind = 'forward'): array
     {
         $event = in_array($in['event'], self::EVENTS, true) ? $in['event'] : 'sms';
         $type = in_array($in['cond_type'], self::CONDITIONS, true) ? $in['cond_type'] : 'all';
-        if ($event === 'call' && $type === 'text') {
+        if ($event === 'call' && in_array($type, self::TEXT_CONDITIONS, true)) {
             return [null, t('rules.err_call_text')];
         }
-        if (Channels::find((int) $in['channel_id']) === null) {
-            return [null, t('rules.err_channel')];
+        $channel = null;
+        $reply = null;
+        if ($kind === 'forward') {
+            $channel = (int) ($in['channel_id'] ?? 0);
+            if (Channels::find($channel) === null) {
+                return [null, t('rules.err_channel')];
+            }
+        } else {
+            $reply = trim((string) ($in['reply_text'] ?? ''));
+            if ($reply === '') {
+                return [null, t('rules.err_reply')];
+            }
+            if (SmsText::analyze(Recipients::personalize($reply, str_repeat('x', 30)))['too_long']) {
+                return [null, t('sms.too_long', ['parts' => SmsText::analyze($reply)['parts'], 'max' => SmsText::MAX_PARTS])];
+            }
         }
         $value = '';
         if ($type === 'number') {
@@ -43,24 +61,34 @@ final class Rules
             if (Db::val('SELECT 1 FROM `groups` WHERE id = ?', [(int) $value]) === null) {
                 return [null, t('rules.err_group')];
             }
-        } elseif ($type === 'text') {
+        } elseif (in_array($type, self::TEXT_CONDITIONS, true)) {
             $value = mb_substr(trim((string) ($in['text'] ?? '')), 0, 255);
             if ($value === '') {
                 return [null, t('rules.err_text')];
+            }
+        }
+        $mode = in_array($in['hours_mode'] ?? 'any', ['outside', 'inside'], true) && $kind === 'autoreply' ? $in['hours_mode'] : 'any';
+        $from = $to = null;
+        if ($mode !== 'any') {
+            $from = Recipients::validTime((string) ($in['hours_from'] ?? '')) ? $in['hours_from'] . ':00' : null;
+            $to = Recipients::validTime((string) ($in['hours_to'] ?? '')) ? $in['hours_to'] . ':00' : null;
+            if ($from === null || $to === null || $from === $to) {
+                return [null, t('rules.err_hours')];
             }
         }
         $name = mb_substr(trim($in['name']), 0, 120);
         if ($name === '') {
             $name = self::describe(['event' => $event, 'cond_type' => $type, 'cond_value' => $value]);
         }
-        $data = ['name' => $name, 'event' => $event, 'cond_type' => $type, 'cond_value' => $value, 'channel_id' => (int) $in['channel_id']];
+        $data = ['name' => $name, 'event' => $event, 'cond_type' => $type, 'cond_value' => $value, 'channel_id' => $channel, 'reply_text' => $reply,
+            'hours_mode' => $mode, 'hours_from' => $from, 'hours_to' => $to, 'workdays_only' => (int) (!empty($in['workdays']) && $mode !== 'any')];
         if ($id === null) {
-            return [Db::insert('rules', $data + ['kind' => 'forward', 'enabled' => 1, 'created_at' => now_db()]), null];
+            return [Db::insert('rules', $data + ['kind' => $kind, 'enabled' => 1, 'created_at' => now_db()]), null];
         }
         if (self::find($id) === null) {
             return [null, t('rules.err_missing')];
         }
-        Db::update('rules', $data, 'id = ?', [$id]);
+        Db::update('rules', $data, 'id = ? AND kind = ?', [$id, $kind]);
         return [$id, null];
     }
 
@@ -102,6 +130,8 @@ final class Rules
             'number' => t('rules.d_number', ['what' => $what, 'who' => Contacts::name($r['cond_value']) ?? Phone::format($r['cond_value'])]),
             'group' => t('rules.d_group', ['what' => $what, 'group' => (string) Db::val('SELECT name FROM `groups` WHERE id = ?', [(int) $r['cond_value']])]),
             'text' => t('rules.d_text', ['what' => $what, 'text' => $r['cond_value']]),
+            'equals' => t('rules.d_equals', ['what' => $what, 'text' => $r['cond_value']]),
+            'starts' => t('rules.d_starts', ['what' => $what, 'text' => $r['cond_value']]),
             default => t('rules.d_all', ['what' => $what]),
         };
     }
@@ -109,17 +139,37 @@ final class Rules
     /** Czy zdarzenie ['event','phone','body'] spełnia warunek reguły. */
     public static function matches(array $rule, array $e): bool
     {
-        if ($rule['event'] !== $e['event']) {
+        if ($rule['event'] !== $e['event'] || !self::inHours($rule, strtotime((string) ($e['at'] ?? 'now')) ?: time())) {
             return false;
         }
+        $body = mb_strtolower(trim((string) ($e['body'] ?? '')));
+        $needle = mb_strtolower(trim((string) $rule['cond_value']));
         return match ($rule['cond_type']) {
             'all' => true,
             'number' => strcasecmp((string) $rule['cond_value'], (string) $e['phone']) === 0,
             'group' => Db::val('SELECT 1 FROM contacts c JOIN contact_group_members m ON m.contact_id = c.id WHERE c.phone = ? AND m.group_id = ?',
                 [$e['phone'], (int) $rule['cond_value']]) !== null,
-            'text' => $e['event'] === 'sms' && mb_stripos((string) ($e['body'] ?? ''), (string) $rule['cond_value']) !== false,
+            'text' => $e['event'] === 'sms' && str_contains($body, $needle),
+            'equals' => $e['event'] === 'sms' && $body === $needle,
+            'starts' => $e['event'] === 'sms' && str_starts_with($body, $needle),
             default => false,
         };
+    }
+
+    /** Warunek godzin reguły: „poza” / „w” przedziale (może przechodzić przez północ); przy workdays_only poza dniami roboczymi liczy się jako „poza”. */
+    public static function inHours(array $rule, int $at): bool
+    {
+        $mode = $rule['hours_mode'] ?? 'any';
+        if ($mode === 'any' || empty($rule['hours_from']) || empty($rule['hours_to'])) {
+            return true;
+        }
+        $time = date('H:i:s', $at);
+        $from = (string) $rule['hours_from'];
+        $to = (string) $rule['hours_to'];
+        $inWindow = $from < $to ? ($time >= $from && $time < $to) : ($time >= $from || $time < $to);
+        $work = !(int) ($rule['workdays_only'] ?? 0) || (int) date('N', $at) <= 5;
+        $inside = $inWindow && $work;
+        return $mode === 'inside' ? $inside : !$inside;
     }
 
     /** @return array{subject:string,text:string,data:array<string,mixed>} */
@@ -146,7 +196,7 @@ final class Rules
      */
     public static function process(): int
     {
-        $rules = array_values(array_filter(self::all(), static fn ($r) => $r['enabled'] && $r['channel_id'] !== null));
+        $rules = array_values(array_filter(array_merge(self::all('forward'), self::all('autoreply')), static fn ($r) => $r['enabled'] && ($r['kind'] === 'autoreply' || $r['channel_id'] !== null)));
         $queued = 0;
         foreach ([
             ['sms', 'rules_msg_cursor', "SELECT id, phone, body, modem, COALESCE(received_at, created_at) AS at FROM messages WHERE direction = 'in' AND id > ? ORDER BY id LIMIT " . self::BATCH],
@@ -164,8 +214,18 @@ final class Rules
                         continue;
                     }
                     $e = ['event' => $event, 'phone' => (string) $row['phone'], 'body' => (string) $row['body'], 'modem' => $row['modem'], 'at' => $row['at']];
+                    $replied = false;
                     foreach ($rules as $rule) {
-                        if (self::matches($rule, $e) && self::deliver($rule, $e)) {
+                        if (!self::matches($rule, $e)) {
+                            continue;
+                        }
+                        if ($rule['kind'] === 'autoreply') {
+                            // Jedna odpowiedź na zdarzenie – pierwsza pasująca reguła
+                            if (!$replied && self::reply($rule, $e)) {
+                                $replied = true;
+                                $n++;
+                            }
+                        } elseif (self::deliver($rule, $e)) {
                             $n++;
                         }
                     }
@@ -175,6 +235,28 @@ final class Rules
             });
         }
         return $queued;
+    }
+
+    /** Autoodpowiedź SMS-em; pomija nadawców, którym nie da się odpowiedzieć, i numery, które dostały odpowiedź w ostatniej godzinie (pętla). */
+    private static function reply(array $rule, array $e): bool
+    {
+        $phone = $e['phone'];
+        if ($phone === '' || Phone::isAlpha($phone) || Phone::isShort($phone)) {
+            return false;
+        }
+        if (Db::val("SELECT 1 FROM messages WHERE direction = 'out' AND source = 'autoreply' AND phone = ? AND created_at > ? LIMIT 1",
+            [$phone, now_db(-self::REPLY_PAUSE)]) !== null) {
+            return false;
+        }
+        try {
+            Outbox::create(['phone' => $phone, 'body' => Recipients::personalize((string) $rule['reply_text'], Contacts::name($phone)),
+                'translit' => Settings::bool('translit_default'), 'source' => 'autoreply', 'priority' => Outbox::PRIORITY_SINGLE]);
+        } catch (InvalidArgumentException $ex) {
+            Db::update('rules', ['last_error' => mb_substr($ex->getMessage(), 0, 250)], 'id = ?', [$rule['id']]);
+            return false;
+        }
+        Db::exec('UPDATE rules SET hits = hits + 1, last_hit_at = ?, last_error = NULL WHERE id = ?', [now_db(), $rule['id']]);
+        return true;
     }
 
     private static function deliver(array $rule, array $e): bool

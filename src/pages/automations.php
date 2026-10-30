@@ -1,6 +1,6 @@
 <?php
 // Automatyzacje: kanały powiadomień (e-mail, webhook) i ustawienia poczty
-$tab = in_array(input('tab'), ['channels', 'alerts', 'rules', 'api'], true) ? input('tab') : 'channels';
+$tab = in_array(input('tab'), ['channels', 'alerts', 'rules', 'replies', 'api'], true) ? input('tab') : 'channels';
 $id = (int) input('id');
 $error = null;
 $mailError = null;
@@ -34,27 +34,30 @@ if (is_post()) {
             }
         }
         redirect(url('automations', ['tab' => 'api']));
-    } elseif ($tab === 'rules' && is_post()) {
+    } elseif (in_array($tab, ['rules', 'replies'], true) && is_post()) {
+        $kind = $tab === 'replies' ? 'autoreply' : 'forward';
         $rid = (int) input('rule');
         if (isset($_POST['rule_test']) && $rid > 0) {
             $err = Rules::test($rid);
             $err === null ? flash('ok', t('channels.test_ok')) : flash('err', t('channels.test_failed'), $err);
-            redirect(url('automations', ['tab' => 'rules']));
+            redirect(url('automations', ['tab' => $tab]));
         } elseif (isset($_POST['rule_toggle']) && $rid > 0) {
             Rules::setEnabled($rid, input('rule_toggle') === '1');
-            redirect(url('automations', ['tab' => 'rules']));
+            redirect(url('automations', ['tab' => $tab]));
         } elseif (isset($_POST['rule_delete']) && $rid > 0) {
             Rules::delete($rid);
             flash('ok', t('rules.deleted'));
-            redirect(url('automations', ['tab' => 'rules']));
+            redirect(url('automations', ['tab' => $tab]));
         }
         [$saved, $ruleError] = Rules::save($rid > 0 ? $rid : null, [
             'name' => input('name'), 'event' => input('event'), 'cond_type' => input('cond_type'), 'number' => input('number'),
             'group' => (int) input('group'), 'text' => input('cond_text'), 'channel_id' => (int) input('channel_id'),
-        ]);
+            'reply_text' => (string) ($_POST['reply_text'] ?? ''), 'hours_mode' => input('hours_mode'), 'hours_from' => input('hours_from'),
+            'hours_to' => input('hours_to'), 'workdays' => isset($_POST['workdays']),
+        ], $kind);
         if ($saved !== null) {
             flash('ok', t('rules.saved'));
-            redirect(url('automations', ['tab' => 'rules']));
+            redirect(url('automations', ['tab' => $tab]));
         }
     } elseif (isset($_POST['test']) && $id > 0) {
         $err = Channels::test($id);
@@ -92,15 +95,23 @@ $form = is_post() && $error !== null
     ? ['type' => input('type'), 'name' => input('name'), 'to' => input('to'), 'url' => input('url'), 'number' => input('number')]
     : ['type' => $current['type'] ?? 'email', 'name' => $current['name'] ?? '', 'to' => $cfg['to'] ?? '', 'url' => $cfg['url'] ?? '',
         'number' => isset($cfg['number']) ? Phone::format($cfg['number']) : ''];
-$ruleId = $tab === 'rules' ? (int) input('rule') : 0;
+$ruleTab = in_array($tab, ['rules', 'replies'], true);
+$ruleId = $ruleTab ? (int) input('rule') : 0;
 $rule = $ruleId > 0 ? Rules::find($ruleId) : null;
+if ($rule !== null && $rule['kind'] !== ($tab === 'replies' ? 'autoreply' : 'forward')) {
+    $rule = null;
+}
 $ruleForm = is_post() && $ruleError !== null
     ? ['name' => input('name'), 'event' => input('event'), 'cond_type' => input('cond_type'), 'number' => input('number'), 'group' => (int) input('group'),
-        'text' => input('cond_text'), 'channel_id' => (int) input('channel_id')]
+        'text' => input('cond_text'), 'channel_id' => (int) input('channel_id'), 'reply_text' => (string) ($_POST['reply_text'] ?? ''),
+        'hours_mode' => input('hours_mode'), 'hours_from' => input('hours_from'), 'hours_to' => input('hours_to'), 'workdays' => isset($_POST['workdays'])]
     : ['name' => $rule['name'] ?? '', 'event' => $rule['event'] ?? 'sms', 'cond_type' => $rule['cond_type'] ?? 'all',
         'number' => ($rule['cond_type'] ?? '') === 'number' ? Phone::format($rule['cond_value']) : '',
         'group' => ($rule['cond_type'] ?? '') === 'group' ? (int) $rule['cond_value'] : 0,
-        'text' => ($rule['cond_type'] ?? '') === 'text' ? $rule['cond_value'] : '', 'channel_id' => (int) ($rule['channel_id'] ?? 0)];
+        'text' => in_array($rule['cond_type'] ?? '', ['text', 'equals', 'starts'], true) ? $rule['cond_value'] : '', 'channel_id' => (int) ($rule['channel_id'] ?? 0),
+        'reply_text' => $rule['reply_text'] ?? '', 'hours_mode' => $rule['hours_mode'] ?? 'any',
+        'hours_from' => substr((string) ($rule['hours_from'] ?? '08:00'), 0, 5), 'hours_to' => substr((string) ($rule['hours_to'] ?? '16:00'), 0, 5),
+        'workdays' => (bool) ($rule['workdays_only'] ?? 0)];
 $newToken = null;
 if ($tab === 'api' && isset($_SESSION['api_new_token'])) {
     $newToken = $_SESSION['api_new_token'];
@@ -108,8 +119,8 @@ if ($tab === 'api' && isset($_SESSION['api_new_token'])) {
 }
 render('automations', [
     'tokens' => $tab === 'api' ? ApiTokens::all() : [], 'newToken' => $newToken,
-    'rules' => $tab === 'rules' ? Rules::all() : [], 'ruleId' => $rule ? $ruleId : 0, 'ruleForm' => $ruleForm, 'ruleError' => $ruleError,
-    'groups' => $tab === 'rules' ? Contacts::groups() : [],
+    'rules' => $ruleTab ? Rules::all($tab === 'replies' ? 'autoreply' : 'forward') : [], 'ruleId' => $rule ? $ruleId : 0, 'ruleForm' => $ruleForm, 'ruleError' => $ruleError,
+    'groups' => $ruleTab ? Contacts::groups() : [],
     'tab' => $tab,
     'title' => t('nav.automations'), 'nav' => 'automations', 'channels' => Channels::all(), 'id' => $current ? $id : 0, 'form' => $form,
     'hasSecret' => ($cfg['secret'] ?? '') !== '', 'error' => $error, 'mailError' => $mailError, 'deliveries' => Deliveries::counts(),
