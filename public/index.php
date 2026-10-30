@@ -21,6 +21,11 @@ if (Auth::https()) {
     header('Strict-Transport-Security: max-age=31536000');
 }
 
+// HTTP API: token Bearer zamiast sesji, bez CSRF
+if (preg_match('#^/api/([a-z]+)/?$#', parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/', $apiRoute)) {
+    Api::handle($apiRoute[1]);
+}
+
 Auth::startSession();
 
 $page = $_GET['p'] ?? 'dashboard';

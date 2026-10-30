@@ -456,6 +456,8 @@ textarea.code-editor { font-family: var(--pico-font-family-monospace); font-size
 .ussd-wait .icon { color: var(--c-accent); width: 1.4rem; height: 1.4rem; }
 .ussd-answer { margin-top: 1.125rem; display: flex; flex-direction: column; gap: 0.5rem; }
 .ussd-answer .head { display: flex; justify-content: space-between; align-items: center; font-size: 0.87rem; font-weight: 600; }
+.code-block { margin: 0 0 0.75rem; padding: 0.75rem 1rem; border-radius: 10px; background: var(--c-code); border: 1px solid var(--c-line); font-size: 0.82rem; line-height: 1.55; overflow-x: auto; }
+.code-block code { background: none; padding: 0; color: var(--c-text); white-space: pre; }
 .ussd-answer pre { margin: 0; padding: 0.875rem 1rem; border-radius: 10px; background: var(--c-code); border: 1px solid var(--c-line); font-family: var(--pico-font-family-monospace); font-size: 0.93rem; line-height: 1.6; white-space: pre-wrap; color: var(--c-text); }
 .preview-bubble { padding: 0.625rem 0.875rem; border-radius: 16px 16px 4px 16px; background: #0E6E86; color: #FFFFFF; font-size: 0.93rem; line-height: 1.45; }
 .recipient-chips { display: flex; gap: 0.5rem; flex-wrap: wrap; }

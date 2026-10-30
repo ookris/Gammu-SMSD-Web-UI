@@ -35,6 +35,7 @@ the modem and finishes with a health check.
 - [Security](#security)
 - [Updating, backups, uninstalling](#updating-backups-uninstalling)
 - [Console tool](#console-tool)
+- [HTTP API](#http-api)
 - [Troubleshooting](#troubleshooting)
 - [Development and tests](#development-and-tests)
 - [License](#license)
@@ -103,8 +104,9 @@ and other national characters (ą→a, ł→l).
 - admin notifications: Gammu service, modem, weak signal, stuck queue, sending errors, background process
   (systemd watchdog), with a grace period, reminders and a “resolved” message
 - forwarding received SMS and rejected calls by rules (all / from number / from group / text contains)
+- HTTP API with tokens (`POST /api/send`, `GET /api/status`) for Zabbix, Home Assistant and scripts
 
-**Planned (after 1.0):** HTTP API, auto-replies, periodic balance checks, statistics, multiple modems.
+**Planned (after 1.0):** auto-replies, periodic balance checks, statistics, multiple modems.
 
 ## Screenshots
 
@@ -476,6 +478,45 @@ Run as `www-data`: `sudo -u www-data php /opt/smsgui/bin/smsgui <command>`.
 | `worker` / `sync` | background process / one-off synchronisation |
 | `setup db` / `setup gammu` / `setup unhook` | installer and uninstaller steps |
 | `hook call --phone=ID [number]` | record an incoming call (called by Gammu via `RunOnIncomingCall`) |
+
+## HTTP API
+
+Scripts and monitoring systems (Zabbix, Home Assistant, cron) can send SMS through the panel. Create a token under
+**Automations → API** (it is shown once, only its hash is stored; it can be limited to IP addresses or networks).
+Requests are authenticated with the `Authorization: Bearer <token>` header, responses are JSON. Messages sent through the
+API appear under “Sent”, are subject to the same limits as the form (throttling and the bulk sending window) and to a limit
+of 120 messages per minute per token.
+
+```bash
+# send (to: one number or a comma-separated list)
+curl -X POST http://panel/api/send -H "Authorization: Bearer sg_…" \
+     -d to=601234567 -d "text=Alert: disk full"
+
+# the same as JSON, valid for 1 hour and scheduled
+curl -X POST http://panel/api/send -H "Authorization: Bearer sg_…" -H "Content-Type: application/json" \
+     -d '{"to":["601234567","602345678"],"text":"Reminder","valid_for":60,"send_at":"2026-11-01T08:00"}'
+
+# message status (id from the /api/send response)
+curl -H "Authorization: Bearer sg_…" "http://panel/api/status?id=123"
+```
+
+`/api/send` parameters: `to`, `text`, and optionally `report` (delivery report), `flash`, `translit` (replace Polish
+characters), `send_at` (date and time), `priority` (`normal`/`high`), `valid_for` (validity in minutes, from 5). Response:
+`{"ok":true,"count":1,"ids":[123],…}`; validation errors – code 422 with an `errors` list, bad token – 401, IP address not
+on the list – 403. Failed authentications are logged in the format understood by the fail2ban filter in `deploy/fail2ban/`.
+
+Home Assistant example (`configuration.yaml`):
+
+```yaml
+rest_command:
+  send_sms:
+    url: "http://panel/api/send"
+    method: POST
+    headers:
+      Authorization: "Bearer sg_…"
+    content_type: "application/json"
+    payload: '{"to": "{{ to }}", "text": "{{ text }}"}'
+```
 
 ## Troubleshooting
 

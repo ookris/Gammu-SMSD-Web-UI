@@ -383,6 +383,20 @@ final class Db
                 "INSERT IGNORE INTO settings (`key`, `value`) SELECT 'rules_msg_cursor', COALESCE(MAX(id), 0) FROM messages",
                 "INSERT IGNORE INTO settings (`key`, `value`) SELECT 'rules_call_cursor', COALESCE(MAX(id), 0) FROM calls",
             ],
+            // Tokeny HTTP API (w bazie tylko skrót SHA-256)
+            6 => [
+                "CREATE TABLE IF NOT EXISTS api_tokens (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    name VARCHAR(120) NOT NULL,
+                    token_hash CHAR(64) NOT NULL UNIQUE,
+                    token_prefix VARCHAR(12) NOT NULL,
+                    allowed_ips TEXT NULL,
+                    created_at DATETIME NOT NULL,
+                    last_used_at DATETIME NULL,
+                    last_ip VARCHAR(45) NULL,
+                    revoked_at DATETIME NULL
+                ) $t",
+            ],
         ];
     }
 }

@@ -32,6 +32,7 @@ i kończy diagnostyką.
 - [Bezpieczeństwo](#bezpieczeństwo)
 - [Aktualizacja, kopie zapasowe, odinstalowanie](#aktualizacja-kopie-zapasowe-odinstalowanie)
 - [Narzędzie konsolowe](#narzędzie-konsolowe)
+- [HTTP API](#http-api)
 - [Rozwiązywanie problemów](#rozwiązywanie-problemów)
 - [Rozwój i testy](#rozwój-i-testy)
 - [Licencje](#licencje)
@@ -98,8 +99,9 @@ wiadomości zapisanych w bazie, a przy kodowaniu GSM po cichu zamienia polskie z
 - powiadomienia administracyjne: usługa Gammu, modem, słaby sygnał, stojąca kolejka, błędy wysyłki, proces w tle
   (strażnik systemd), z karencją, przypomnieniami i wiadomością „ustąpiło”
 - przekazywanie odebranych SMS i odrzuconych połączeń wg reguł (wszystkie / od numeru / od grupy / treść zawiera)
+- HTTP API z tokenami (`POST /api/send`, `GET /api/status`) dla Zabbixa, Home Assistanta i skryptów
 
-**Planowane (po wersji 1.0):** HTTP API, autoodpowiedzi, cykliczne sprawdzanie salda, statystyki, obsługa kilku modemów.
+**Planowane (po wersji 1.0):** autoodpowiedzi, cykliczne sprawdzanie salda, statystyki, obsługa kilku modemów.
 
 ## Zrzuty ekranu
 
@@ -469,6 +471,44 @@ Uruchamiane jako `www-data`: `sudo -u www-data php /opt/smsgui/bin/smsgui <polec
 | `worker` / `sync` | proces w tle / jednorazowa synchronizacja |
 | `setup db` / `setup gammu` / `setup unhook` | kroki instalatora i dezinstalatora |
 | `hook call --phone=ID [numer]` | zapis połączenia przychodzącego (wywołuje Gammu przez `RunOnIncomingCall`) |
+
+## HTTP API
+
+Skrypty i systemy monitoringu (Zabbix, Home Assistant, cron) mogą wysyłać SMS przez panel. Token tworzysz w
+**Automatyzacje → API** (jest pokazywany raz, w bazie zostaje tylko jego skrót; można ograniczyć go do adresów IP lub sieci).
+Żądania uwierzytelnia nagłówek `Authorization: Bearer <token>`, odpowiedzi są w JSON. Wiadomości z API widać w „Wysłane”,
+obowiązują je te same limity co formularz (dławienie i okno wysyłki do wielu odbiorców) oraz limit 120 wiadomości na minutę na token.
+
+```bash
+# wysyłka (to: jeden numer albo lista oddzielona przecinkami)
+curl -X POST http://panel/api/send -H "Authorization: Bearer sg_…" \
+     -d to=601234567 -d "text=Alarm: dysk pełny"
+
+# to samo w JSON, z ważnością 1 godzina i wysyłką o określonej porze
+curl -X POST http://panel/api/send -H "Authorization: Bearer sg_…" -H "Content-Type: application/json" \
+     -d '{"to":["601234567","602345678"],"text":"Przypomnienie","valid_for":60,"send_at":"2026-11-01T08:00"}'
+
+# status wiadomości (id z odpowiedzi /api/send)
+curl -H "Authorization: Bearer sg_…" "http://panel/api/status?id=123"
+```
+
+Parametry `/api/send`: `to`, `text` oraz opcjonalnie `report` (raport doręczenia), `flash`, `translit` (zamiana polskich
+znaków), `send_at` (data i godzina), `priority` (`normal`/`high`), `valid_for` (ważność w minutach, od 5). Odpowiedź:
+`{"ok":true,"count":1,"ids":[123],…}`; błędy walidacji – kod 422 z listą `errors`, zły token – 401, adres IP spoza listy – 403.
+Nieudane uwierzytelnienia trafiają do logu w formacie obsługiwanym przez filtr fail2ban z `deploy/fail2ban/`.
+
+Przykład dla Home Assistanta (`configuration.yaml`):
+
+```yaml
+rest_command:
+  send_sms:
+    url: "http://panel/api/send"
+    method: POST
+    headers:
+      Authorization: "Bearer sg_…"
+    content_type: "application/json"
+    payload: '{"to": "{{ to }}", "text": "{{ text }}"}'
+```
 
 ## Rozwiązywanie problemów
 

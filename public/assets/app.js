@@ -147,6 +147,11 @@
     });
   });
 
+  // Pole tylko do odczytu zaznacza całą zawartość po kliknięciu (data-select-on-focus)
+  document.addEventListener('focusin', (e) => {
+    if (e.target instanceof HTMLInputElement && e.target.matches('[data-select-on-focus]')) e.target.select();
+  });
+
   // Kopiowanie kodu z wiadomości: data-copy="123456" data-copied="Skopiowano"
   document.addEventListener('click', (e) => {
     const b = e.target.closest('[data-copy]');

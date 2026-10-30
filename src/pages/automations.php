@@ -1,6 +1,6 @@
 <?php
 // Automatyzacje: kanały powiadomień (e-mail, webhook) i ustawienia poczty
-$tab = in_array(input('tab'), ['channels', 'alerts', 'rules'], true) ? input('tab') : 'channels';
+$tab = in_array(input('tab'), ['channels', 'alerts', 'rules', 'api'], true) ? input('tab') : 'channels';
 $id = (int) input('id');
 $error = null;
 $mailError = null;
@@ -17,6 +17,23 @@ if (is_post()) {
         Alerts::saveRoutes(is_array($_POST['route'] ?? null) ? $_POST['route'] : []);
         flash('ok', t('alerts.saved'));
         redirect(url('automations', ['tab' => 'alerts']));
+    } elseif ($tab === 'api') {
+        $tid = (int) input('token');
+        if (isset($_POST['token_revoke']) && $tid > 0) {
+            ApiTokens::revoke($tid);
+            flash('ok', t('api.revoked'));
+        } elseif (isset($_POST['token_delete']) && $tid > 0) {
+            ApiTokens::delete($tid);
+            flash('ok', t('api.deleted'));
+        } else {
+            [, $plain, $apiError] = ApiTokens::create(input('name'), input('ips'));
+            if ($plain !== null) {
+                $_SESSION['api_new_token'] = $plain; // pokazany raz, zaraz po przekierowaniu
+            } else {
+                flash('err', $apiError);
+            }
+        }
+        redirect(url('automations', ['tab' => 'api']));
     } elseif ($tab === 'rules' && is_post()) {
         $rid = (int) input('rule');
         if (isset($_POST['rule_test']) && $rid > 0) {
@@ -84,7 +101,13 @@ $ruleForm = is_post() && $ruleError !== null
         'number' => ($rule['cond_type'] ?? '') === 'number' ? Phone::format($rule['cond_value']) : '',
         'group' => ($rule['cond_type'] ?? '') === 'group' ? (int) $rule['cond_value'] : 0,
         'text' => ($rule['cond_type'] ?? '') === 'text' ? $rule['cond_value'] : '', 'channel_id' => (int) ($rule['channel_id'] ?? 0)];
+$newToken = null;
+if ($tab === 'api' && isset($_SESSION['api_new_token'])) {
+    $newToken = $_SESSION['api_new_token'];
+    unset($_SESSION['api_new_token']);
+}
 render('automations', [
+    'tokens' => $tab === 'api' ? ApiTokens::all() : [], 'newToken' => $newToken,
     'rules' => $tab === 'rules' ? Rules::all() : [], 'ruleId' => $rule ? $ruleId : 0, 'ruleForm' => $ruleForm, 'ruleError' => $ruleError,
     'groups' => $tab === 'rules' ? Contacts::groups() : [],
     'tab' => $tab,

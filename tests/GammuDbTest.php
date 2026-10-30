@@ -187,7 +187,7 @@ test('ważność wiadomości trafia do outbox, a ponowienie ją zachowuje', func
     $none = Outbox::create(['phone' => '48601234567', 'body' => 'Bez']);
     assert_same([null, -1], [Db::val('SELECT validity_min FROM messages WHERE id = ?', [$none]),
         (int) Db::val('SELECT RelativeValidity FROM {g}.outbox WHERE ID = (SELECT gammu_id FROM messages WHERE id = ?)', [$none])]);
-    $bad = Outbox::create(['phone' => '48601234567', 'body' => 'Zła', 'validity' => 77]);
+    $bad = Outbox::create(['phone' => '48601234567', 'body' => 'Zła', 'validity' => 3]);
     assert_same(null, Db::val('SELECT validity_min FROM messages WHERE id = ?', [$bad]));
     Db::update('messages', ['status' => 'failed'], 'id = ?', [$id]);
     assert_same(true, Outbox::retry($id));

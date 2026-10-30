@@ -101,7 +101,7 @@ final class Compose
         return $plan['delayed'] ? fmt_when(date('Y-m-d H:i:s', $plan['start'])) : t('compose.now');
     }
 
-    /** Wysyłka wg planu; [batch_id lub null, id pierwszej wiadomości]. */
+    /** Wysyłka wg planu; [batch_id lub null, id pierwszej wiadomości, id wszystkich wiadomości]. */
     public static function send(array $in, array $plan): array
     {
         $list = $plan['recipients']['list'];
@@ -111,7 +111,8 @@ final class Compose
         $priority = !$multi || $in['priority'] ? Outbox::PRIORITY_SINGLE : Outbox::PRIORITY_BULK;
         // Cała wysyłka w jednej transakcji: błąd przy którymkolwiek odbiorcy nie zostawia części wiadomości w kolejce,
         // a Gammu widzi wysyłkę dopiero w całości
-        $first = Db::tx(static function () use ($list, $in, $plan, $times, $priority, $batch): int {
+        $ids = [];
+        $first = Db::tx(static function () use ($list, $in, $plan, $times, $priority, $batch, &$ids): int {
             $first = null;
             foreach ($list as $i => $r) {
                 $id = Outbox::create([
@@ -125,7 +126,10 @@ final class Compose
                     'validity' => $in['validity'],
                     'window' => $plan['window'],
                     'batch_id' => $batch,
+                    'source' => $in['source'] ?? 'gui',
+                    'api_token_id' => $in['api_token_id'] ?? null,
                 ]);
+                $ids[] = $id;
                 $first ??= $id;
             }
             if ($batch !== null) {
@@ -135,7 +139,7 @@ final class Compose
             return (int) $first;
         });
         app_log('info', 'wysyłka: ' . count($list) . ' odbiorców' . ($batch ? " (batch $batch)" : ''));
-        return [$batch, $first];
+        return [$batch, $first, $ids];
     }
 
     /** Opis wysyłki do raportu: „grupa „Serwis””, „3 kontakty”, … */

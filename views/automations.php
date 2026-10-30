@@ -1,5 +1,5 @@
 <?php /** @var string $tab @var array $deliveries */
-$tabNames = ['channels' => t('channels.tab_channels'), 'alerts' => t('channels.tab_alerts'), 'rules' => t('channels.tab_rules')];
+$tabNames = ['channels' => t('channels.tab_channels'), 'alerts' => t('channels.tab_alerts'), 'rules' => t('channels.tab_rules'), 'api' => t('channels.tab_api')];
 ?>
 <header class="page-head"><div><h1><?= e(t('nav.automations')) ?></h1><p class="sub"><?= e(t('channels.sub')) ?></p></div>
 <?php if ($tab === 'channels'): ?><div class="actions"><a href="<?= e(url('automations')) ?>" role="button"><?= icon('add-circle') ?><?= e(t('channels.new')) ?></a></div><?php elseif ($tab === 'rules'): ?><div class="actions"><a href="<?= e(url('automations', ['tab' => 'rules'])) ?>" role="button"><?= icon('add-circle') ?><?= e(t('rules.new')) ?></a></div><?php endif ?></header>
