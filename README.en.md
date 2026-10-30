@@ -99,10 +99,12 @@ and other national characters (ą→a, ł→l).
 - a single account with lockout after 5 failed logins, “Remember me”, session expiry
 - access from the local network only by default
 - panel data backup (contacts, groups, templates, blocklist, settings) in a single JSON file
-- Automations screen: e-mail (sendmail or SMTP) and webhook (HMAC signature) channels with a retry queue
+- Automations screen: e-mail (sendmail or SMTP), webhook (HMAC signature) and SMS channels with a retry queue
+- admin notifications: Gammu service, modem, weak signal, stuck queue, sending errors, background process
+  (systemd watchdog), with a grace period, reminders and a “resolved” message
+- forwarding received SMS and rejected calls by rules (all / from number / from group / text contains)
 
-**Planned (after 1.0):** admin notifications, forwarding SMS and calls, HTTP API, auto-replies,
-periodic balance checks, statistics, multiple modems.
+**Planned (after 1.0):** HTTP API, auto-replies, periodic balance checks, statistics, multiple modems.
 
 ## Screenshots
 

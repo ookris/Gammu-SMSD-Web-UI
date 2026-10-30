@@ -94,10 +94,12 @@ wiadomości zapisanych w bazie, a przy kodowaniu GSM po cichu zamienia polskie z
 - jedno konto z blokadą po 5 nieudanych logowaniach, „Zapamiętaj mnie”, wygasanie sesji
 - dostęp domyślnie tylko z sieci lokalnej
 - kopia danych panelu (kontakty, grupy, szablony, czarna lista, ustawienia) w jednym pliku JSON
-- ekran Automatyzacje: kanały e-mail (sendmail lub SMTP) i webhook (podpis HMAC) z kolejką ponawiania
+- ekran Automatyzacje: kanały e-mail (sendmail lub SMTP), webhook (podpis HMAC) i SMS z kolejką ponawiania
+- powiadomienia administracyjne: usługa Gammu, modem, słaby sygnał, stojąca kolejka, błędy wysyłki, proces w tle
+  (strażnik systemd), z karencją, przypomnieniami i wiadomością „ustąpiło”
+- przekazywanie odebranych SMS i odrzuconych połączeń wg reguł (wszystkie / od numeru / od grupy / treść zawiera)
 
-**Planowane (po wersji 1.0):** powiadomienia administracyjne, przekazywanie SMS i połączeń, HTTP API, autoodpowiedzi,
-cykliczne sprawdzanie salda, statystyki, obsługa kilku modemów.
+**Planowane (po wersji 1.0):** HTTP API, autoodpowiedzi, cykliczne sprawdzanie salda, statystyki, obsługa kilku modemów.
 
 ## Zrzuty ekranu
 

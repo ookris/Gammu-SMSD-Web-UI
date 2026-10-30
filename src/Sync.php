@@ -15,7 +15,7 @@ final class Sync
         if (!Db::lock(self::LOCK, $wait ? 10 : 0)) {
             return null;
         }
-        $r = ['statuses' => 0, 'external' => 0, 'received' => 0, 'ussd' => 0, 'modems' => 0, 'calls' => 0, 'alerts' => 0, 'deliveries' => 0, 'errors' => 0];
+        $r = ['statuses' => 0, 'external' => 0, 'received' => 0, 'ussd' => 0, 'modems' => 0, 'calls' => 0, 'rules' => 0, 'alerts' => 0, 'deliveries' => 0, 'errors' => 0];
         $errors = [];
         try {
             Settings::forget();
@@ -28,6 +28,7 @@ final class Sync
                 'received' => self::inbox(...),
                 'modems' => self::phones(...),
                 'calls' => Calls::process(...),
+                'rules' => Rules::process(...),
                 'alerts' => Alerts::process(...),
                 'deliveries' => Deliveries::process(...),
             ] as $step => $fn) {

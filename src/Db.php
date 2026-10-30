@@ -360,6 +360,29 @@ final class Db
                     CONSTRAINT deliveries_channel_fk FOREIGN KEY (channel_id) REFERENCES channels (id) ON DELETE CASCADE
                 ) $t",
             ],
+            // Reguły automatyzacji (przekazywanie; autoodpowiedzi dojdą w etapie 8) i kursory przetworzonych wiadomości/połączeń
+            5 => [
+                "CREATE TABLE IF NOT EXISTS rules (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    kind VARCHAR(16) NOT NULL DEFAULT 'forward',
+                    name VARCHAR(120) NOT NULL,
+                    event ENUM('sms','call') NOT NULL DEFAULT 'sms',
+                    cond_type ENUM('all','number','group','text') NOT NULL DEFAULT 'all',
+                    cond_value VARCHAR(255) NOT NULL DEFAULT '',
+                    channel_id INT NULL,
+                    reply_text TEXT NULL,
+                    enabled TINYINT(1) NOT NULL DEFAULT 1,
+                    hits INT UNSIGNED NOT NULL DEFAULT 0,
+                    last_hit_at DATETIME NULL,
+                    last_error VARCHAR(255) NULL,
+                    created_at DATETIME NOT NULL,
+                    KEY rules_kind (kind, enabled),
+                    CONSTRAINT rules_channel_fk FOREIGN KEY (channel_id) REFERENCES channels (id) ON DELETE CASCADE
+                ) $t",
+                // Reguły dotyczą tylko wiadomości i połączeń przyjętych po ich utworzeniu – historii nie przekazują
+                "INSERT IGNORE INTO settings (`key`, `value`) SELECT 'rules_msg_cursor', COALESCE(MAX(id), 0) FROM messages",
+                "INSERT IGNORE INTO settings (`key`, `value`) SELECT 'rules_call_cursor', COALESCE(MAX(id), 0) FROM calls",
+            ],
         ];
     }
 }
