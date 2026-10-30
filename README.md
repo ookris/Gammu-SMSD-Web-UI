@@ -10,8 +10,9 @@ Instalacja jednym poleceniem: skrypt instaluje i konfiguruje Gammu SMSD, MariaDB
 i kończy diagnostyką.
 
 > **Stan projektu:** wersja 1.0.0-beta.1. Panel jest kompletny i przetestowany na symulatorze Gammu oraz na czystym
-> Ubuntu Server 26.04.1 (instalacja, diagnostyka, panel, testy automatyczne). Wysyłka i odbiór SMS zostały sprawdzone
-> na prawdziwym modemie (Huawei E3372 w trybie „stick”); testy USSD, raportów doręczenia i połączeń są w toku.
+> Ubuntu Server 26.04.1 (instalacja, diagnostyka, panel, testy automatyczne). Na prawdziwym modemie (Huawei E3372 w trybie
+> „stick”) sprawdzone: wysyłka, odbiór, długie SMS i raporty doręczenia – także na Gammu 1.45.1. Testy USSD i połączeń są w toku;
+> funkcje dodane po wersji beta (automatyzacje, API, saldo, statystyki, kilka modemów) mają testy automatyczne, czekają na testy w praktyce.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="screenshots/dashboard-dark.png">
@@ -137,7 +138,7 @@ Jasny i ciemny motyw przełączają się według ustawień systemu. Kliknij mini
 
 | Warstwa | Technologia |
 |---------|-------------|
-| Bramka SMS | Gammu SMSD 1.42 z backendem SQL (`native_mysql`), schemat bazy w wersji 17 lub 18 (Gammu 1.44+) |
+| Bramka SMS | Gammu SMSD 1.42 (z Ubuntu) lub 1.44+ (np. 1.45.1 zbudowane skryptem – patrz niżej) z backendem SQL (`native_mysql`), schemat bazy w wersji 17 lub 18 (Gammu 1.44+) |
 | Baza danych | MariaDB (tabele InnoDB – transakcje przy zapisie wiadomości wieloczęściowych) |
 | Aplikacja | PHP 8.5 bez frameworka i bez Composera; PDO, migracje bazy wbudowane w panel |
 | Interfejs | [htmx](https://htmx.org) 2, [Pico.css](https://picocss.com) 2, czcionki IBM Plex, ikony [Solar](https://icon-sets.iconify.design/solar/) – wszystko dołączone lokalnie, bez npm i bez procesu budowania |
@@ -447,6 +448,15 @@ sudo -u www-data php /opt/smsgui/bin/smsgui check     # migracje bazy wykonują 
 ```
 
 Proces w tle sam się restartuje po zmianie plików. `config.php` i dane nie są nadpisywane.
+
+**Nowsze Gammu (opcjonalnie):** Ubuntu 26.04 ma Gammu 1.42.0. Wersję 1.45.1 (m.in. poprawka bezpieczeństwa hooków, lepsza obsługa
+raportów doręczenia i wieloczęściowych SMS) buduje ze źródeł skrypt – instaluje ją do `/usr/local`, zmienia schemat bazy `gammu`
+z 17 na 18 i przełącza usługę drop-inem systemd (paczka z Ubuntu zostaje):
+
+```bash
+sudo /opt/smsgui/deploy/build-gammu.sh            # budowa, migracja bazy, restart usługi
+sudo /opt/smsgui/deploy/build-gammu.sh --revert   # powrót do Gammu z paczki (potem w bazie gammu: UPDATE gammu SET Version = 17)
+```
 
 **Kopie zapasowe:**
 
