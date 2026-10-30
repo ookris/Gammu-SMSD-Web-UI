@@ -256,7 +256,16 @@ final class Sync
     private static function phones(): int
     {
         $n = 0;
+        $forgotten = Settings::json('modems_forgotten');
         foreach (Db::all('SELECT ID, IMEI, IMSI, `Signal` AS sig, Battery, NetCode, NetName, Sent, Received, Client, UpdatedInDB FROM {g}.phones') as $p) {
+            $id = mb_substr((string) $p['ID'], 0, 64);
+            if (isset($forgotten[$id])) {
+                if ((string) $p['UpdatedInDB'] <= $forgotten[$id]) {
+                    continue; // usunięty z listy w panelu i od tego czasu się nie zgłosił
+                }
+                unset($forgotten[$id]);
+                Settings::set('modems_forgotten', $forgotten);
+            }
             Db::exec('INSERT INTO modem_status (modem, imei, imsi, signal_pct, battery_pct, net_code, net_name, sent, received, client, gammu_updated_at, updated_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON DUPLICATE KEY UPDATE imei = VALUES(imei), imsi = VALUES(imsi), signal_pct = VALUES(signal_pct), battery_pct = VALUES(battery_pct),

@@ -115,12 +115,13 @@ final class Alerts
         if (!$force && $now - self::$checkedAt < self::CHECK_EVERY) {
             return 0;
         }
-        self::$checkedAt = $now;
         // Stan alarmów czyta i zapisuje synchronizacja oraz strażnik – osobna blokada, żeby jeden nie nadpisał drugiego
-        if (!Db::lock('smsgui-alerts', 5)) {
-            return 0;
+        if (!Db::lock('smsgui-alerts', 2)) {
+            return 0; // bez zapamiętania czasu – następny przebieg spróbuje od razu
         }
+        self::$checkedAt = $now;
         try {
+            Settings::forget(); // stan czytany z bazy po zajęciu blokady, nie z pamięci podręcznej sprzed niej
             return self::step($only, $now);
         } finally {
             Db::unlock('smsgui-alerts');
@@ -132,7 +133,12 @@ final class Alerts
         $routes = self::routes();
         $state = self::state();
         $queued = 0;
-        foreach (self::conditions($only) as $type => $params) {
+        $conds = self::conditions($only);
+        foreach ($conds as $type => $params) {
+            // Przy wyczerpanym limicie zgłasza „limit_full” (jeśli ma kanał) – „limit” milczy, żeby nie dublować wiadomości
+            if ($type === 'limit' && ($conds['limit_full'] ?? null) !== null && ($routes['limit_full'] ?? []) !== []) {
+                continue;
+            }
             $s = ($state[$type] ?? []) + ['since' => null, 'notified' => false, 'last_sent' => null];
             if ($params !== null) {
                 $s['since'] ??= $now;

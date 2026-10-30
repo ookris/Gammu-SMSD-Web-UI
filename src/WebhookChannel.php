@@ -9,7 +9,7 @@ final class WebhookChannel implements Channel
     {
     }
 
-    /** Adresy IP hosta (A i AAAA); lista pusta, gdy nazwy nie da się rozwiązać. @return list<string> */
+    /** Adresy IP hosta: IPv4 z resolvera systemowego (z /etc/hosts), a gdy go brak – IPv6 z DNS (wpis IPv6 tylko w /etc/hosts nie zadziała). @return list<string> */
     private static function resolve(string $host): array
     {
         if (filter_var($host, FILTER_VALIDATE_IP)) {

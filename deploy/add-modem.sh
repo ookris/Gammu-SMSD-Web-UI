@@ -21,6 +21,8 @@ if [ -f /etc/systemd/system/gammu-smsd.service.d/gammu-local.conf ] && [ -x /usr
     install -d /etc/systemd/system/gammu-smsd@.service.d
     printf '[Service]\nExecStart=\nExecStart=/usr/local/bin/gammu-smsd --config=/etc/gammu-smsdrc-%%i --pid=/run/gammu-smsd-%%i/gammu-smsd.pid --daemon\n' \
         >/etc/systemd/system/gammu-smsd@.service.d/gammu-local.conf
+else
+    rm -f /etc/systemd/system/gammu-smsd@.service.d/gammu-local.conf   # stary drop-in wskazywałby nieaktualny plik PID
 fi
 GAMMU_USER=$(systemctl show -p User --value gammu-smsd 2>/dev/null || true)
 if [ -n "$GAMMU_USER" ] && [ "$GAMMU_USER" != root ]; then

@@ -24,7 +24,7 @@ final class Balance
         foreach ($patterns as $re) {
             if (@preg_match($re, $response, $m) === 1 && isset($m[1])) {
                 $num = str_replace(',', '.', preg_replace('/\s+/u', '', $m[1]));
-                if (is_numeric($num) && (float) $num < 10000000) { // kolumna DECIMAL(10,2); dłuższa liczba to raczej numer niż kwota
+                if (is_numeric($num) && is_finite((float) $num) && abs((float) $num) < 10000000) { // kolumna DECIMAL(10,2); dłuższa liczba to raczej numer niż kwota
                     return round((float) $num, 2);
                 }
             }
@@ -91,8 +91,8 @@ final class Balance
                     }
                 });
             } catch (PDOException $e) {
-                if (!str_starts_with((string) $e->getCode(), '22')) {
-                    throw $e; // błąd przejściowy (blokada, połączenie) – odpowiedź zostanie zapisana w kolejnym przebiegu
+                if (in_array((int) ($e->errorInfo[1] ?? 0), [1205, 1213, 2006, 2013], true) || in_array((string) $e->getCode(), ['40001', '08S01'], true)) {
+                    throw $e; // błąd przejściowy (blokada, zakleszczenie, zerwane połączenie) – odpowiedź zostanie zapisana w kolejnym przebiegu
                 }
                 // Jedna nieprzetwarzalna odpowiedź nie może blokować całej synchronizacji (byłaby ponawiana w każdym przebiegu)
                 app_log('error', "saldo: odpowiedź USSD #{$r['id']} pominięta: " . $e->getMessage());
@@ -122,6 +122,7 @@ final class Balance
     /** Modemy z zapisanym saldem (kolejność alfabetyczna). @return list<string> */
     public static function modemsWithData(): array
     {
-        return Db::col('SELECT DISTINCT modem FROM balance_log WHERE modem IS NOT NULL ORDER BY modem');
+        // Tylko modemy obecne na liście – usunięty z listy nie wywołuje alarmu salda ani nie ma wykresu
+        return Db::col('SELECT DISTINCT b.modem FROM balance_log b JOIN modem_status m ON m.modem = b.modem ORDER BY b.modem');
     }
 }

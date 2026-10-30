@@ -72,11 +72,6 @@ final class Setup
             return 1;
         }
         $base = GammuConf::path();
-        $path = $base . '-' . $id;
-        if (file_exists($path)) {
-            echo "$path już istnieje – zostawiam bez zmian (edytuj ręcznie).\n";
-            return 2;
-        }
         $text = @file_get_contents($base);
         if ($text === false) {
             fwrite(STDERR, "Nie można odczytać $base\n");
@@ -86,6 +81,11 @@ final class Setup
         if (strcasecmp((string) $conf->get('smsd', 'phoneid'), $id) === 0) {
             fwrite(STDERR, "PhoneID $id ma już główny modem ($base).\n");
             return 1;
+        }
+        $path = $base . '-' . $id;
+        if (file_exists($path)) {
+            echo "$path już istnieje – zostawiam bez zmian (edytuj ręcznie).\n";
+            return 2;
         }
         $conf->set('gammu', 'device', $device);
         $conf->dropLegacyPort();

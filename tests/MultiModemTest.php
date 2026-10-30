@@ -140,3 +140,21 @@ test('Kilka modemów: ponowne add-modem nie twierdzi, że usunął PIN, skoro ni
         $old === null ? @unlink($base) : file_put_contents($base, $old);
     }
 });
+
+test('Kilka modemów: „Usuń z listy” nie wraca przy synchronizacji, dopóki modem się nie zgłosi', function () {
+    modems_setup(['GSM1']);
+    $old = now_db(-86400);
+    Db::insert(Db::g() . '.phones', ['ID' => 'GSM9', 'IMEI' => '1', 'IMSI' => '', 'Client' => 'x', 'UpdatedInDB' => $old, 'InsertIntoDB' => $old, 'TimeOut' => $old]);
+    Sync::run(true);
+    assert_true(in_array('GSM9', Status::modemIds(), true), 'stary wiersz phones trafia do listy');
+    Settings::set('modems_forgotten', ['GSM9' => (string) Db::val("SELECT gammu_updated_at FROM modem_status WHERE modem = 'GSM9'")]);
+    Db::exec("DELETE FROM modem_status WHERE modem = 'GSM9'");
+    Sync::run(true);
+    Status::forget();
+    assert_true(!in_array('GSM9', Status::modemIds(), true), 'nie wraca');
+    Db::exec('UPDATE ' . Db::g() . ".phones SET UpdatedInDB = ? WHERE ID = 'GSM9'", [now_db()]);
+    Sync::run(true);
+    Status::forget();
+    assert_true(in_array('GSM9', Status::modemIds(), true), 'wraca po ponownym zgłoszeniu');
+    assert_same([], Settings::json('modems_forgotten'));
+});

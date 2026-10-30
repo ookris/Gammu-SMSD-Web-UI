@@ -6,6 +6,10 @@ if (is_post()) {
         foreach (Status::modems() as $m) {
             if ($m['modem'] === $forget && !Status::modemAvailable($m)) {
                 Db::exec('DELETE FROM modem_status WHERE modem = ?', [$forget]);
+                // Gammu zostawia wiersz w phones – synchronizacja pominie go, dopóki modem nie zgłosi się na nowo
+                $forgotten = Settings::json('modems_forgotten');
+                $forgotten[$forget] = (string) $m['gammu_updated_at'];
+                Settings::set('modems_forgotten', $forgotten);
                 flash('ok', t('modem.forgotten', ['modem' => $forget]));
             }
         }
