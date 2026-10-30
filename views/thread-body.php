@@ -8,6 +8,9 @@
 <?php else: $out = $it['direction'] === 'out'; ?>
 <div class="msg<?= $out ? ' out' : '' ?>">
 <div class="bubble"><?= nl2br(e($it['body'])) ?></div>
+<?php if (!$out): foreach (SmsText::codes($it['body']) as $code): ?>
+<button type="button" class="secondary outline btn-sm copy-code" data-copy="<?= e($code) ?>" data-copied="<?= e(t('inbox.copied')) ?>"><?= icon('copy') ?><span><?= e(t('inbox.copy_code', ['code' => $code])) ?></span></button>
+<?php endforeach; endif ?>
 <div class="meta"><?= e(date('H:i', (int) ts($it['at']))) ?><?= $it['modem'] ? ' · ' . e($it['modem']) : '' ?><?= $it['batch_id'] ? ' · ' . e(t('threads.batch')) : '' ?><?= $it['source'] === 'external' ? ' · ' . e(t('sent.external')) : '' ?><?= $it['incomplete'] ? ' · ' . e(t('inbox.incomplete')) : '' ?><?= $it['flash'] ? ' · Flash' : '' ?>
 <?php if ($out): ?><?= Ui::status($it, false) ?><?php endif ?>
 <span class="msg-actions"><?= Ui::iconBtnLink(url('compose', ['forward' => $it['id']]), 'forward', t('inbox.forward')) ?>

@@ -18,6 +18,10 @@ $err = static fn (string $k) => isset($errors[$k]) ? '<small class="warn">' . e(
 <div class="grid-2">
 <label><input type="checkbox" name="report_default" value="1"<?= $chk('report_default') ?>> <span><?= e(t('settings.report_default')) ?></span></label>
 <label><input type="checkbox" name="translit_default" value="1"<?= $chk('translit_default') ?>> <span><?= e(t('settings.translit_default')) ?></span></label></div>
+<div class="field"><label for="validity_default"><?= e(t('settings.validity_default')) ?></label>
+<select id="validity_default" name="validity_default" aria-describedby="validity_default-h">
+<?php foreach (Outbox::VALIDITY_CHOICES as $m): ?><option value="<?= $m ?>"<?= (int) $v('validity_default') === $m ? ' selected' : '' ?>><?= e(t('validity.' . $m)) ?></option><?php endforeach ?></select>
+<small id="validity_default-h"><?= e(t('settings.validity_hint')) ?></small></div>
 <div class="grid-2">
 <div class="field"><label for="throttle"><?= e(t('settings.throttle')) ?></label>
 <input id="throttle" aria-describedby="throttle-h" name="throttle_per_min" type="number" value="<?= e($v('throttle_per_min')) ?>" min="0" max="60">
@@ -40,6 +44,16 @@ $err = static fn (string $k) => isset($errors[$k]) ? '<small class="warn">' . e(
 <button type="button" class="icon-btn danger" aria-label="<?= e(t('settings.ussd_remove')) ?>" title="<?= e(t('settings.ussd_remove')) ?>" data-remove-row><?= icon('trash-bin-trash') ?></button></div></template>
 <div class="gap-lg"><button type="button" class="secondary outline btn-sm" data-add-row="ussd-row-tpl" data-target="ussd-rows"><?= icon('add-circle') ?><?= e(t('settings.ussd_add')) ?></button></div>
 </section>
+<section class="card"><header><h2><?= e(t('settings.balance')) ?></h2></header>
+<div class="stack-sm">
+<div class="grid-2">
+<div class="field"><label for="balance_code"><?= e(t('settings.balance_code')) ?></label><input id="balance_code" name="balance_code" class="mono-input" value="<?= e($v('balance_code')) ?>" placeholder="*101#"><?= $err('balance_code') ?></div>
+<div class="field"><label for="balance_hours"><?= e(t('settings.balance_hours')) ?></label><input id="balance_hours" aria-describedby="balance-h" name="balance_hours" type="number" min="0" max="720" value="<?= e($v('balance_hours')) ?>"><small id="balance-h"><?= e(t('settings.balance_hours_hint')) ?></small><?= $err('balance_hours') ?></div></div>
+<div class="grid-2">
+<div class="field"><label for="balance_threshold"><?= e(t('settings.balance_threshold')) ?></label><input id="balance_threshold" aria-describedby="threshold-h" name="balance_threshold" type="text" inputmode="decimal" value="<?= e($v('balance_threshold')) ?>"><small id="threshold-h"><?= e(t('settings.balance_threshold_hint')) ?></small><?= $err('balance_threshold') ?></div>
+<div class="field"><label for="monthly_limit"><?= e(t('settings.monthly_limit')) ?></label><input id="monthly_limit" aria-describedby="limit-h" name="monthly_limit" type="number" min="0" value="<?= e($v('monthly_limit')) ?>"><small id="limit-h"><?= e(t('settings.monthly_limit_hint')) ?></small><?= $err('monthly_limit') ?></div></div>
+<div class="field"><label for="balance_regex"><?= e(t('settings.balance_regex')) ?></label><input id="balance_regex" aria-describedby="regex-h" name="balance_regex" class="mono-input" value="<?= e($v('balance_regex')) ?>" placeholder="<?= e(t('settings.balance_regex_ph')) ?>"><small id="regex-h"><?= e(t('settings.balance_regex_hint')) ?></small><?= $err('balance_regex') ?></div>
+</div></section>
 <section class="card"><header><h2><?= e(t('settings.calls')) ?></h2></header>
 <label><input type="checkbox" name="calls_enabled" value="1"<?= ($callsEnabled && !is_post()) || isset($_POST['calls_enabled']) ? ' checked' : '' ?>> <span><?= e(t('settings.calls_on')) ?><span class="check-sub"><?= e(t('settings.calls_hint')) ?></span></span></label>
 </section>
@@ -55,3 +69,14 @@ $err = static fn (string $k) => isset($errors[$k]) ? '<small class="warn">' . e(
 <p class="muted small gap-lg"><?= t('settings.system_hint', ['file' => '<code>config/config.php</code>']) ?></p>
 </section>
 </form>
+
+<section class="card gap-lg"><header><h2><?= e(t('backup.title')) ?></h2></header>
+<p class="muted small"><?= e(t('backup.hint')) ?></p>
+<div class="grid-2">
+<form method="post" action="<?= e(url('settings')) ?>"><?= csrf_field() ?>
+<button type="submit" name="backup_export" value="1" class="secondary outline"><?= icon('export') ?><?= e(t('backup.export')) ?></button></form>
+<form method="post" action="<?= e(url('settings')) ?>" enctype="multipart/form-data" class="stack-sm"><?= csrf_field() ?>
+<label for="backup-file" class="visually-hidden"><?= e(t('backup.file')) ?></label>
+<input id="backup-file" type="file" name="backup" accept="application/json,.json" required>
+<button type="submit" name="backup_import" value="1" class="secondary outline"><?= icon('import') ?><?= e(t('backup.import')) ?></button></form>
+</div></section>

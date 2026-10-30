@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-/** Tabele Gammu (schemat 17, Gammu 1.42): zapis do outbox, odczyt stanu wiadomości, odczyt inbox i phones. */
+/** Tabele Gammu (schemat 17 – Gammu 1.40–1.43, i 18 – Gammu 1.44 i nowsze): zapis do outbox, odczyt stanu wiadomości, odczyt inbox i phones. */
 final class GammuDb
 {
     /** Wartości kolumn ENUM Gammu – tylko z tej listy (MariaDB w trybie ścisłym odrzuca inne). */
@@ -31,6 +31,23 @@ final class GammuDb
         return msg_key('gammu.tp', ['code' => $code, 'desc' => $desc]);
     }
 
+    /**
+     * Ważność wiadomości w minutach → TP-VP względny (GSM 03.40): 5 min…12 h co 5 min (0–143), do 24 h co 30 min (144–167),
+     * do 30 dni co dzień (168–196), dalej co tydzień (197–255). Brak ważności → -1 (domyślna sieci/SMSC).
+     */
+    public static function relativeValidity(?int $minutes): int
+    {
+        if ($minutes === null || $minutes <= 0) {
+            return -1;
+        }
+        return match (true) {
+            $minutes <= 720 => max(1, (int) ceil($minutes / 5)) - 1,
+            $minutes <= 1440 => 143 + (int) ceil(($minutes - 720) / 30),
+            $minutes <= 43200 => 166 + (int) ceil($minutes / 1440),
+            default => min(255, 192 + (int) ceil($minutes / 10080)),
+        };
+    }
+
     /** MaxRetries z gammu-smsdrc (domyślnie 1, czyli 2 próby). */
     public static function maxRetries(): int
     {
@@ -41,7 +58,7 @@ final class GammuDb
     /**
      * Zapis wiadomości: część 1 do outbox, części 2…N do outbox_multipart (w transakcji wywołującego).
      * @param array{number:string,parts:list<array{text:string,udh:string}>,coding:string,class?:int,report?:bool,
-     *   send_at?:?string,after?:?string,before?:?string,priority?:int,sender?:?string} $m
+     *   send_at?:?string,after?:?string,before?:?string,priority?:int,validity?:?int,sender?:?string} $m
      */
     public static function insertOutbox(array $m): int
     {
@@ -59,6 +76,7 @@ final class GammuDb
             'SendAfter' => $m['after'] ?? '00:00:00',
             'SendBefore' => $m['before'] ?? '23:59:59',
             'DeliveryReport' => ($m['report'] ?? false) ? 'yes' : 'no',
+            'RelativeValidity' => self::relativeValidity($m['validity'] ?? null),
             'SenderID' => $m['sender'] ?? null,
             'CreatorID' => (string) cfg('creator_id', 'smsgui'),
             'Priority' => $m['priority'] ?? 0,

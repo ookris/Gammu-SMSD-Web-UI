@@ -1,10 +1,10 @@
 <?php
 test('migracje na pustej bazie tworzą tabele panelu', function () {
     reset_db();
-    assert_same(2, Db::schemaVersion());
+    assert_same(10, Db::schemaVersion());
     $tables = Db::col('SHOW TABLES');
     foreach (['users', 'contacts', 'groups', 'contact_group_members', 'messages', 'calls', 'ussd_requests', 'blocked_numbers',
-        'modem_status', 'templates', 'settings', 'login_attempts', 'deleted_external', 'schema_version'] as $t) {
+        'modem_status', 'templates', 'settings', 'login_attempts', 'deleted_external', 'channels', 'deliveries', 'rules', 'api_tokens', 'balance_log', 'schedules', 'schema_version'] as $t) {
         assert_true(in_array($t, $tables, true), "brak tabeli $t");
     }
 });

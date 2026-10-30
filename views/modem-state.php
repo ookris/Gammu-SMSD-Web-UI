@@ -5,7 +5,8 @@
 <?= Ui::empty('sim-card', t('modem.not_reported'), t('modem.not_reported_text'), '<a href="' . e(url('config', ['tab' => 'service'])) . '" role="button" class="secondary">' . e(t('modem.service')) . '</a>') ?>
 <?php endif ?>
 <?php foreach ($modems as $m): $ok = Status::modemAvailable($m); ?>
-<div class="row"><strong class="big-name"><?= e($m['modem']) ?></strong><?= $ok ? '<span class="badge badge-ok">' . e(t('modem.available')) . '</span>' : '<span class="badge badge-err">' . e(t('modem.unavailable_since', ['when' => fmt_when($m['gammu_updated_at'])])) . '</span>' ?><?php if ($device): ?><span class="muted"><?= e($device) ?></span><?php endif ?></div>
+<div class="row"><strong class="big-name"><?= e($m['modem']) ?></strong><?= $ok ? '<span class="badge badge-ok">' . e(t('modem.available')) . '</span>' : '<span class="badge badge-err">' . e(t('modem.unavailable_since', ['when' => fmt_when($m['gammu_updated_at'])])) . '</span>' ?><?php if ($device): ?><span class="muted"><?= e($device) ?></span><?php endif ?>
+<?php if (!$ok): ?><form method="post" action="<?= e(url('modem')) ?>"><?= csrf_field() ?><button type="submit" name="forget_modem" value="<?= e($m['modem']) ?>" class="secondary outline btn-sm"<?= Ui::confirm(t('modem.forget_q', ['modem' => $m['modem']]), t('modem.forget_text'), t('modem.forget')) ?>><?= e(t('modem.forget')) ?></button></form><?php endif ?></div>
 <dl class="kv kv-170 gap-lg">
 <dt><?= e(t('dash.signal')) ?></dt><dd><?php if ((int) $m['signal_pct'] >= 0): ?><progress class="signal" value="<?= (int) $m['signal_pct'] ?>" max="100" aria-label="<?= e(t('dash.signal_label', ['pct' => (int) $m['signal_pct']])) ?>"></progress> <?= (int) $m['signal_pct'] ?> %<?php else: ?><span class="muted"><?= e(t('modem.no_data')) ?></span><?php endif ?></dd>
 <dt><?= e(t('modem.network')) ?></dt><dd><?= e($m['net_name'] ?: '—') ?><?= $m['net_code'] ? ' (' . e($m['net_code']) . ')' : '' ?></dd>

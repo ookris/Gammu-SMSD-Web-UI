@@ -6,17 +6,25 @@ final class Threads
 {
     /**
      * Lista rozmów: ostatnia wiadomość na numer (MAX(id) GROUP BY phone) + liczba nieprzeczytanych.
-     * Filtry ($f: q, from, to, unread) zawężają listę do numerów z pasującymi wiadomościami.
+     * Filtry ($f: q, from, to, unread, dir) zawężają listę do numerów z pasującymi wiadomościami;
+     * przy szukaniu tekstu wiersz dostaje też 'match' – treść najnowszej wiadomości zawierającej szukany tekst.
      */
     public static function list(array $f = [], int $limit = 200): array
     {
         $params = [];
         $where = [];
         $q = (string) ($f['q'] ?? '');
+        $like = '';
         if ($q !== '') {
             $digits = preg_replace('/[^0-9]/', '', $q);
+            // Znaki % i _ szukane dosłownie, nie jako wzorzec
+            $like = '%' . addcslashes($q, '%_\\') . '%';
             $where[] = '(phone LIKE ? OR body LIKE ? OR phone IN (SELECT phone FROM contacts WHERE name LIKE ?))';
-            array_push($params, '%' . ($digits !== '' ? ltrim($digits, '0') : $q) . '%', "%$q%", "%$q%");
+            array_push($params, '%' . ($digits !== '' ? ltrim($digits, '0') : addcslashes($q, '%_\\')) . '%', $like, $like);
+        }
+        if (in_array($f['dir'] ?? '', ['in', 'out'], true)) {
+            $where[] = 'direction = ?';
+            $params[] = $f['dir'];
         }
         if (($f['from'] ?? '') !== '') {
             $where[] = 'COALESCE(received_at, created_at) >= ?';
@@ -34,10 +42,32 @@ final class Threads
         $rows = Db::all("SELECT m.* FROM messages m JOIN (SELECT phone, MAX(id) AS id FROM messages GROUP BY phone) t ON t.id = m.id
             WHERE m.phone IN (SELECT phone FROM messages $filter) ORDER BY m.id DESC LIMIT $limit", $params);
         $unread = array_column(Db::all("SELECT phone, COUNT(*) AS n FROM messages WHERE direction = 'in' AND is_read = 0 GROUP BY phone"), 'n', 'phone');
+        $match = [];
+        if ($q !== '' && $rows !== []) {
+            $phones = array_column($rows, 'phone');
+            $match = array_column(Db::all('SELECT m.phone, m.body FROM messages m JOIN (SELECT phone, MAX(id) AS id FROM messages
+                WHERE body LIKE ? AND phone IN (' . Db::in($phones) . ') GROUP BY phone) t ON t.id = m.id', [$like, ...$phones]), 'body', 'phone');
+        }
         foreach ($rows as &$r) {
             $r['unread'] = (int) ($unread[$r['phone']] ?? 0);
+            $r['match'] = $match[$r['phone']] ?? null;
         }
         return $rows;
+    }
+
+    /** Modem, który odebrał ostatnią wiadomość od numeru – odpowiedź idzie tą samą drogą (tylko gdy jest kilka modemów i ten jest dostępny). */
+    public static function replyModem(string $phone): ?string
+    {
+        if (!Status::multiModem()) {
+            return null;
+        }
+        $modem = Db::val("SELECT modem FROM messages WHERE phone = ? AND direction = 'in' AND modem IS NOT NULL ORDER BY id DESC LIMIT 1", [$phone]);
+        foreach (Status::modems() as $m) {
+            if ($m['modem'] === $modem && Status::modemAvailable($m)) {
+                return $modem;
+            }
+        }
+        return null;
     }
 
     /** Oś czasu: wiadomości i odrzucone połączenia z numerem, od najstarszych. */

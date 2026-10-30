@@ -37,7 +37,7 @@ final class Health
         // Baza Gammu: wersja schematu i silnik tabel
         try {
             $version = (int) Db::val('SELECT Version FROM {g}.gammu');
-            $add('gammu-schema', $version === 17 ? 'ok' : 'err', t('health.gammu_schema', ['db' => cfg('gammu_db'), 'version' => $version]),
+            $add('gammu-schema', in_array($version, [17, 18], true) ? 'ok' : 'err', t('health.gammu_schema', ['db' => cfg('gammu_db'), 'version' => $version]),
                 t('health.gammu_schema_hint'));
         } catch (Throwable) {
             $add('gammu-schema', 'err', t('health.gammu_missing', ['db' => cfg('gammu_db')]), t('health.gammu_missing_hint'));
@@ -104,12 +104,16 @@ final class Health
             $add('sync', 'warn', t('health.sync', ['error' => $err]), t('health.sync_hint'));
         }
 
-        $m = Status::modem();
-        if (!Status::modemAvailable($m)) {
-            $add('modem', 'warn', $m === null ? t('health.modem_never')
-                : t('health.modem_down', ['modem' => $m['modem'], 'ago' => fmt_ago($m['gammu_updated_at'])]), t('health.modem_hint'));
-        } elseif ($environment) {
-            $add('modem', 'ok', t('health.modem_ok', ['modem' => $m['modem'], 'pct' => $m['signal_pct']]));
+        $modems = Status::modems();
+        if ($modems === []) {
+            $add('modem', 'warn', t('health.modem_never'), t('health.modem_hint'));
+        }
+        foreach ($modems as $m) {
+            if (!Status::modemAvailable($m)) {
+                $add('modem', 'warn', t('health.modem_down', ['modem' => $m['modem'], 'ago' => fmt_ago($m['gammu_updated_at'])]), t('health.modem_hint'));
+            } elseif ($environment) {
+                $add('modem', 'ok', t('health.modem_ok', ['modem' => $m['modem'], 'pct' => $m['signal_pct']]));
+            }
         }
 
         $stuck = (int) Db::val("SELECT COUNT(*) FROM messages WHERE direction = 'out' AND status = 'queued' AND retries = 0

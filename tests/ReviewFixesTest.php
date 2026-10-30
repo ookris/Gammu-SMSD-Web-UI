@@ -245,3 +245,19 @@ test('usuwanie wiadomości z zakresem numeru nie rusza innych rozmów', function
     assert_same(0, Messages::delete([$id], null, '48700000000'));
     assert_same(1, Messages::delete([$id], null, '48601234567'));
 });
+
+test('Odebrane: szukanie traktuje % i _ dosłownie, filtr kierunku i fragment pasującej wiadomości', function () {
+    reset_db();
+    $now = now_db();
+    foreach ([['in', '48601000001', 'Rabat 50% na wszystko'], ['in', '48601000002', 'Rabat 50 na wszystko'],
+        ['out', '48601000003', 'Odpowiedź: rabat_ok'], ['in', '48601000003', 'Dzień dobry']] as [$dir, $phone, $body]) {
+        Db::insert('messages', ['direction' => $dir, 'phone' => $phone, 'body' => $body, 'status' => $dir === 'in' ? 'received' : 'sent',
+            'is_read' => 1, 'received_at' => $dir === 'in' ? $now : null, 'created_at' => $now, 'updated_at' => $now]);
+    }
+    assert_same(['48601000001'], array_column(Threads::list(['q' => '50%']), 'phone'));
+    assert_same(['48601000003'], array_column(Threads::list(['q' => 'rabat_ok']), 'phone'));
+    assert_same(3, count(Threads::list(['dir' => 'in'])));
+    assert_same(['48601000003'], array_column(Threads::list(['dir' => 'out']), 'phone'));
+    $row = Threads::list(['q' => 'rabat_ok'])[0];
+    assert_same(['Dzień dobry', 'Odpowiedź: rabat_ok'], [$row['body'], $row['match']]);
+});

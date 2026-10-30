@@ -103,7 +103,7 @@ function sim_init(): void
     $host = getenv('SIM_DB_HOST') ?: '127.0.0.1';
     $port = getenv('SIM_DB_PORT') ?: '3306';
     $pdo = new PDO("mysql:host=$host;port=$port;charset=utf8mb4", $user, $pass, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-    $schema = file_get_contents(SIM_ROOT . '/deploy/sql/gammu-mysql-17.sql');
+    $schema = file_get_contents(SIM_ROOT . '/deploy/sql/gammu-mysql-18.sql');
     $schema = preg_replace('/^--.*$/m', '', $schema);
     foreach (['gammu_dev', 'gammu_test'] as $db) {
         $pdo->exec("CREATE DATABASE IF NOT EXISTS `$db` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");

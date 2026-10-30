@@ -61,3 +61,22 @@ test('UDH: 8- i 16-bitowy numer referencyjny', function () {
     assert_same(['ref' => 0x1234, 'total' => 2, 'seq' => 1], SmsText::parseUdh('060804123402' . '01'));
     assert_same(null, SmsText::parseUdh(''));
 });
+
+test('kody jednorazowe: rozpoznawanie', function () {
+    $c = [SmsText::class, 'codes'];
+    assert_same(['123456'], $c('Twój kod weryfikacyjny: 123456. Nie udostępniaj go.'));
+    assert_same(['123456'], $c('Your code is 123 456'));
+    assert_same(['482913'], $c('G-482913 is your Google verification code.'));
+    assert_same(['4821'], $c('Kod PIN: 4821'));
+    assert_same(['1234', '5678'], $c('Kod 1234, kod zapasowy 5678'));
+});
+
+test('kody jednorazowe: kwoty, daty, telefony i wiadomości bez słowa kluczowego', function () {
+    $c = [SmsText::class, 'codes'];
+    assert_same([], $c('Zadzwoń pod 601234567, spotkanie 12.05.2026'));
+    assert_same([], $c('Stan konta: 1234,56 zł'));
+    assert_same([], $c('Kod: abc'));
+    assert_same([], $c('Kod rabatowy: 20% taniej, 1234,5 zł'));
+    assert_same([], $c('Kod dla +48601234567'));
+    assert_same([], $c('Potwierdzamy rezerwację na 12345678901'));
+});

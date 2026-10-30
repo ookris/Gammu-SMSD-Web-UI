@@ -1,6 +1,26 @@
 <?php
 // Ustawienia panelu – zapisywane w bazie; ustawienia systemowe tylko do odczytu
 $errors = [];
+if (is_post() && isset($_POST['backup_export'])) {
+    header('Content-Type: application/json; charset=utf-8');
+    header('Content-Disposition: attachment; filename="smsgui-' . date('Y-m-d') . '.json"');
+    echo Backup::export();
+    exit;
+}
+if (is_post() && isset($_POST['backup_import'])) {
+    $f = $_FILES['backup'] ?? null;
+    if ($f === null || $f['error'] !== UPLOAD_ERR_OK || $f['size'] > Backup::MAX_BYTES) {
+        flash('err', t('blocklist.upload_failed'), t('backup.upload_hint'));
+    } else {
+        try {
+            $n = Backup::import((string) file_get_contents($f['tmp_name']));
+            flash('ok', t('backup.imported'), t('backup.imported_text', $n));
+        } catch (InvalidArgumentException $e) {
+            flash('err', t('backup.import_failed'), $e->getMessage());
+        }
+    }
+    redirect(url('settings'));
+}
 if (is_post()) {
     $from = input('window_from');
     $to = input('window_to');
@@ -14,6 +34,25 @@ if (is_post()) {
         if (!$int($k, $min, $max)) {
             $errors[$k] = t('settings.err_range', ['min' => $min, 'max' => $max]);
         }
+    }
+    $bcode = str_replace(' ', '', input('balance_code'));
+    if ($bcode !== '' && !preg_match('/^[0-9*#+]{1,20}$/', $bcode)) {
+        $errors['balance_code'] = t('settings.err_ussd', ['code' => $bcode]);
+    }
+    if (!Balance::validRegex(trim(input('balance_regex')))) {
+        $errors['balance_regex'] = t('settings.err_regex');
+    }
+    foreach (['balance_hours' => [0, 720], 'monthly_limit' => [0, 1000000]] as $k => [$min, $max]) {
+        if (!$int($k, $min, $max)) {
+            $errors[$k] = t('settings.err_range', ['min' => $min, 'max' => $max]);
+        }
+    }
+    $threshold = str_replace(',', '.', trim(input('balance_threshold')));
+    if ($threshold === '') {
+        $threshold = '0';
+    }
+    if (!is_numeric($threshold) || (float) $threshold < 0 || (float) $threshold > 100000) {
+        $errors['balance_threshold'] = t('settings.err_range', ['min' => 0, 'max' => 100000]);
     }
     // Pary nazwa–kod po indeksach z formularza (puste nazwy nie mogą przesunąć kodów)
     $codes = [];
@@ -36,6 +75,12 @@ if (is_post()) {
         foreach (['throttle_per_min', 'session_hours', 'backup_keep', 'cleanup_days'] as $k) {
             Settings::set($k, (int) input($k));
         }
+        Settings::set('balance_code', $bcode);
+        Settings::set('balance_regex', trim(input('balance_regex')));
+        Settings::set('balance_hours', (int) input('balance_hours'));
+        Settings::set('monthly_limit', (int) input('monthly_limit'));
+        Settings::set('balance_threshold', (string) round((float) $threshold, 2));
+        Settings::set('validity_default', Outbox::validity(input('validity_default')));
         Settings::set('window_from', $from);
         Settings::set('window_to', $to);
         Settings::set('ussd_codes', $codes);

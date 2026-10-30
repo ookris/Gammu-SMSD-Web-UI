@@ -17,6 +17,8 @@ final class Compose
             'flash' => isset($_POST['flash']),
             'priority' => isset($_POST['priority']),
             'send_at' => input('send_at'),
+            'validity' => Outbox::validity(input('validity')),
+            'modem' => Status::validModem(input('modem')),
             'skip_window' => isset($_POST['skip_window']),
             'template' => input('template'),
         ];
@@ -25,7 +27,8 @@ final class Compose
     public static function defaults(): array
     {
         return ['groups' => [], 'contacts' => [], 'numbers' => '', 'text' => '', 'translit' => Settings::bool('translit_default'),
-            'report' => Settings::bool('report_default'), 'flash' => false, 'priority' => false, 'send_at' => '', 'skip_window' => false,
+            'report' => Settings::bool('report_default'), 'flash' => false, 'priority' => false, 'send_at' => '',
+            'validity' => Outbox::validity(Settings::get('validity_default')), 'modem' => null, 'skip_window' => false,
             'template' => ''];
     }
 
@@ -99,7 +102,7 @@ final class Compose
         return $plan['delayed'] ? fmt_when(date('Y-m-d H:i:s', $plan['start'])) : t('compose.now');
     }
 
-    /** Wysyłka wg planu; [batch_id lub null, id pierwszej wiadomości]. */
+    /** Wysyłka wg planu; [batch_id lub null, id pierwszej wiadomości, id wszystkich wiadomości]. */
     public static function send(array $in, array $plan): array
     {
         $list = $plan['recipients']['list'];
@@ -109,7 +112,8 @@ final class Compose
         $priority = !$multi || $in['priority'] ? Outbox::PRIORITY_SINGLE : Outbox::PRIORITY_BULK;
         // Cała wysyłka w jednej transakcji: błąd przy którymkolwiek odbiorcy nie zostawia części wiadomości w kolejce,
         // a Gammu widzi wysyłkę dopiero w całości
-        $first = Db::tx(static function () use ($list, $in, $plan, $times, $priority, $batch): int {
+        $ids = [];
+        $first = Db::tx(static function () use ($list, $in, $plan, $times, $priority, $batch, &$ids): int {
             $first = null;
             foreach ($list as $i => $r) {
                 $id = Outbox::create([
@@ -120,9 +124,14 @@ final class Compose
                     'report' => $in['report'],
                     'send_at' => $times[$i] > now_db() ? $times[$i] : null,
                     'priority' => $priority,
+                    'validity' => $in['validity'],
+                    'modem' => $in['modem'] ?? null,
                     'window' => $plan['window'],
                     'batch_id' => $batch,
+                    'source' => $in['source'] ?? 'gui',
+                    'api_token_id' => $in['api_token_id'] ?? null,
                 ]);
+                $ids[] = $id;
                 $first ??= $id;
             }
             if ($batch !== null) {
@@ -132,7 +141,7 @@ final class Compose
             return (int) $first;
         });
         app_log('info', 'wysyłka: ' . count($list) . ' odbiorców' . ($batch ? " (batch $batch)" : ''));
-        return [$batch, $first];
+        return [$batch, $first, $ids];
     }
 
     /** Opis wysyłki do raportu: „grupa „Serwis””, „3 kontakty”, … */

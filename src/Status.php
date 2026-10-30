@@ -22,6 +22,24 @@ final class Status
         return self::$memo['modems'] ??= Db::all('SELECT * FROM modem_status ORDER BY modem');
     }
 
+    /** Nazwy modemów znanych panelowi (z tabeli phones). */
+    public static function modemIds(): array
+    {
+        return array_column(self::modems(), 'modem');
+    }
+
+    /** Czy wybór modemu ma sens (więcej niż jeden modem zgłosił się do Gammu). */
+    public static function multiModem(): bool
+    {
+        return count(self::modems()) > 1;
+    }
+
+    /** Nazwa modemu z żądania, jeśli jest znana panelowi; inaczej null (= dowolny). */
+    public static function validModem(mixed $name): ?string
+    {
+        return is_string($name) && $name !== '' && in_array($name, self::modemIds(), true) ? $name : null;
+    }
+
     public static function modem(): ?array
     {
         return self::modems()[0] ?? null;
@@ -42,6 +60,12 @@ final class Status
     {
         $service = self::service();
         $m = self::modem();
+        foreach (self::modems() as $candidate) { // przy kilku modemach wskaźnik pokazuje pierwszy niedostępny
+            if (!self::modemAvailable($candidate)) {
+                $m = $candidate;
+                break;
+            }
+        }
         $sync = t('status.sync', ['ago' => fmt_ago(Settings::get('last_sync_at'))]);
         if ($service !== 'active') {
             return ['level' => 'err', 'title' => t('status.gammu_down'), 'line2' => t('status.service', ['state' => $service]), 'line3' => $sync,

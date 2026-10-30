@@ -10,9 +10,11 @@
 <form class="search" method="get" action="./"><input type="hidden" name="p" value="inbox">
 <?php if ($phone !== ''): ?><input type="hidden" name="phone" value="<?= e($phone) ?>"><?php endif ?>
 <input id="tq" name="q" type="search" value="<?= e($f['q']) ?>" placeholder="<?= e(t('threads.search_ph')) ?>" aria-label="<?= e(t('threads.search')) ?>">
-<details class="filters"<?= array_filter([$f['from'], $f['to'], $f['unread']]) ? ' open' : '' ?>><summary><?= icon('filter') ?><?= e(t('common.filter')) ?></summary>
+<details class="filters"<?= array_filter([$f['from'], $f['to'], $f['unread'], $f['dir']]) ? ' open' : '' ?>><summary><?= icon('filter') ?><?= e(t('common.filter')) ?></summary>
 <div class="field"><label for="from"><?= e(t('common.from')) ?></label><input id="from" name="from" type="date" value="<?= e($f['from']) ?>"></div>
 <div class="field"><label for="to"><?= e(t('common.to')) ?></label><input id="to" name="to" type="date" value="<?= e($f['to']) ?>"></div>
+<div class="field"><label for="dir"><?= e(t('inbox.dir')) ?></label><select id="dir" name="dir">
+<?php foreach (['' => 'inbox.dir_all', 'in' => 'inbox.dir_in', 'out' => 'inbox.dir_out'] as $k => $key): ?><option value="<?= $k ?>"<?= $f['dir'] === $k ? ' selected' : '' ?>><?= e(t($key)) ?></option><?php endforeach ?></select></div>
 <label><input type="checkbox" name="unread" value="1"<?= $f['unread'] !== '' ? ' checked' : '' ?>> <span><?= e(t('inbox.only_unread')) ?></span></label>
 <div class="row"><button type="submit" class="secondary btn-sm"><?= e(t('common.filter')) ?></button>
 <?php if (array_filter($f)): ?><a href="<?= e(url('inbox', $phone !== '' ? ['phone' => $phone] : [])) ?>" role="button" class="secondary outline btn-sm"><?= e(t('common.clear_filters')) ?></a><?php endif ?></div>
@@ -27,7 +29,7 @@
 <li<?= $t['unread'] > 0 ? ' class="unread"' : '' ?>><input type="checkbox" name="phones[]" value="<?= e($t['phone']) ?>" aria-label="<?= e(t('common.select_row')) ?>"><a href="<?= e(url('inbox', ['phone' => $t['phone']])) ?>"<?= $t['phone'] === $phone ? ' aria-current="page"' : '' ?>>
 <span class="avatar" aria-hidden="true"><?= e(Contacts::initials(Contacts::name($t['phone']) ?? (Phone::isAlpha($t['phone']) ? $t['phone'] : ''))) ?></span>
 <span class="name"><?= e($label) ?><?= in_array($t['phone'], $blockedList, true) ? ' <span class="badge badge-err">' . e(t('inbox.blocked')) . '</span>' : '' ?></span><span class="when"><?= e(fmt_short($t['received_at'] ?? $t['created_at'])) ?></span>
-<span class="snippet"><?= e(Ui::snippet((string) $t['body'], 60)) ?></span><?= $t['unread'] > 0 ? '<span class="nav-count">' . $t['unread'] . '</span>' : '<span></span>' ?></a></li>
+<span class="snippet"><?= e(Ui::snippet((string) (($t['match'] ?? null) ?? $t['body']), 60)) ?></span><?= $t['unread'] > 0 ? '<span class="nav-count">' . $t['unread'] . '</span>' : '<span></span>' ?></a></li>
 <?php endforeach ?>
 <?php if ($list === []): ?><li class="muted small"><?= Ui::empty('magnifer', t('common.no_results'), t('inbox.change_filters')) ?></li><?php endif ?>
 </ul>

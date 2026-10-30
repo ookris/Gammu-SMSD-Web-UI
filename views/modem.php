@@ -1,4 +1,4 @@
-<?php /** @var array $modems @var ?array $current @var array $codes @var array $history @var ?string $device */ ?>
+<?php /** @var array $modems @var ?array $current @var array $codes @var array $history @var ?string $device @var array $balance */ ?>
 <header class="page-head"><div><h1><?= e(t('nav.modem')) ?></h1><p class="sub"><?= e(t('modem.sub')) ?></p></div>
 <div class="actions"><a href="<?= e(url('modem')) ?>" role="button" class="secondary"><?= icon('refresh') ?><?= e(t('modem.refresh')) ?></a></div></header>
 <?= flashes_html() ?>
@@ -9,12 +9,29 @@
 <?php if ($codes): ?><p class="small"><strong><?= e(t('modem.quick_codes')) ?></strong></p>
 <div class="chips"><?php foreach ($codes as $c): ?><button type="button" class="secondary outline btn-sm" data-fill="ussd-code" data-value="<?= e($c['code']) ?>"><?= e($c['name']) ?> · <?= e($c['code']) ?></button><?php endforeach ?></div><?php endif ?>
 <form class="row row-end gap-lg" method="post" action="<?= e(url('modem')) ?>"><?= csrf_field() ?>
+<?php if (Status::multiModem()): ?><div class="field"><label for="ussd-modem"><?= e(t('compose.modem')) ?></label><select id="ussd-modem" name="modem"><?php foreach (Status::modems() as $m): ?><option value="<?= e($m['modem']) ?>"><?= e($m['modem']) ?></option><?php endforeach ?></select></div><?php endif ?>
 <div class="field grow-1"><label for="ussd-code"><?= e(t('settings.ussd_code')) ?></label><input id="ussd-code" name="code" class="mono-input" value="<?= e($codes[0]['code'] ?? '*101#') ?>" required pattern="[0-9*#+]+"></div>
 <button type="submit"><?= icon('plain') ?><?= e(t('compose.send')) ?></button></form>
 <?= view('modem-ussd', ['current' => $current]) ?>
 <p class="muted small gap-lg"><?= e(t('modem.ussd_note')) ?></p>
 </section>
 </div>
+<?php if ($balance['enabled'] || $balance['by'] !== []): ?>
+<?php foreach ($balance['by'] ?: ['' => ['latest' => null, 'series' => []]] as $name => $b): ?>
+<div class="gap-lg"></div>
+<section class="card">
+<header><h2><?= e(t('balance.title')) ?><?= count($balance['by']) > 1 ? ' · ' . e($name) : '' ?></h2><?php if ($b['latest'] !== null): ?><span class="muted"><?= e($b['latest']['amount'] !== null ? number_format($b['latest']['amount'], 2, lang() === 'pl' ? ',' : '.', ' ') . ' ' . t('balance.currency') : t('balance.unreadable')) ?> · <?= e(fmt_when($b['latest']['at'])) ?></span><?php endif ?></header>
+<?php if ($b['series'] === []): ?><p class="muted"><?= e(t($balance['enabled'] ? 'balance.waiting' : 'balance.no_data')) ?></p>
+<?php else: $thr = (float) Settings::get('balance_threshold'); ?>
+<?= Chart::line(t('balance.title') . ' ' . $name, t('balance.chart_desc'), array_map(static fn ($p) => ['t' => (int) ts($p['at']), 'y' => $p['amount']], $b['series']), time() - 30 * 86400, time(), $thr > 0 ? $thr : null, ' ' . t('balance.currency')) ?>
+<details class="gap-lg"><summary><?= e(t('stats.as_table')) ?></summary>
+<div class="table-wrap"><table><thead><tr><th scope="col"><?= e(t('common.date')) ?></th><th scope="col"><?= e(t('balance.title')) ?></th></tr></thead>
+<tbody><?php foreach (array_reverse($b['series']) as $p): ?><tr><td><?= e(fmt_when($p['at'])) ?></td><td><?= e(number_format($p['amount'], 2, lang() === 'pl' ? ',' : '.', ' ')) ?> <?= e(t('balance.currency')) ?></td></tr><?php endforeach ?></tbody></table></div>
+</details>
+<?php endif ?>
+</section>
+<?php endforeach ?>
+<?php endif ?>
 <div class="gap-lg"></div>
 <section class="card flush">
 <header><h2><?= e(t('modem.history')) ?></h2></header>

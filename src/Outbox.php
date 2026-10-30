@@ -8,10 +8,22 @@ final class Outbox
     public const PRIORITY_SINGLE = 10;
     public const PRIORITY_BULK = 0;
 
+    /** Wartości ważności oferowane w formularzu (minuty); 0 = domyślna sieci. */
+    public const VALIDITY_CHOICES = [0, 60, 360, 1440, 4320, 10080];
+    /** Najdłuższa ważność, jaką da się zakodować w TP-VP (63 tygodnie). */
+    private const VALIDITY_MAX = 635040;
+
+    /** Ważność w minutach: 0 (domyślna) albo od 5 min do 63 tygodni; wszystko inne daje 0. */
+    public static function validity(mixed $v): int
+    {
+        $n = is_numeric($v) ? (int) $v : 0;
+        return $n >= 5 && $n <= self::VALIDITY_MAX ? $n : 0;
+    }
+
     /**
      * Zapis wiadomości do messages + outbox/outbox_multipart w jednej transakcji. Zwraca messages.id.
-     * @param array{phone:string,body:string,translit?:bool,flash?:bool,report?:bool,send_at?:?string,priority?:int,
-     *   window?:?array{0:string,1:string},batch_id?:?string,source?:string,modem?:?string} $o
+     * @param array{phone:string,body:string,translit?:bool,flash?:bool,report?:bool,send_at?:?string,priority?:int,validity?:int,
+     *   window?:?array{0:string,1:string},batch_id?:?string,source?:string,api_token_id?:?int,modem?:?string} $o
      */
     public static function create(array $o): int
     {
@@ -44,8 +56,10 @@ final class Outbox
                 'flash' => (int) !empty($o['flash']),
                 'report' => (int) !empty($o['report']),
                 'priority' => $o['priority'] ?? self::PRIORITY_SINGLE,
+                'validity_min' => self::validity($o['validity'] ?? 0) ?: null,
                 'send_window' => (int) ($window !== null),
                 'source' => $o['source'] ?? 'gui',
+                'api_token_id' => $o['api_token_id'] ?? null,
                 'batch_id' => $o['batch_id'] ?? null,
                 'udh_ref' => $ref,
                 'modem_requested' => $o['modem'] ?? null,
@@ -64,6 +78,7 @@ final class Outbox
                 'after' => $window[0] ?? null,
                 'before' => $window[1] ?? null,
                 'priority' => $o['priority'] ?? self::PRIORITY_SINGLE,
+                'validity' => self::validity($o['validity'] ?? 0),
                 'sender' => $o['modem'] ?? null,
             ]);
             Db::update('messages', ['gammu_id' => $gid], 'id = ?', [$id]);
@@ -113,6 +128,7 @@ final class Outbox
                 'class' => $m['flash'] ? 0 : -1,
                 'report' => (bool) $m['report'],
                 'priority' => (int) $m['priority'],
+                'validity' => (int) $m['validity_min'],
                 'sender' => $m['modem_requested'],
             ]);
             Db::update('messages', [

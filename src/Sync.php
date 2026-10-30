@@ -7,7 +7,7 @@ declare(strict_types=1);
  */
 final class Sync
 {
-    private const LOCK = 'smsgui-sync';
+    public const LOCK = 'smsgui-sync';
 
     /** Jeden przebieg; null = inny proces właśnie synchronizuje. */
     public static function run(bool $wait = false): ?array
@@ -15,7 +15,7 @@ final class Sync
         if (!Db::lock(self::LOCK, $wait ? 10 : 0)) {
             return null;
         }
-        $r = ['statuses' => 0, 'external' => 0, 'received' => 0, 'ussd' => 0, 'modems' => 0, 'calls' => 0, 'errors' => 0];
+        $r = ['statuses' => 0, 'external' => 0, 'received' => 0, 'ussd' => 0, 'modems' => 0, 'calls' => 0, 'schedules' => 0, 'balance' => 0, 'rules' => 0, 'alerts' => 0, 'deliveries' => 0, 'errors' => 0];
         $errors = [];
         try {
             Settings::forget();
@@ -26,8 +26,12 @@ final class Sync
                 'external' => self::external(...),
                 'ussd' => Ussd::sync(...),
                 'received' => self::inbox(...),
+                'schedules' => Schedules::process(...),
+                'balance' => Balance::process(...),
                 'modems' => self::phones(...),
                 'calls' => Calls::process(...),
+                'rules' => Rules::process(...),
+                'alerts' => Alerts::process(...),
             ] as $step => $fn) {
                 try {
                     $r[$step] = $fn();
@@ -55,6 +59,20 @@ final class Sync
             Settings::set('last_sync_error', implode('; ', $errors));
         } finally {
             Db::unlock(self::LOCK);
+        }
+        // Wysyłka powiadomień po zwolnieniu blokady synchronizacji – sieć (SMTP, webhook) nie może jej przetrzymywać
+        try {
+            $r['deliveries'] = Deliveries::process();
+            if ($r['deliveries'] > 0) {
+                Settings::set('last_sync_result', $r);
+            }
+        } catch (PDOException $e) {
+            throw $e;
+        } catch (Throwable $e) {
+            $r['errors']++;
+            app_log('error', 'powiadomienia: ' . $e->getMessage());
+            Settings::set('last_sync_result', $r);
+            Settings::set('last_sync_error', ltrim(Settings::get('last_sync_error', '') . '; deliveries: ' . $e->getMessage(), '; '));
         }
         return $r;
     }
@@ -93,6 +111,7 @@ final class Sync
         app_log('info', 'proces w tle: start (co ' . $interval . ' s)');
         while (!$stop) {
             try {
+                Settings::set('worker_seen_at', now_db()); // także przed pracą – wolna wysyłka powiadomień nie może wyglądać jak awaria procesu
                 self::run();
                 Settings::set('worker_seen_at', now_db());
             } catch (PDOException $e) {
@@ -237,7 +256,16 @@ final class Sync
     private static function phones(): int
     {
         $n = 0;
+        $forgotten = Settings::json('modems_forgotten');
         foreach (Db::all('SELECT ID, IMEI, IMSI, `Signal` AS sig, Battery, NetCode, NetName, Sent, Received, Client, UpdatedInDB FROM {g}.phones') as $p) {
+            $id = mb_substr((string) $p['ID'], 0, 64);
+            if (isset($forgotten[$id])) {
+                if ((string) $p['UpdatedInDB'] <= $forgotten[$id]) {
+                    continue; // usunięty z listy w panelu i od tego czasu się nie zgłosił
+                }
+                unset($forgotten[$id]);
+                Settings::set('modems_forgotten', $forgotten);
+            }
             Db::exec('INSERT INTO modem_status (modem, imei, imsi, signal_pct, battery_pct, net_code, net_name, sent, received, client, gammu_updated_at, updated_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON DUPLICATE KEY UPDATE imei = VALUES(imei), imsi = VALUES(imsi), signal_pct = VALUES(signal_pct), battery_pct = VALUES(battery_pct),

@@ -1,0 +1,10 @@
+[Unit]
+Description=Gammu SMSD Web UI – strażnik procesu w tle (powiadomienie, gdy synchronizacja stoi)
+After=mariadb.service
+
+[Service]
+Type=oneshot
+User=www-data
+Group=www-data
+ExecStart=/usr/bin/php __ROOT__/bin/smsgui watchdog
+PrivateTmp=true

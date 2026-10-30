@@ -327,6 +327,124 @@ final class Db
                     KEY deleted_external_at (deleted_at)
                 ) $t",
             ],
+            // Ważność wiadomości (minuty; NULL = domyślna sieci) – potrzebna też przy ponawianiu
+            3 => [
+                'ALTER TABLE messages ADD COLUMN IF NOT EXISTS validity_min INT UNSIGNED NULL AFTER priority',
+            ],
+            // Kanały powiadomień (e-mail, webhook, SMS) i kolejka dostarczeń z ponawianiem
+            4 => [
+                "CREATE TABLE IF NOT EXISTS channels (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    type ENUM('email','webhook','sms') NOT NULL,
+                    name VARCHAR(120) NOT NULL,
+                    config TEXT NOT NULL,
+                    enabled TINYINT(1) NOT NULL DEFAULT 1,
+                    last_ok_at DATETIME NULL,
+                    last_error VARCHAR(255) NULL,
+                    created_at DATETIME NOT NULL
+                ) $t",
+                "CREATE TABLE IF NOT EXISTS deliveries (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    channel_id INT NOT NULL,
+                    kind VARCHAR(16) NOT NULL,
+                    subject VARCHAR(255) NOT NULL,
+                    body MEDIUMTEXT NOT NULL,
+                    status ENUM('pending','sent','failed') NOT NULL DEFAULT 'pending',
+                    attempts TINYINT UNSIGNED NOT NULL DEFAULT 0,
+                    next_try_at DATETIME NOT NULL,
+                    last_error VARCHAR(255) NULL,
+                    created_at DATETIME NOT NULL,
+                    sent_at DATETIME NULL,
+                    KEY deliveries_due (status, next_try_at),
+                    KEY deliveries_channel (channel_id),
+                    CONSTRAINT deliveries_channel_fk FOREIGN KEY (channel_id) REFERENCES channels (id) ON DELETE CASCADE
+                ) $t",
+            ],
+            // Reguły automatyzacji (przekazywanie; autoodpowiedzi dojdą w etapie 8) i kursory przetworzonych wiadomości/połączeń
+            5 => [
+                "CREATE TABLE IF NOT EXISTS rules (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    kind VARCHAR(16) NOT NULL DEFAULT 'forward',
+                    name VARCHAR(120) NOT NULL,
+                    event ENUM('sms','call') NOT NULL DEFAULT 'sms',
+                    cond_type ENUM('all','number','group','text') NOT NULL DEFAULT 'all',
+                    cond_value VARCHAR(255) NOT NULL DEFAULT '',
+                    channel_id INT NULL,
+                    reply_text TEXT NULL,
+                    enabled TINYINT(1) NOT NULL DEFAULT 1,
+                    hits INT UNSIGNED NOT NULL DEFAULT 0,
+                    last_hit_at DATETIME NULL,
+                    last_error VARCHAR(255) NULL,
+                    created_at DATETIME NOT NULL,
+                    KEY rules_kind (kind, enabled),
+                    CONSTRAINT rules_channel_fk FOREIGN KEY (channel_id) REFERENCES channels (id) ON DELETE CASCADE
+                ) $t",
+                // Reguły dotyczą tylko wiadomości i połączeń przyjętych po ich utworzeniu – historii nie przekazują
+                "INSERT IGNORE INTO settings (`key`, `value`) SELECT 'rules_msg_cursor', COALESCE(MAX(id), 0) FROM messages",
+                "INSERT IGNORE INTO settings (`key`, `value`) SELECT 'rules_call_cursor', COALESCE(MAX(id), 0) FROM calls",
+            ],
+            // Tokeny HTTP API (w bazie tylko skrót SHA-256)
+            6 => [
+                "CREATE TABLE IF NOT EXISTS api_tokens (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    name VARCHAR(120) NOT NULL,
+                    token_hash CHAR(64) NOT NULL UNIQUE,
+                    token_prefix VARCHAR(12) NOT NULL,
+                    allowed_ips TEXT NULL,
+                    created_at DATETIME NOT NULL,
+                    last_used_at DATETIME NULL,
+                    last_ip VARCHAR(45) NULL,
+                    revoked_at DATETIME NULL
+                ) $t",
+            ],
+            // Historia salda z cyklicznych zapytań USSD (wykres na ekranie Modem)
+            7 => [
+                "CREATE TABLE IF NOT EXISTS balance_log (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    ussd_id INT NOT NULL UNIQUE,
+                    modem VARCHAR(64) NULL,
+                    amount DECIMAL(10,2) NULL,
+                    raw TEXT NOT NULL,
+                    created_at DATETIME NOT NULL,
+                    KEY balance_created (created_at)
+                ) $t",
+            ],
+            // Autoodpowiedzi: dopasowanie „równa się / zaczyna się” oraz warunek godzin (kind = 'autoreply' w tabeli rules)
+            8 => [
+                "ALTER TABLE rules MODIFY cond_type ENUM('all','number','group','text','equals','starts') NOT NULL DEFAULT 'all'",
+                "ALTER TABLE rules ADD COLUMN IF NOT EXISTS hours_mode ENUM('any','outside','inside') NOT NULL DEFAULT 'any' AFTER cond_value",
+                'ALTER TABLE rules ADD COLUMN IF NOT EXISTS hours_from TIME NULL AFTER hours_mode',
+                'ALTER TABLE rules ADD COLUMN IF NOT EXISTS hours_to TIME NULL AFTER hours_from',
+                'ALTER TABLE rules ADD COLUMN IF NOT EXISTS workdays_only TINYINT(1) NOT NULL DEFAULT 0 AFTER hours_to',
+            ],
+            // Wiadomości cykliczne (codziennie / co tydzień / co miesiąc)
+            9 => [
+                "CREATE TABLE IF NOT EXISTS schedules (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    name VARCHAR(120) NOT NULL,
+                    groups_json VARCHAR(255) NOT NULL DEFAULT '[]',
+                    numbers TEXT NOT NULL,
+                    body TEXT NOT NULL,
+                    translit TINYINT(1) NOT NULL DEFAULT 0,
+                    report TINYINT(1) NOT NULL DEFAULT 0,
+                    flash TINYINT(1) NOT NULL DEFAULT 0,
+                    frequency ENUM('daily','weekly','monthly') NOT NULL DEFAULT 'daily',
+                    weekdays VARCHAR(20) NOT NULL DEFAULT '',
+                    month_day TINYINT UNSIGNED NOT NULL DEFAULT 1,
+                    at_time TIME NOT NULL,
+                    enabled TINYINT(1) NOT NULL DEFAULT 1,
+                    next_run_at DATETIME NULL,
+                    last_run_at DATETIME NULL,
+                    runs INT UNSIGNED NOT NULL DEFAULT 0,
+                    last_error VARCHAR(255) NULL,
+                    created_at DATETIME NOT NULL,
+                    KEY schedules_due (enabled, next_run_at)
+                ) $t",
+            ],
+            // Limit wiadomości na token API liczy wiersze po (api_token_id, created_at)
+            10 => [
+                'ALTER TABLE messages ADD INDEX IF NOT EXISTS messages_api (api_token_id, created_at)',
+            ],
         ];
     }
 }

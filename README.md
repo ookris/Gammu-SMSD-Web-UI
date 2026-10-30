@@ -10,8 +10,8 @@ Instalacja jednym poleceniem: skrypt instaluje i konfiguruje Gammu SMSD, MariaDB
 i kończy diagnostyką.
 
 > **Stan projektu:** wersja 1.0.0-beta.1. Panel jest kompletny i przetestowany na symulatorze Gammu oraz na czystym
-> Ubuntu Server 26.04.1 (instalacja, diagnostyka, panel, testy automatyczne). Testy z prawdziwym modemem (wysyłka,
-> odbiór, USSD, raporty doręczenia) są w toku.
+> Ubuntu Server 26.04.1 (instalacja, diagnostyka, panel, testy automatyczne). Wysyłka i odbiór SMS zostały sprawdzone
+> na prawdziwym modemie (Huawei E3372 w trybie „stick”); testy USSD, raportów doręczenia i połączeń są w toku.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="screenshots/dashboard-dark.png">
@@ -32,6 +32,8 @@ i kończy diagnostyką.
 - [Bezpieczeństwo](#bezpieczeństwo)
 - [Aktualizacja, kopie zapasowe, odinstalowanie](#aktualizacja-kopie-zapasowe-odinstalowanie)
 - [Narzędzie konsolowe](#narzędzie-konsolowe)
+- [HTTP API](#http-api)
+- [Kilka modemów](#kilka-modemów)
 - [Rozwiązywanie problemów](#rozwiązywanie-problemów)
 - [Rozwój i testy](#rozwój-i-testy)
 - [Licencje](#licencje)
@@ -59,7 +61,7 @@ wiadomości zapisanych w bazie, a przy kodowaniu GSM po cichu zamienia polskie z
 - do jednego lub wielu odbiorców: grupy, kontakty i numery wpisane ręcznie – bez duplikatów, z listą błędnych numerów
 - licznik znaków i części na żywo z wyjaśnieniem kodowania (GSM / Unicode), automatyczny podział do 10 części,
   opcjonalna zamiana polskich znaków (dłuższa wiadomość w jednym SMS)
-- raport doręczenia, SMS flash, wysyłka planowana, wysyłka priorytetowa
+- raport doręczenia, SMS flash, wysyłka planowana, wysyłka priorytetowa, ważność wiadomości (po czasie sieć nie doręcza SMS)
 - szablony i personalizacja (`{nazwa}`, `{imie}`) z podglądem
 - dławienie (N SMS na minutę) i okno godzinowe wysyłki do wielu odbiorców
 - raport wysyłki z paskiem postępu, „Ponów nieudane”, „Anuluj pozostałe”
@@ -70,6 +72,7 @@ wiadomości zapisanych w bazie, a przy kodowaniu GSM po cichu zamienia polskie z
   z opisem kodu błędu sieci
 - ponawianie i anulowanie wiadomości z kolejki
 - widoczne są też SMS wysłane innymi drogami (np. `gammu-smsd-inject`)
+- kody jednorazowe w odebranych SMS z przyciskiem „Kopiuj”, wyszukiwanie w treści z filtrem dat i kierunku
 - licznik nieprzeczytanych w menu, automatyczne czyszczenie historii starszej niż N dni (opcjonalnie)
 
 **Kontakty**
@@ -79,6 +82,8 @@ wiadomości zapisanych w bazie, a przy kodowaniu GSM po cichu zamienia polskie z
 
 **Modem i Gammu**
 - stan modemu: sygnał, operator, ostatnia aktualizacja; wykrywanie niedostępnego modemu
+- cykliczne sprawdzanie salda (USSD co N godzin), wykres z 30 dni i alarm przy niskim saldzie; miesięczny limit SMS z ostrzeżeniem
+- statystyki: SMS dziennie i miesięcznie, odsetek doręczeń, najaktywniejsze numery, odrzucone połączenia
 - USSD na żądanie (np. stan konta) z obsługą menu operatora i szybkimi kodami
 - odrzucanie połączeń przychodzących z listą połączeń i wpisami w rozmowie
 - czarna lista numerów (Gammu odrzuca wiadomości od zablokowanych numerów)
@@ -92,9 +97,18 @@ wiadomości zapisanych w bazie, a przy kodowaniu GSM po cichu zamienia polskie z
 - interfejs po polsku i angielsku, jasny i ciemny motyw, działa na telefonie
 - jedno konto z blokadą po 5 nieudanych logowaniach, „Zapamiętaj mnie”, wygasanie sesji
 - dostęp domyślnie tylko z sieci lokalnej
+- kopia danych panelu (kontakty, grupy, szablony, czarna lista, ustawienia) w jednym pliku JSON
+- ekran Automatyzacje: kanały e-mail (sendmail lub SMTP), webhook (podpis HMAC) i SMS z kolejką ponawiania
+- powiadomienia administracyjne: usługa Gammu, modem, słaby sygnał, stojąca kolejka, błędy wysyłki, proces w tle
+  (strażnik systemd), z karencją, przypomnieniami i wiadomością „ustąpiło”
+- przekazywanie odebranych SMS i odrzuconych połączeń wg reguł (wszystkie / od numeru / od grupy / treść zawiera)
+- HTTP API z tokenami (`POST /api/send`, `GET /api/status`) dla Zabbixa, Home Assistanta i skryptów
+- wiadomości cykliczne (codziennie, w wybrane dni tygodnia, raz w miesiącu) do grup i numerów
+- autoodpowiedzi SMS: słowo kluczowe, godziny (np. poza 8–16 w dni robocze) albo odrzucone połączenie; blokada pętli
+  (jedna odpowiedź na numer na godzinę, bez odpowiedzi nadawcom alfanumerycznym i numerom skróconym)
+- kilka modemów: wybór modemu przy wysyłce, USSD i w API, odpowiedź tym samym modemem, alarmy osobno dla każdego
 
-**Planowane (po wersji 1.0):** przekazywanie SMS i połączeń na e-mail i webhook, HTTP API, autoodpowiedzi,
-cykliczne sprawdzanie salda, powiadomienia administracyjne, statystyki, obsługa kilku modemów.
+**Planowane (po wersji 1.0):** edycja konfiguracji dodatkowych modemów z poziomu panelu.
 
 ## Zrzuty ekranu
 
@@ -123,7 +137,7 @@ Jasny i ciemny motyw przełączają się według ustawień systemu. Kliknij mini
 
 | Warstwa | Technologia |
 |---------|-------------|
-| Bramka SMS | Gammu SMSD 1.42 z backendem SQL (`native_mysql`), schemat bazy w wersji 17 |
+| Bramka SMS | Gammu SMSD 1.42 z backendem SQL (`native_mysql`), schemat bazy w wersji 17 lub 18 (Gammu 1.44+) |
 | Baza danych | MariaDB (tabele InnoDB – transakcje przy zapisie wiadomości wieloczęściowych) |
 | Aplikacja | PHP 8.5 bez frameworka i bez Composera; PDO, migracje bazy wbudowane w panel |
 | Interfejs | [htmx](https://htmx.org) 2, [Pico.css](https://picocss.com) 2, czcionki IBM Plex, ikony [Solar](https://icon-sets.iconify.design/solar/) – wszystko dołączone lokalnie, bez npm i bez procesu budowania |
@@ -138,7 +152,7 @@ z zewnętrznych serwerów.
 |---------|-----------|
 | System | **Ubuntu Server 26.04 LTS** (sprawdzone na 26.04.1). Starsze wydania nie mają PHP 8.5 w repozytorium |
 | Repozytoria | `main` i `universe` (z `universe` pochodzą m.in. `gammu-smsd`, `php-fpm`, `php-mbstring`) |
-| Sprzęt | modem GSM USB lub szeregowy obsługiwany przez Gammu (komendy AT), aktywna karta SIM – PIN wyłączony lub znany |
+| Sprzęt | modem GSM USB lub szeregowy obsługiwany przez Gammu (komendy AT), aktywna karta SIM – PIN wyłączony lub znany. Modem musi udostępniać porty szeregowe (AT). Huawei E3372 z firmware **HiLink** nie nadaje się: jego własna aplikacja przechwytuje odbierane SMS i Gammu ich nie widzi – potrzebny jest firmware w trybie „stick” (sprawdzone: E3372H) |
 | Pakiety | `gammu`, `gammu-smsd`, `mariadb-server`, `nginx`, `php-fpm`, `php-cli`, `php-mysql`, `php-mbstring`, `openssl`, `git` |
 | PHP | 8.5 lub nowsze z rozszerzeniami `pdo_mysql` i `mbstring`; PHP-FPM w tej samej wersji co PHP CLI |
 | Uprawnienia | konto z `sudo`; MariaDB z dostępem `root` przez gniazdo (domyślnie w Ubuntu) |
@@ -256,7 +270,7 @@ for t in gammu inbox outbox outbox_multipart phones sentitems; do
 done
 ```
 
-Gdy paczka nie zawiera skryptu, można użyć `deploy/sql/gammu-mysql-17.sql` z repozytorium (krok 4).
+Gdy paczka nie zawiera skryptu, można użyć `deploy/sql/gammu-mysql-18.sql` z repozytorium (krok 4).
 
 ### 3. Konfiguracja Gammu SMSD
 
@@ -465,6 +479,64 @@ Uruchamiane jako `www-data`: `sudo -u www-data php /opt/smsgui/bin/smsgui <polec
 | `setup db` / `setup gammu` / `setup unhook` | kroki instalatora i dezinstalatora |
 | `hook call --phone=ID [numer]` | zapis połączenia przychodzącego (wywołuje Gammu przez `RunOnIncomingCall`) |
 
+## HTTP API
+
+Skrypty i systemy monitoringu (Zabbix, Home Assistant, cron) mogą wysyłać SMS przez panel. Token tworzysz w
+**Automatyzacje → API** (jest pokazywany raz, w bazie zostaje tylko jego skrót; można ograniczyć go do adresów IP lub sieci).
+Żądania uwierzytelnia nagłówek `Authorization: Bearer <token>`, odpowiedzi są w JSON. Wiadomości z API widać w „Wysłane”,
+obowiązują je te same limity co formularz (dławienie i okno wysyłki do wielu odbiorców) oraz limit 120 wiadomości na minutę na token.
+
+```bash
+# wysyłka (to: jeden numer albo lista oddzielona przecinkami)
+curl -X POST http://panel/api/send -H "Authorization: Bearer sg_…" \
+     -d to=601234567 -d "text=Alarm: dysk pełny"
+
+# to samo w JSON, z ważnością 1 godzina i wysyłką o określonej porze
+curl -X POST http://panel/api/send -H "Authorization: Bearer sg_…" -H "Content-Type: application/json" \
+     -d '{"to":["601234567","602345678"],"text":"Przypomnienie","valid_for":60,"send_at":"2026-11-01T08:00"}'
+
+# status wiadomości (id z odpowiedzi /api/send)
+curl -H "Authorization: Bearer sg_…" "http://panel/api/status?id=123"
+```
+
+Parametry `/api/send`: `to`, `text` oraz opcjonalnie `report` (raport doręczenia), `flash`, `translit` (zamiana polskich
+znaków), `send_at` (data i godzina), `priority` (`normal`/`high`), `valid_for` (ważność w minutach, od 5). Odpowiedź:
+`{"ok":true,"count":1,"ids":[123],…}`; błędy walidacji – kod 422 z listą `errors`, zły token – 401, adres IP spoza listy – 403.
+Nieudane uwierzytelnienia trafiają do logu w formacie obsługiwanym przez filtr fail2ban z `deploy/fail2ban/`.
+
+Przykład dla Home Assistanta (`configuration.yaml`):
+
+```yaml
+rest_command:
+  send_sms:
+    url: "http://panel/api/send"
+    method: POST
+    headers:
+      Authorization: "Bearer sg_…"
+    content_type: "application/json"
+    payload: '{"to": "{{ to }}", "text": "{{ text }}"}'
+```
+
+## Kilka modemów
+
+Panel obsługuje kilka modemów pracujących na jednej bazie `gammu`. Każdy modem to osobny proces Gammu z własną konfiguracją
+(`/etc/gammu-smsdrc-<PhoneID>`) i usługą `gammu-smsd@<PhoneID>`. Dodajesz go skryptem (jako root – panel z poziomu WWW
+nie tworzy plików w `/etc` ani usług systemowych):
+
+```bash
+sudo /opt/smsgui/deploy/add-modem.sh GSM2 /dev/serial/by-id/usb-HUAWEI_MOBILE_…-if01-port0 --pin=1234
+```
+
+Skrypt kopiuje główną konfigurację, zmienia urządzenie, `PhoneID` i plik logu, instaluje szablon `gammu-smsd@.service` i uruchamia
+usługę. Gdy w tabeli `phones` zgłoszą się co najmniej dwa modemy, panel pokazuje:
+- wybór „Wyślij przez” w formularzu nowej wiadomości, w USSD i w API (`"modem": "GSM2"`; pusty = dowolny modem);
+- odpowiedź w rozmowie wychodzącą tym modemem, który odebrał ostatnią wiadomość od danego numeru (gdy jest dostępny);
+- stan każdego modemu na ekranie Modem oraz alarmy i kontrolę zdrowia osobno dla każdego modemu.
+
+Konfigurację dodatkowego modemu edytujesz ręcznie (`/etc/gammu-smsdrc-<PhoneID>`, potem `sudo systemctl restart gammu-smsd@<PhoneID>`);
+formularz i edytor w panelu dotyczą głównego pliku `/etc/gammu-smsdrc`. Skrypt kopiuje z niego także hook odrzucania połączeń i plik czarnej listy w chwili tworzenia; późniejsze zmiany tych opcji w panelu (włączenie odrzucania połączeń, czarna lista) obejmują tylko główny modem – dla pozostałych zmień je ręcznie. Usunięcie modemu:
+`sudo systemctl disable --now gammu-smsd@GSM2 && sudo rm /etc/gammu-smsdrc-GSM2`.
+
 ## Rozwiązywanie problemów
 
 | Objaw | Co sprawdzić |
@@ -525,8 +597,9 @@ Gammu SMSD Web UI jest wolnym oprogramowaniem: możesz je rozpowszechniać i mod
 [Powszechnej Licencji Publicznej GNU w wersji 3](LICENSE) (GPL-3.0) opublikowanej przez Free Software Foundation.
 Program jest rozpowszechniany bez jakiejkolwiek gwarancji – szczegóły w pliku [LICENSE](LICENSE).
 
-Dołączone biblioteki: [htmx](https://htmx.org) (0BSD), [Pico.css](https://picocss.com) (MIT), czcionki IBM Plex (OFL).
-Schemat bazy `deploy/sql/gammu-mysql-17.sql` na podstawie Gammu (GPL-2.0).
+Dołączone biblioteki: [htmx](https://htmx.org) (0BSD), [Pico.css](https://picocss.com) (MIT), czcionki IBM Plex (OFL),
+[PHPMailer](https://github.com/PHPMailer/PHPMailer) (LGPL-2.1, `src/vendor/PHPMailer/`).
+Schemat bazy `deploy/sql/gammu-mysql-18.sql` na podstawie Gammu (GPL-2.0).
 
 **Ikony:** [Solar Icon Set](https://icon-sets.iconify.design/solar/) – autor 480 Design, licencja
 [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) (pliki w `resources/icons/`, atrybucja także w stopce panelu).

@@ -1,13 +1,28 @@
 <?php
 // Modem i USSD
 if (is_post()) {
+    if (($forget = input('forget_modem')) !== '') {
+        // Tylko niedostępny modem (np. po zmianie PhoneID albo odłączeniu) – działający i tak wróciłby przy następnej synchronizacji
+        foreach (Status::modems() as $m) {
+            if ($m['modem'] === $forget && !Status::modemAvailable($m)) {
+                Db::exec('DELETE FROM modem_status WHERE modem = ?', [$forget]);
+                // Gammu zostawia wiersz w phones – synchronizacja pominie go, dopóki modem nie zgłosi się na nowo
+                $forgotten = Settings::json('modems_forgotten');
+                $forgotten[$forget] = (string) $m['gammu_updated_at'];
+                Settings::set('modems_forgotten', $forgotten);
+                flash('ok', t('modem.forgotten', ['modem' => $forget]));
+            }
+        }
+        redirect(url('modem'));
+    }
     if (($close = (int) input('close')) > 0) {
         Ussd::close($close);
         redirect(url('modem'));
     }
     $parent = (int) input('parent');
     $code = input($parent > 0 ? 'reply' : 'code');
-    [$id, $err] = Ussd::send($code, Status::modem()['modem'] ?? null, $parent > 0 ? $parent : null);
+    $modem = $parent > 0 ? (Ussd::get($parent)['modem'] ?? null) : Status::validModem(input('modem'));
+    [$id, $err] = Ussd::send($code, $modem ?? Status::modem()['modem'] ?? null, $parent > 0 ? $parent : null);
     if ($err !== null) {
         flash('err', $err);
         redirect(url('modem'));
@@ -28,6 +43,10 @@ if (input('fragment') === 'state') {
     echo view('modem-state', ['modems' => Status::modems()]);
     exit;
 }
-render('modem', ['title' => t('nav.modem'), 'nav' => 'modem', 'modems' => Status::modems(), 'current' => $current,
+$balance = ['enabled' => Balance::enabled(), 'by' => []];
+foreach (Balance::modemsWithData() as $name) {
+    $balance['by'][$name] = ['latest' => Balance::latest($name), 'series' => Balance::series(30, $name)];
+}
+render('modem', ['balance' => $balance,'title' => t('nav.modem'), 'nav' => 'modem', 'modems' => Status::modems(), 'current' => $current,
     'codes' => Settings::json('ussd_codes'), 'history' => Ussd::history(20),
     'device' => GammuConf::load()?->get('gammu', 'device')]);

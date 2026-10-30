@@ -170,12 +170,15 @@ if ! mariadb gammu -e 'SELECT Version FROM gammu' >/dev/null 2>&1; then
         info "Schemat Gammu z paczki: $SQLFILE"
         if [[ "$SQLFILE" == *.gz ]]; then zcat "$SQLFILE" | mariadb gammu; else mariadb gammu <"$SQLFILE"; fi
     else
-        warn "Nie znaleziono mysql.sql w paczce – używam deploy/sql/gammu-mysql-17.sql"
-        mariadb gammu <"$APP/deploy/sql/gammu-mysql-17.sql"
+        # Gammu 1.44+ używa schematu 18, starsze (w tym 1.42 z Ubuntu) – 17
+        GV=$(gammu-smsd --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+' | head -1 || echo 1.42)
+        if dpkg --compare-versions "$GV" ge 1.44; then SQLVER=18; else SQLVER=17; fi
+        warn "Nie znaleziono mysql.sql w paczce – używam deploy/sql/gammu-mysql-$SQLVER.sql (Gammu $GV)"
+        mariadb gammu <"$APP/deploy/sql/gammu-mysql-$SQLVER.sql"
     fi
 fi
 VER=$(mariadb -N gammu -e 'SELECT Version FROM gammu' 2>/dev/null || echo 0)
-[ "$VER" = 17 ] || warn "Schemat bazy Gammu w wersji $VER – panel wymaga 17 (Gammu 1.42)"
+[ "$VER" = 17 ] || [ "$VER" = 18 ] || warn "Schemat bazy Gammu w wersji $VER – panel obsługuje 17 (Gammu 1.40–1.43) i 18 (Gammu 1.44+)"
 for t in gammu inbox outbox outbox_multipart phones sentitems; do   # MyISAM → InnoDB: bez transakcji Gammu mógłby wysłać niepełną wiadomość wieloczęściową
     ENG=$(mariadb -N -e "SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA='gammu' AND TABLE_NAME='$t'")
     if [ -n "$ENG" ] && [ "$ENG" != InnoDB ]; then info "gammu.$t: $ENG → InnoDB"; mariadb gammu -e "ALTER TABLE \`$t\` ENGINE=InnoDB"; fi
@@ -187,6 +190,9 @@ chown -R root:root "$APP"
 install -d -o www-data -g www-data -m 0750 "$DATA" "$DATA/backups" "$DATA/sessions"
 touch "$DATA/exclude-numbers.txt" "$DATA/smsgui.log"   # log tworzony z góry – CLI uruchamiane jako root nie może go przejąć
 chown www-data:www-data "$DATA/exclude-numbers.txt" "$DATA/smsgui.log" && chmod 0644 "$DATA/exclude-numbers.txt" && chmod 0640 "$DATA/smsgui.log"
+# Klucz szyfrowania sekretów (hasło SMTP, sekrety webhooków) – tworzony z góry, żeby CLI uruchomione jako root nie założyło go z błędnym właścicielem
+if [ ! -s "$DATA/secret.key" ]; then ( umask 0077; openssl rand -hex 32 >"$DATA/secret.key" ); fi
+chown www-data:www-data "$DATA/secret.key" && chmod 0640 "$DATA/secret.key"
 install -d -m 0750 -g www-data /var/log/gammu-smsd
 CONFIG="$APP/config/config.php"
 if [ ! -f "$CONFIG" ]; then
@@ -291,8 +297,11 @@ say "Tabele panelu i proces w tle"
 sudo -u www-data php "$APP/bin/smsgui" setup db
 mariadb -e "GRANT INSERT (phone, raw_number, modem, received_at) ON smsgui.calls TO 'smsgui_hook'@'localhost'; FLUSH PRIVILEGES;"
 sed "s#__ROOT__#$APP#g" "$APP/deploy/smsgui-worker.service" >/etc/systemd/system/smsgui-worker.service
+sed "s#__ROOT__#$APP#g" "$APP/deploy/smsgui-watchdog.service" >/etc/systemd/system/smsgui-watchdog.service
+install -m 0644 "$APP/deploy/smsgui-watchdog.timer" /etc/systemd/system/smsgui-watchdog.timer
 systemctl daemon-reload
 systemctl enable --now smsgui-worker >/dev/null
+systemctl enable --now smsgui-watchdog.timer >/dev/null
 systemctl restart smsgui-worker
 
 say "Serwer WWW"
