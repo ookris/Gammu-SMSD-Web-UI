@@ -1,49 +1,107 @@
 <?php
-// Odebrane
-if (is_post()) {
-    if (input('block') !== '') {
-        Blocklist::blockFromPanel(input('block'), t('inbox.block_note'));
-        back(url('inbox'));
-    }
-    $ids = input_ids();
-    $n = count($ids);
-    match (input('action')) {
-        'read' => Db::exec("UPDATE messages SET is_read = 1, updated_at = NOW() WHERE direction = 'in' AND id IN (" . Db::in($ids) . ')', $ids),
-        'unread' => Db::exec("UPDATE messages SET is_read = 0, updated_at = NOW() WHERE direction = 'in' AND id IN (" . Db::in($ids) . ')', $ids),
-        'delete' => Messages::delete($ids, 'in'),
-        default => 0,
+// Odebrane: lista rozmów + wybrana rozmowa (wiadomości, połączenia, odpowiedź)
+$raw = input('phone');
+// Nazwa nadawcy (zawiera litery) bez zmian, numer – tylko po poprawnej normalizacji
+$phone = $raw === '' ? '' : (preg_match('/\p{L}/u', $raw) && mb_strlen($raw) <= 32 ? $raw : Phone::normalize($raw));
+if ($phone === null) {
+    flash('err', t('threads.invalid_number', ['number' => $raw]), (string) Phone::error($raw));
+    redirect(url('inbox'));
+}
+
+// Akcje zbiorcze na liście rozmów
+if (is_post() && input('bulk') !== '') {
+    $phones = array_values(array_filter(input_list('phones'), static fn ($p) => $p !== ''));
+    $n = count($phones);
+    $bulk = input('bulk');
+    match ($bulk) {
+        'read' => array_map([Threads::class, 'markRead'], $phones),
+        'unread' => Threads::markUnread($phones),
+        'delete' => array_map([Threads::class, 'delete'], $phones),
+        default => null,
     };
-    if ($n > 0) {
-        flash('ok', input('action') === 'delete' ? tn('inbox.deleted', $n) : t('common.saved'));
+    if ($bulk === 'delete' && $n > 0) {
+        // Rozmowy z wiadomościami w kolejce zostają – liczymy tylko faktycznie usunięte
+        $left = (int) Db::val('SELECT COUNT(DISTINCT phone) FROM messages WHERE phone IN (' . Db::in($phones) . ')', $phones);
+        $left < $n ? flash('ok', tn('inbox.threads_deleted', $n - $left), $left > 0 ? tn('inbox.threads_kept', $left) : '') : flash('err', t('inbox.delete_pending'));
+    } elseif ($n > 0) {
+        flash('ok', t('common.saved'));
     }
-    back(url('inbox'));
+    // „Nieprzeczytane” nie może wrócić na otwartą rozmowę – jej otwarcie od razu oznaczyłoby ją jako przeczytaną
+    $bulk === 'unread' ? redirect(url('inbox')) : back(url('inbox'));
 }
 
-$f = ['q' => input('q'), 'from' => input('from'), 'to' => input('to'), 'unread' => input('unread')];
-$f = clean_dates($f, ['from', 'to']);
-$where = ["direction = 'in'"];
-$params = [];
-if ($f['q'] !== '') {
-    $digits = preg_replace('/[^0-9]/', '', $f['q']);
-    $where[] = '(body LIKE ? OR phone LIKE ? OR phone IN (SELECT phone FROM contacts WHERE name LIKE ?))';
-    array_push($params, '%' . $f['q'] . '%', '%' . ($digits !== '' ? ltrim($digits, '0') : $f['q']) . '%', '%' . $f['q'] . '%');
+if (is_post() && $phone !== '') {
+    if (isset($_POST['delete_msg'])) {
+        $n = Messages::delete([(int) $_POST['delete_msg']], null, $phone);
+        $n > 0 ? flash('ok', tn('inbox.deleted', $n)) : flash('err', t('inbox.delete_pending'));
+        redirect(url('inbox', ['phone' => $phone]));
+    }
+    if (isset($_POST['mark_unread'])) {
+        Threads::markUnread([$phone]);
+        flash('ok', t('common.saved'));
+        redirect(url('inbox'));
+    }
+    if (isset($_POST['block'])) {
+        Blocklist::blockFromPanel($phone, t('threads.block_note'));
+        redirect(url('inbox', ['phone' => $phone]));
+    }
+    if (isset($_POST['delete_thread'])) {
+        $n = Threads::delete($phone);
+        flash('ok', t('threads.deleted', ['who' => Contacts::display($phone)]), tn('common.messages', $n) . '.');
+        redirect(url('inbox'));
+    }
+    // Odpowiedź (htmx – bez przeładowania strony)
+    $text = SmsText::normalize((string) ($_POST['text'] ?? ''));
+    $error = null;
+    if (trim($text) === '') {
+        $error = t('threads.empty_reply');
+    } elseif (Phone::isAlpha($phone)) {
+        $error = t('threads.alpha_readonly');
+    } else {
+        try {
+            Outbox::create(['phone' => $phone, 'body' => $text, 'report' => Settings::bool('report_default'),
+                'translit' => isset($_POST['translit']), 'priority' => Outbox::PRIORITY_SINGLE]);
+        } catch (InvalidArgumentException $e) {
+            $error = $e->getMessage();
+        }
+    }
+    if (!is_htmx()) {
+        $error ? flash('err', $error) : flash('ok', t('threads.queued'));
+        redirect(url('inbox', ['phone' => $phone]));
+    }
+    echo view('thread-body', ['phone' => $phone, 'items' => Threads::timeline($phone), 'version' => Threads::version($phone)]);
+    echo view('thread-reply', ['phone' => $phone, 'oob' => true, 'error' => $error, 'text' => $error ? $text : '']);
+    exit;
 }
-if ($f['from'] !== '') {
-    $where[] = 'received_at >= ?';
-    $params[] = $f['from'] . ' 00:00:00';
-}
-if ($f['to'] !== '') {
-    $where[] = 'received_at <= ?';
-    $params[] = $f['to'] . ' 23:59:59';
-}
-if ($f['unread'] !== '') {
-    $where[] = 'is_read = 0';
-}
-$w = implode(' AND ', $where);
-$page = Ui::page();
-$total = (int) Db::val("SELECT COUNT(*) FROM messages WHERE $w", $params);
-$rows = Db::all("SELECT * FROM messages WHERE $w ORDER BY id DESC LIMIT " . Ui::PER_PAGE . ' OFFSET ' . ($page - 1) * Ui::PER_PAGE, $params);
-$stats = Db::row("SELECT COUNT(*) AS n, SUM(is_read = 0) AS unread FROM messages WHERE direction = 'in'");
 
-render('inbox', ['title' => t('nav.inbox'), 'nav' => 'inbox', 'rows' => $rows, 'total' => $total, 'page' => $page, 'f' => $f, 'stats' => $stats,
-    'blocked' => Blocklist::blockedAmong(array_column($rows, 'phone'))]);
+// Odświeżanie fragmentu co 10 s – tylko gdy coś się zmieniło
+if ($phone !== '' && input('fragment') === 'body') {
+    $version = Threads::version($phone);
+    if ($version === input('v')) {
+        http_response_code(204);
+        exit;
+    }
+    Threads::markRead($phone);
+    echo view('thread-body', ['phone' => $phone, 'items' => Threads::timeline($phone), 'version' => Threads::version($phone)]);
+    exit;
+}
+
+if ($phone !== '') {
+    Threads::markRead($phone);
+    Status::forget();
+}
+$f = clean_dates(['q' => input('q'), 'from' => input('from'), 'to' => input('to'), 'unread' => input('unread')], ['from', 'to']);
+$list = Threads::list($f);
+if ($phone !== '' && !in_array($phone, array_column($list, 'phone'), true) && !array_filter($f)) {
+    array_unshift($list, ['phone' => $phone, 'body' => '', 'direction' => 'out', 'created_at' => null, 'received_at' => null, 'unread' => 0]);
+}
+$contact = $phone !== '' ? Contacts::byPhone($phone) : null;
+
+render('inbox', [
+    'title' => $phone !== '' ? Contacts::display($phone) : t('nav.inbox'), 'nav' => 'inbox', 'phone' => $phone, 'list' => $list, 'f' => $f,
+    'blockedList' => Blocklist::blockedAmong(array_column($list, 'phone')),
+    'contact' => $contact, 'groups' => $contact ? (Contacts::groupsOf([(int) $contact['id']])[(int) $contact['id']] ?? []) : [],
+    'items' => $phone !== '' ? Threads::timeline($phone) : [], 'version' => $phone !== '' ? Threads::version($phone) : '',
+    'blocked' => $phone !== '' && Blocklist::isBlocked($phone),
+    'stats' => Db::row("SELECT COUNT(DISTINCT phone) AS threads, SUM(direction = 'in' AND is_read = 0) AS unread FROM messages"),
+]);

@@ -12,8 +12,7 @@ $link = static function (string $page, string $iconName, string $label, int $cou
 <div class="brand"><span class="brand-mark"><?= icon('chat-round-line') ?></span><div><div class="brand-name"><?= e(t('app.name')) ?></div><div class="brand-sub">Gammu SMSD<?= $status['modem'] !== '' ? ' · ' . e($status['modem']) : '' ?></div></div></div>
 <a class="compose" href="<?= e(url('compose')) ?>"<?= $nav === 'compose' ? ' aria-current="page"' : '' ?>><?= icon('add-circle') ?><?= e(t('nav.compose')) ?></a>
 <?= $link('dashboard', 'home-angle', t('nav.dashboard')) ?>
-<?= $link('threads', 'chat-round-line', t('nav.threads'), $unread) ?>
-<?= $link('inbox', 'inbox-in', t('nav.inbox')) ?>
+<?= $link('inbox', 'inbox-in', t('nav.inbox'), $unread) ?>
 <?= $link('sent', 'inbox-out', t('nav.sent')) ?>
 <?= $link('contacts', 'users-group-two-rounded', t('nav.contacts')) ?>
 <?= $link('groups', 'folder-with-files', t('nav.groups')) ?>

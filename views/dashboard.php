@@ -11,7 +11,7 @@ $worker = Settings::get('worker_seen_at');
 <div class="alert alert-<?= e($p['level']) ?>" role="alert"><?= icon($p['level'] === 'err' ? 'danger-circle' : 'danger-triangle') ?><div><strong><?= Health::html($p['text']) ?>.</strong> <?= e($p['hint'] ? ucfirst($p['hint']) . '.' : '') ?></div><?= isset($links[$p['id']]) ? '<a href="' . e($links[$p['id']]) . '">' . e(t('dash.go')) . '</a>' : '' ?></div>
 <?php endforeach ?>
 <div class="tiles">
-<a class="tile" href="<?= e(url('threads')) ?>"><span class="label"><?= e(t('dash.unread')) ?></span><span class="value"><?= (int) $tiles['unread']['n'] ?></span><span class="hint"><?= e((int) $tiles['unread']['n'] ? tn('dash.unread_in', (int) $tiles['unread']['threads']) : t('dash.all_read')) ?></span></a>
+<a class="tile" href="<?= e(url('inbox')) ?>"><span class="label"><?= e(t('dash.unread')) ?></span><span class="value"><?= (int) $tiles['unread']['n'] ?></span><span class="hint"><?= e((int) $tiles['unread']['n'] ? tn('dash.unread_in', (int) $tiles['unread']['threads']) : t('dash.all_read')) ?></span></a>
 <a class="tile" href="<?= e(url('sent', ['status' => 'pending'])) ?>"><span class="label"><?= e(t('dash.queue')) ?></span><span class="value"><?= (int) $tiles['queue']['n'] ?></span><span class="hint"><?= e($tiles['queue']['oldest'] ? t('dash.oldest', ['time' => fmt_duration(max(0, time() - (int) ts($tiles['queue']['oldest'])))]) : t('dash.queue_empty')) ?></span></a>
 <a class="tile" href="<?= e(url('sent', ['status' => 'done', 'sent_from' => date('Y-m-d')])) ?>"><span class="label"><?= e(t('dash.sent_today')) ?></span><span class="value"><?= (int) $tiles['sent']['n'] ?></span><span class="hint"><?= e(t('sent.n_delivered', ['n' => (int) $tiles['sent']['delivered']])) ?></span></a>
 <a class="tile" href="<?= e(url('sent', ['status' => 'problem', 'changed_from' => $weekAgo])) ?>"><span class="label"><?= e(t('dash.errors')) ?></span><span class="value<?= (int) $tiles['errors']['n'] ? ' err' : '' ?>"><?= (int) $tiles['errors']['n'] ?></span><span class="hint"><?= e(t('dash.errors_hint')) ?></span></a>
@@ -20,14 +20,14 @@ $worker = Settings::get('worker_seen_at');
 </div>
 <div class="split">
 <section class="card flush">
-<header><h2><?= e(t('dash.recent')) ?></h2><a href="<?= e(url('threads')) ?>"><strong><?= e(t('dash.all_threads')) ?></strong></a></header>
+<header><h2><?= e(t('dash.recent')) ?></h2><a href="<?= e(url('inbox')) ?>"><strong><?= e(t('dash.all_threads')) ?></strong></a></header>
 <?php if ($recent === []): ?><?= Ui::empty('chat-round-line', t('dash.recent_empty'), t('dash.recent_empty_text'), '<a href="' . e(url('compose')) . '" role="button">' . icon('add-circle') . e(t('nav.compose')) . '</a>') ?><?php else: ?>
 <div class="table-wrap"><table class="dash-recent">
 <thead><tr><th scope="col"><span class="visually-hidden"><?= e(t('dash.direction')) ?></span></th><th scope="col"><?= e(t('dash.who')) ?></th><th scope="col"><?= e(t('common.body')) ?></th><th scope="col"><?= e(t('common.status')) ?></th><th scope="col"><?= e(t('dash.when')) ?></th></tr></thead>
 <tbody>
 <?php foreach ($recent as $m): $in = $m['direction'] === 'in'; ?>
 <tr><td><span title="<?= e(t($in ? 'status.received' : 'status.sent')) ?>"><?= icon($in ? 'inbox-in' : 'plain') ?><span class="visually-hidden"><?= e(t($in ? 'status.received' : 'status.sent')) ?></span></span></td>
-<td><a href="<?= e(url('threads', ['phone' => $m['phone']])) ?>"><strong><?= e(Contacts::display($m['phone'])) ?></strong></a></td>
+<td><a href="<?= e(url('inbox', ['phone' => $m['phone']])) ?>"><strong><?= e(Contacts::display($m['phone'])) ?></strong></a></td>
 <td><span class="truncate muted"><?= e(Ui::snippet($m['body'], 70)) ?></span></td><td><?= Ui::status($m, false) ?></td>
 <td><span class="muted"><?= e(fmt_short($m['received_at'] ?? $m['created_at'])) ?></span></td></tr>
 <?php endforeach ?>

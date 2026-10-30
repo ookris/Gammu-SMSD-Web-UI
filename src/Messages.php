@@ -4,15 +4,22 @@ declare(strict_types=1);
 /** Operacje na historii wiadomości: usuwanie, czyszczenie starszych niż N dni. */
 final class Messages
 {
-    public static function delete(array $ids, ?string $direction = null): int
+    public static function delete(array $ids, ?string $direction = null, ?string $phone = null): int
     {
         if ($ids === []) {
             return 0;
         }
-        $sql = 'DELETE FROM messages WHERE id IN (' . Db::in($ids) . ')' . ($direction !== null ? ' AND direction = ?' : '');
+        $params = $ids;
+        $sql = 'DELETE FROM messages WHERE id IN (' . Db::in($ids) . ')';
+        foreach (['direction' => $direction, 'phone' => $phone] as $col => $val) {
+            if ($val !== null) {
+                $sql .= " AND $col = ?";
+                $params[] = $val;
+            }
+        }
         // Nie usuwamy wiadomości, które Gammu jeszcze może wysłać – najpierw trzeba je anulować
         $sql .= " AND NOT (direction = 'out' AND status IN ('scheduled','queued'))";
-        return Db::exec($sql, $direction !== null ? [...$ids, $direction] : $ids);
+        return Db::exec($sql, $params);
     }
 
     /** Usunięcie wiadomości, połączeń i historii USSD starszych niż N dni oraz zaimportowanych wierszy Gammu. */

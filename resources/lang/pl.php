@@ -7,7 +7,6 @@ return [
     // Menu
     'nav.compose' => 'Nowa wiadomość',
     'nav.dashboard' => 'Pulpit',
-    'nav.threads' => 'Rozmowy',
     'nav.inbox' => 'Odebrane',
     'nav.sent' => 'Wysłane',
     'nav.contacts' => 'Kontakty',
@@ -363,6 +362,14 @@ return [
     'inbox.block_q' => 'Zablokować {who}?',
     'inbox.block_text' => 'SMS od tego nadawcy nie będą trafiać do panelu – Gammu usunie je z modemu.',
     'inbox.block' => 'Zablokuj',
+    'inbox.threads_deleted' => ['Usunięto {n} rozmowę.', 'Usunięto {n} rozmowy.', 'Usunięto {n} rozmów.'],
+    'inbox.delete_threads' => 'Usunąć zaznaczone rozmowy?',
+    'inbox.delete_threads_text' => 'Usunięte zostaną wszystkie wiadomości i połączenia z tymi numerami (poza czekającymi w kolejce).',
+    'inbox.delete_msg' => 'Usuń wiadomość',
+    'inbox.delete_msg_q' => 'Usunąć wiadomość?',
+    'inbox.delete_msg_text' => 'Wiadomość zniknie z panelu.',
+    'inbox.delete_pending' => 'Wiadomości czekającej w kolejce nie można usunąć – najpierw ją anuluj.',
+    'inbox.threads_kept' => ['Rozmów z wiadomościami w kolejce nie usunięto: {n}.', 'Rozmów z wiadomościami w kolejce nie usunięto: {n}.', 'Rozmów z wiadomościami w kolejce nie usunięto: {n}.'],
     'inbox.deleted' => ['Usunięto {n} wiadomość.', 'Usunięto {n} wiadomości.', 'Usunięto {n} wiadomości.'],
     'inbox.block_note' => 'z odebranych',
 

@@ -35,7 +35,7 @@ $cc = cfg('default_country_code', '48');
 </section>
 <?php if ($contact): ?>
 <section class="card">
-<header><h2><?= e(t('contact.feed')) ?></h2><a href="<?= e(url('threads', ['phone' => $contact['phone']])) ?>"><strong><?= e(t('contact.open_thread')) ?></strong></a></header>
+<header><h2><?= e(t('contact.feed')) ?></h2><a href="<?= e(url('inbox', ['phone' => $contact['phone']])) ?>"><strong><?= e(t('contact.open_thread')) ?></strong></a></header>
 <?php if ($feed === []): ?><p class="muted"><?= e(t('contact.feed_empty')) ?></p><?php endif ?>
 <ul class="feed">
 <?php foreach ($feed as $it): ?>

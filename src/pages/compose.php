@@ -36,7 +36,7 @@ if (is_post()) {
             $target = url('batch', ['id' => $batch]);
         } else {
             flash('ok', t('threads.queued'), $plan['delayed'] ? t('compose.single_delayed', ['start' => Compose::startLabel($plan)]) : t('compose.single_now'));
-            $target = url('threads', ['phone' => $plan['recipients']['list'][0]['phone']]);
+            $target = url('inbox', ['phone' => $plan['recipients']['list'][0]['phone']]);
         }
         if ($token !== '') {
             $_SESSION['compose_sent'] = array_slice(($_SESSION['compose_sent'] ?? []) + [$token => $target], -20, null, true);

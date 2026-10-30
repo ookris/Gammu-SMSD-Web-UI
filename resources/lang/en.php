@@ -7,7 +7,6 @@ return [
     // Menu
     'nav.compose' => 'New message',
     'nav.dashboard' => 'Dashboard',
-    'nav.threads' => 'Conversations',
     'nav.inbox' => 'Inbox',
     'nav.sent' => 'Sent',
     'nav.contacts' => 'Contacts',
@@ -363,6 +362,14 @@ return [
     'inbox.block_q' => 'Block {who}?',
     'inbox.block_text' => 'SMS from this sender will not reach the panel – Gammu will delete them from the modem.',
     'inbox.block' => 'Block',
+    'inbox.threads_deleted' => ['Deleted {n} conversation.', 'Deleted {n} conversations.'],
+    'inbox.delete_threads' => 'Delete the selected conversations?',
+    'inbox.delete_threads_text' => 'All messages and calls with these numbers will be deleted (except those waiting in the queue).',
+    'inbox.delete_msg' => 'Delete message',
+    'inbox.delete_msg_q' => 'Delete this message?',
+    'inbox.delete_msg_text' => 'The message will disappear from the panel.',
+    'inbox.delete_pending' => 'A message waiting in the queue cannot be deleted – cancel it first.',
+    'inbox.threads_kept' => ['Kept {n} conversation with messages in the queue.', 'Kept {n} conversations with messages in the queue.'],
     'inbox.deleted' => ['Deleted {n} message.', 'Deleted {n} messages.'],
     'inbox.block_note' => 'from inbox',
 

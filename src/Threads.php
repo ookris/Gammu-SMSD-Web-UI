@@ -4,18 +4,35 @@ declare(strict_types=1);
 /** Rozmowy: lista – jeden wiersz na numer, oś czasu rozmowy z wiadomościami i połączeniami. */
 final class Threads
 {
-    /** Lista rozmów: ostatnia wiadomość na numer (MAX(id) GROUP BY phone) + liczba nieprzeczytanych. */
-    public static function list(string $q = '', int $limit = 200): array
+    /**
+     * Lista rozmów: ostatnia wiadomość na numer (MAX(id) GROUP BY phone) + liczba nieprzeczytanych.
+     * Filtry ($f: q, from, to, unread) zawężają listę do numerów z pasującymi wiadomościami.
+     */
+    public static function list(array $f = [], int $limit = 200): array
     {
         $params = [];
-        $filter = '';
+        $where = [];
+        $q = (string) ($f['q'] ?? '');
         if ($q !== '') {
             $digits = preg_replace('/[^0-9]/', '', $q);
-            $filter = 'WHERE (phone LIKE ? OR body LIKE ? OR phone IN (SELECT phone FROM contacts WHERE name LIKE ?))';
-            $params = ['%' . ($digits !== '' ? ltrim($digits, '0') : $q) . '%', "%$q%", "%$q%"];
+            $where[] = '(phone LIKE ? OR body LIKE ? OR phone IN (SELECT phone FROM contacts WHERE name LIKE ?))';
+            array_push($params, '%' . ($digits !== '' ? ltrim($digits, '0') : $q) . '%', "%$q%", "%$q%");
         }
-        $rows = Db::all("SELECT m.* FROM messages m JOIN (SELECT phone, MAX(id) AS id FROM messages $filter GROUP BY phone) t ON t.id = m.id
-            ORDER BY m.id DESC LIMIT $limit", $params);
+        if (($f['from'] ?? '') !== '') {
+            $where[] = 'COALESCE(received_at, created_at) >= ?';
+            $params[] = $f['from'] . ' 00:00:00';
+        }
+        if (($f['to'] ?? '') !== '') {
+            $where[] = 'COALESCE(received_at, created_at) <= ?';
+            $params[] = $f['to'] . ' 23:59:59';
+        }
+        if (($f['unread'] ?? '') !== '') {
+            $where[] = "direction = 'in' AND is_read = 0";
+        }
+        $filter = $where ? 'WHERE ' . implode(' AND ', $where) : '';
+        // Filtry wybierają numery; wiersz pokazuje prawdziwą ostatnią wiadomość rozmowy
+        $rows = Db::all("SELECT m.* FROM messages m JOIN (SELECT phone, MAX(id) AS id FROM messages GROUP BY phone) t ON t.id = m.id
+            WHERE m.phone IN (SELECT phone FROM messages $filter) ORDER BY m.id DESC LIMIT $limit", $params);
         $unread = array_column(Db::all("SELECT phone, COUNT(*) AS n FROM messages WHERE direction = 'in' AND is_read = 0 GROUP BY phone"), 'n', 'phone');
         foreach ($rows as &$r) {
             $r['unread'] = (int) ($unread[$r['phone']] ?? 0);
@@ -47,6 +64,16 @@ final class Threads
     {
         Db::exec("UPDATE messages SET is_read = 1, updated_at = NOW() WHERE phone = ? AND direction = 'in' AND is_read = 0", [$phone]);
         Db::exec('UPDATE calls SET is_read = 1 WHERE phone = ? AND is_read = 0', [$phone]);
+    }
+
+    /** Oznacza rozmowy jako nieprzeczytane: ostatnia odebrana wiadomość każdego numeru wraca na „nieprzeczytane”. */
+    public static function markUnread(array $phones): void
+    {
+        if ($phones === []) {
+            return;
+        }
+        Db::exec("UPDATE messages SET is_read = 0, updated_at = NOW() WHERE id IN (
+            SELECT id FROM (SELECT MAX(id) AS id FROM messages WHERE direction = 'in' AND phone IN (" . Db::in($phones) . ') GROUP BY phone) x)', $phones);
     }
 
     public static function delete(string $phone): int

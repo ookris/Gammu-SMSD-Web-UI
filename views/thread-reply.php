@@ -1,6 +1,6 @@
 <?php /** @var string $phone @var bool $oob @var ?string $error @var string $text */ ?>
-<form class="reply" id="reply-form" method="post" action="<?= e(url('threads', ['phone' => $phone])) ?>"
-      hx-post="<?= e(url('threads', ['phone' => $phone])) ?>" hx-target="#thread-body" hx-swap="outerHTML"<?= $oob ? ' hx-swap-oob="true"' : '' ?>>
+<form class="reply" id="reply-form" method="post" action="<?= e(url('inbox', ['phone' => $phone])) ?>"
+      hx-post="<?= e(url('inbox', ['phone' => $phone])) ?>" hx-target="#thread-body" hx-swap="outerHTML"<?= $oob ? ' hx-swap-oob="true"' : '' ?>>
 <?= csrf_field() ?>
 <?php if ($error): ?><?= alert('err', '', $error) ?><?php endif ?>
 <div class="row">
