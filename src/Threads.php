@@ -79,6 +79,10 @@ final class Threads
     public static function delete(string $phone): int
     {
         Db::exec('DELETE FROM calls WHERE phone = ?', [$phone]);
-        return Db::exec("DELETE FROM messages WHERE phone = ? AND NOT (direction = 'out' AND status IN ('scheduled','queued'))", [$phone]);
+        $where = "phone = ? AND NOT (direction = 'out' AND status IN ('scheduled','queued'))";
+        return Db::tx(static function () use ($where, $phone): int {
+            Messages::tombstone($where, [$phone]);
+            return Db::exec("DELETE FROM messages WHERE $where", [$phone]);
+        });
     }
 }

@@ -319,6 +319,14 @@ final class Db
                     KEY attempts_ip (ip, attempted_at)
                 ) $t",
             ],
+            // Znaczniki usuniętych wiadomości zewnętrznych – Sync::external() nie importuje ich ponownie
+            2 => [
+                "CREATE TABLE IF NOT EXISTS deleted_external (
+                    gammu_id INT UNSIGNED NOT NULL PRIMARY KEY,
+                    deleted_at DATETIME NOT NULL,
+                    KEY deleted_external_at (deleted_at)
+                ) $t",
+            ],
         ];
     }
 }

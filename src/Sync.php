@@ -157,6 +157,7 @@ final class Sync
         $rows = Db::all("SELECT s.ID FROM {g}.sentitems s
             WHERE s.SequencePosition = 1 AND s.Class <> 127 AND s.CreatorID <> ? AND s.InsertIntoDB >= NOW() - INTERVAL 7 DAY
               AND NOT EXISTS (SELECT 1 FROM messages m WHERE m.direction = 'out' AND m.gammu_id = s.ID)
+              AND NOT EXISTS (SELECT 1 FROM deleted_external d WHERE d.gammu_id = s.ID)
               AND NOT EXISTS (SELECT 1 FROM {g}.outbox o WHERE o.ID = s.ID)
             ORDER BY s.ID LIMIT 200", [(string) cfg('creator_id', 'smsgui')]);
         if ($rows === []) {
