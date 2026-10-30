@@ -1,6 +1,26 @@
 <?php
 // Ustawienia panelu – zapisywane w bazie; ustawienia systemowe tylko do odczytu
 $errors = [];
+if (is_post() && isset($_POST['backup_export'])) {
+    header('Content-Type: application/json; charset=utf-8');
+    header('Content-Disposition: attachment; filename="smsgui-' . date('Y-m-d') . '.json"');
+    echo Backup::export();
+    exit;
+}
+if (is_post() && isset($_POST['backup_import'])) {
+    $f = $_FILES['backup'] ?? null;
+    if ($f === null || $f['error'] !== UPLOAD_ERR_OK || $f['size'] > Backup::MAX_BYTES) {
+        flash('err', t('blocklist.upload_failed'), t('backup.upload_hint'));
+    } else {
+        try {
+            $n = Backup::import((string) file_get_contents($f['tmp_name']));
+            flash('ok', t('backup.imported'), t('backup.imported_text', $n));
+        } catch (InvalidArgumentException $e) {
+            flash('err', t('backup.import_failed'), $e->getMessage());
+        }
+    }
+    redirect(url('settings'));
+}
 if (is_post()) {
     $from = input('window_from');
     $to = input('window_to');

@@ -59,3 +59,14 @@ $err = static fn (string $k) => isset($errors[$k]) ? '<small class="warn">' . e(
 <p class="muted small gap-lg"><?= t('settings.system_hint', ['file' => '<code>config/config.php</code>']) ?></p>
 </section>
 </form>
+
+<section class="card gap-lg"><header><h2><?= e(t('backup.title')) ?></h2></header>
+<p class="muted small"><?= e(t('backup.hint')) ?></p>
+<div class="grid-2">
+<form method="post" action="<?= e(url('settings')) ?>"><?= csrf_field() ?>
+<button type="submit" name="backup_export" value="1" class="secondary outline"><?= icon('export') ?><?= e(t('backup.export')) ?></button></form>
+<form method="post" action="<?= e(url('settings')) ?>" enctype="multipart/form-data" class="stack-sm"><?= csrf_field() ?>
+<label for="backup-file" class="visually-hidden"><?= e(t('backup.file')) ?></label>
+<input id="backup-file" type="file" name="backup" accept="application/json,.json" required>
+<button type="submit" name="backup_import" value="1" class="secondary outline"><?= icon('import') ?><?= e(t('backup.import')) ?></button></form>
+</div></section>
