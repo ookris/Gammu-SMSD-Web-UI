@@ -71,6 +71,8 @@ final class Sync
         } catch (Throwable $e) {
             $r['errors']++;
             app_log('error', 'powiadomienia: ' . $e->getMessage());
+            Settings::set('last_sync_result', $r);
+            Settings::set('last_sync_error', ltrim(Settings::get('last_sync_error', '') . '; deliveries: ' . $e->getMessage(), '; '));
         }
         return $r;
     }

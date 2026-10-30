@@ -1322,4 +1322,8 @@ return [
     'alerts.limit_full.text' => '{pct}% of the monthly SMS limit used ({used} of {limit}). The limit does not block sending.',
     'alerts.limit_full.resolved' => 'SMS limit usage dropped below 100%.',
     'api.e_internal' => 'Internal panel error – see the log.',
+    'modem.forget' => 'Remove from list',
+    'modem.forget_q' => 'Remove modem {modem} from the list?',
+    'modem.forget_text' => 'For a modem that no longer exists (e.g. after a PhoneID change). If it reports to Gammu again, it will reappear.',
+    'modem.forgotten' => 'Modem {modem} removed from the list.',
 ];

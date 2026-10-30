@@ -15,18 +15,18 @@ final class Api
     public static function handle(string $route): never
     {
         header('Content-Type: application/json; charset=utf-8');
-        $token = self::bearer();
-        $auth = ApiTokens::authenticate($token, request_ip());
-        if (!is_array($auth)) {
-            if ($token !== '') {
-                // Format dla fail2ban (deploy/fail2ban) – jak przy nieudanym logowaniu; brak tokenu to nie próba logowania
-                app_log('auth', 'failed login for user "api" from ' . request_ip());
-                usleep(300000);
-            }
-            self::reply($auth === 'ip' ? 403 : 401, ['ok' => false, 'error' => t($auth === 'ip' ? 'api.e_ip' : 'api.e_token')]);
-        }
-        $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
         try {
+            $token = self::bearer();
+            $auth = ApiTokens::authenticate($token, request_ip());
+            if (!is_array($auth)) {
+                if ($token !== '') {
+                    // Format dla fail2ban (deploy/fail2ban) – jak przy nieudanym logowaniu; brak tokenu to nie próba logowania
+                    app_log('auth', 'failed login for user "api" from ' . request_ip());
+                    usleep(300000);
+                }
+                self::reply($auth === 'ip' ? 403 : 401, ['ok' => false, 'error' => t($auth === 'ip' ? 'api.e_ip' : 'api.e_token')]);
+            }
+            $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
             match ($route) {
                 'send' => $method === 'POST' ? self::send($auth) : self::reply(405, ['ok' => false, 'error' => t('api.e_method')]),
                 'status' => $method === 'GET' ? self::status($auth) : self::reply(405, ['ok' => false, 'error' => t('api.e_method')]),

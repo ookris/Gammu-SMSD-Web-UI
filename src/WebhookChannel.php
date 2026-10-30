@@ -15,12 +15,12 @@ final class WebhookChannel implements Channel
         if (filter_var($host, FILTER_VALIDATE_IP)) {
             return [$host];
         }
-        $ips = [];
-        foreach (@dns_get_record($host, DNS_A | DNS_AAAA) ?: [] as $r) {
-            $ips[] = $r['ip'] ?? $r['ipv6'] ?? null;
+        // Najpierw systemowy resolver (uwzględnia /etc/hosts), IPv6 z DNS tylko dla hostów bez adresu IPv4
+        $v4 = @gethostbynamel($host) ?: [];
+        if ($v4 !== []) {
+            return $v4;
         }
-        $ips = array_values(array_filter($ips));
-        return $ips !== [] ? $ips : (@gethostbynamel($host) ?: []);
+        return array_values(array_filter(array_map(static fn ($r) => $r['ipv6'] ?? null, @dns_get_record($host, DNS_AAAA) ?: [])));
     }
 
     /**

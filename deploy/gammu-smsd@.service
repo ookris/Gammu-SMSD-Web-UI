@@ -5,11 +5,12 @@ After=mysql.service mariadb.service network-online.target
 
 [Service]
 EnvironmentFile=-/etc/default/gammu-smsd
-ExecStart=/usr/bin/gammu-smsd --config=/etc/gammu-smsdrc-%i --pid=/run/gammu-smsd-%i.pid --daemon
+# Katalog na PID tworzony przez systemd z prawami użytkownika usługi (także gdy działa na zwykłym koncie)
+RuntimeDirectory=gammu-smsd-%i
+ExecStart=/usr/bin/gammu-smsd --config=/etc/gammu-smsdrc-%i --pid=/run/gammu-smsd-%i/gammu-smsd.pid --daemon
 ExecReload=/bin/kill -HUP $MAINPID
-ExecStopPost=/bin/rm -f /run/gammu-smsd-%i.pid
 Type=forking
-PIDFile=/run/gammu-smsd-%i.pid
+PIDFile=/run/gammu-smsd-%i/gammu-smsd.pid
 
 [Install]
 WantedBy=multi-user.target

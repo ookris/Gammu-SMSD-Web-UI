@@ -112,3 +112,31 @@ test('Kilka modemów: konfiguracja dodatkowego modemu na bazie głównego pliku'
         $old === null ? @unlink($base) : file_put_contents($base, $old);
     }
 });
+
+test('Kilka modemów: usunięcie nieaktualnego modemu z listy przestaje zgłaszać jego niedostępność', function () {
+    modems_setup();
+    Db::update('modem_status', ['gammu_updated_at' => now_db(-86400)], "modem = 'GSM2'");
+    Status::forget();
+    assert_same('warn', Status::indicator()['level']);
+    Db::exec("DELETE FROM modem_status WHERE modem = 'GSM2'");
+    Status::forget();
+    assert_same('ok', Status::indicator()['level']);
+});
+
+test('Kilka modemów: ponowne add-modem nie twierdzi, że usunął PIN, skoro niczego nie zmienia', function () {
+    $base = GammuConf::path();
+    $old = is_file($base) ? file_get_contents($base) : null;
+    $new = $base . '-GSM3';
+    file_put_contents($base, "[gammu]\ndevice = /dev/ttyUSB0\n\n[smsd]\nPhoneID = GSM1\nPIN = 1234\n");
+    file_put_contents($new, "[smsd]\nPIN = 1234\n");
+    try {
+        ob_start();
+        $code = Setup::modem(['phoneid' => 'GSM3', 'device' => '/dev/ttyUSB2']);
+        $out = (string) ob_get_clean();
+        assert_same(2, $code);
+        assert_true(!str_contains($out, 'PIN'), 'bez komunikatu o PIN-ie: ' . $out);
+    } finally {
+        @unlink($new);
+        $old === null ? @unlink($base) : file_put_contents($base, $old);
+    }
+});

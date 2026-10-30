@@ -1,6 +1,16 @@
 <?php
 // Modem i USSD
 if (is_post()) {
+    if (($forget = input('forget_modem')) !== '') {
+        // Tylko niedostępny modem (np. po zmianie PhoneID albo odłączeniu) – działający i tak wróciłby przy następnej synchronizacji
+        foreach (Status::modems() as $m) {
+            if ($m['modem'] === $forget && !Status::modemAvailable($m)) {
+                Db::exec('DELETE FROM modem_status WHERE modem = ?', [$forget]);
+                flash('ok', t('modem.forgotten', ['modem' => $forget]));
+            }
+        }
+        redirect(url('modem'));
+    }
     if (($close = (int) input('close')) > 0) {
         Ussd::close($close);
         redirect(url('modem'));

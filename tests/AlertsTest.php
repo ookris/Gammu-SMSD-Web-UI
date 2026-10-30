@@ -151,3 +151,12 @@ test('Alerty: nieudane autoodpowiedzi nie liczą się do alarmu błędów wysył
     assert_same(null, Alerts::conditions(['failures'])['failures']);
     Channels::$factory = null;
 });
+
+test('Alerty: strażnik przy żywym procesie w tle niczego nie zgłasza', function () {
+    alerts_setup();
+    Settings::set('worker_seen_at', now_db());
+    assert_same(0, Alerts::watchdog());
+    assert_same([], FakeChannel::$sent);
+    assert_true(!isset(Alerts::state()['worker']), 'brak stanu alarmu');
+    Channels::$factory = null;
+});

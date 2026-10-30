@@ -153,5 +153,5 @@ test('Wykresy: oś liczb całkowitych ma całkowite podziałki; limit 100 % to o
     Settings::set('monthly_limit', 4);
     Db::insert('messages', ['direction' => 'out', 'phone' => '48601000001', 'body' => 'x', 'status' => 'sent', 'parts' => 4, 'sent_at' => now_db(), 'created_at' => now_db(), 'updated_at' => now_db()]);
     $c = Alerts::conditions(['limit', 'limit_full']);
-    assert_same([null, 100], [$c['limit'], $c['limit_full']['pct']]);
+    assert_same([100, 100], [$c['limit']['pct'], $c['limit_full']['pct']]);
 });

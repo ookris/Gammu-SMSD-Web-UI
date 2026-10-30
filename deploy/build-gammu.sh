@@ -71,7 +71,7 @@ ExecStart=/usr/local/bin/gammu-smsd --pid=/run/gammu-smsd.pid --daemon
 UNIT
 if [ -f /etc/systemd/system/gammu-smsd@.service ]; then   # dodatkowe modemy (add-modem.sh) też na nowej wersji
     install -d "$(dirname "$DROPIN_TPL")"
-    printf '[Service]\nExecStart=\nExecStart=/usr/local/bin/gammu-smsd --config=/etc/gammu-smsdrc-%%i --pid=/run/gammu-smsd-%%i.pid --daemon\n' >"$DROPIN_TPL"
+    printf '[Service]\nExecStart=\nExecStart=/usr/local/bin/gammu-smsd --config=/etc/gammu-smsdrc-%%i --pid=/run/gammu-smsd-%%i/gammu-smsd.pid --daemon\n' >"$DROPIN_TPL"
 fi
 systemctl daemon-reload
 systemctl restart gammu-smsd

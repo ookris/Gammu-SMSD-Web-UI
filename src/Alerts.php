@@ -67,7 +67,8 @@ final class Alerts
             }
         }
         $lim = $want('limit', 'limit_full') ? Stats::limit() : null;
-        $c['limit'] = $lim !== null && $lim['pct'] >= 80 && $lim['pct'] < 100 ? ['pct' => $lim['pct'], 'used' => $lim['used'], 'limit' => $lim['limit']] : null;
+        // „limit” trwa od 80 % (także po przekroczeniu 100 % – inaczej wysłałby fałszywe „ustąpiło”), „limit_full” dochodzi od 100 %
+        $c['limit'] = $lim !== null && $lim['pct'] >= 80 ? ['pct' => $lim['pct'], 'used' => $lim['used'], 'limit' => $lim['limit']] : null;
         $c['limit_full'] = $lim !== null && $lim['pct'] >= 100 ? ['pct' => $lim['pct'], 'used' => $lim['used'], 'limit' => $lim['limit']] : null;
         return array_intersect_key($c, array_flip($only));
     }
@@ -115,6 +116,19 @@ final class Alerts
             return 0;
         }
         self::$checkedAt = $now;
+        // Stan alarmów czyta i zapisuje synchronizacja oraz strażnik – osobna blokada, żeby jeden nie nadpisał drugiego
+        if (!Db::lock('smsgui-alerts', 5)) {
+            return 0;
+        }
+        try {
+            return self::step($only, $now);
+        } finally {
+            Db::unlock('smsgui-alerts');
+        }
+    }
+
+    private static function step(array $only, int $now): int
+    {
         $routes = self::routes();
         $state = self::state();
         $queued = 0;
@@ -173,18 +187,9 @@ final class Alerts
     /** Strażnik uruchamiany z timera systemd: gdy proces w tle nie działa, sam ocenia alarm „worker” i wysyła zaległe powiadomienia. */
     public static function watchdog(): int
     {
-        // Ta sama blokada co synchronizacja: strażnik nie działa równolegle z procesem w tle (podwójne wysyłki, nadpisany stan alarmów).
-        // Zajęta blokada = proces w tle właśnie pracuje, więc żyje.
-        $locked = Db::lock(Sync::LOCK, 0);
-        // Blokada zajęta, a ostatni sygnał życia procesu w tle jest stary = proces zawisł w środku synchronizacji; wtedy też zgłaszamy
-        if (!$locked && self::conditions(['worker'])['worker'] === null) {
-            return 0;
-        }
-        try {
-            $queued = self::process(['worker'], null, true);
-        } finally {
-            $locked && Db::unlock(Sync::LOCK);
-        }
+        // Ocena tylko po sygnale życia procesu w tle (zapisywanym także przed każdym przebiegiem), więc zadziała również,
+        // gdy proces zawisł z blokadą synchronizacji; stan alarmów chroni blokada smsgui-alerts, wysyłkę – smsgui-deliveries
+        $queued = self::process(['worker'], null, true);
         Deliveries::process();
         return $queued;
     }

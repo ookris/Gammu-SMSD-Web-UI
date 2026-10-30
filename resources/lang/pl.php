@@ -1322,4 +1322,8 @@ return [
     'alerts.limit_full.text' => 'Wykorzystano {pct}% miesięcznego limitu SMS ({used} z {limit}). Limit nie blokuje wysyłki.',
     'alerts.limit_full.resolved' => 'Zużycie limitu SMS spadło poniżej 100 %.',
     'api.e_internal' => 'Błąd wewnętrzny panelu – szczegóły w logu.',
+    'modem.forget' => 'Usuń z listy',
+    'modem.forget_q' => 'Usunąć modem {modem} z listy?',
+    'modem.forget_text' => 'Dla modemu, który już nie istnieje (np. po zmianie PhoneID). Jeśli znów zgłosi się do Gammu, pojawi się ponownie.',
+    'modem.forgotten' => 'Modem {modem} usunięty z listy.',
 ];

@@ -91,6 +91,9 @@ final class Balance
                     }
                 });
             } catch (PDOException $e) {
+                if (!str_starts_with((string) $e->getCode(), '22')) {
+                    throw $e; // błąd przejściowy (blokada, połączenie) – odpowiedź zostanie zapisana w kolejnym przebiegu
+                }
                 // Jedna nieprzetwarzalna odpowiedź nie może blokować całej synchronizacji (byłaby ponawiana w każdym przebiegu)
                 app_log('error', "saldo: odpowiedź USSD #{$r['id']} pominięta: " . $e->getMessage());
                 Db::exec('INSERT IGNORE INTO balance_log (ussd_id, modem, amount, raw, created_at) VALUES (?, ?, NULL, ?, ?)',
