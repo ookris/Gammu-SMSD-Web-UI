@@ -90,7 +90,8 @@ if ($phone !== '') {
     Threads::markRead($phone);
     Status::forget();
 }
-$f = clean_dates(['q' => input('q'), 'from' => input('from'), 'to' => input('to'), 'unread' => input('unread')], ['from', 'to']);
+$f = clean_dates(['q' => input('q'), 'from' => input('from'), 'to' => input('to'), 'unread' => input('unread'),
+    'dir' => in_array(input('dir'), ['in', 'out'], true) ? input('dir') : ''], ['from', 'to']);
 $list = Threads::list($f);
 if ($phone !== '' && !in_array($phone, array_column($list, 'phone'), true) && !array_filter($f)) {
     array_unshift($list, ['phone' => $phone, 'body' => '', 'direction' => 'out', 'created_at' => null, 'received_at' => null, 'unread' => 0]);

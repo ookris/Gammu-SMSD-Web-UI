@@ -344,6 +344,10 @@ return [
     // Inbox
     'inbox.search_ph' => 'sender, number or text',
     'inbox.only_unread' => 'Unread only',
+    'inbox.dir' => 'Direction',
+    'inbox.dir_all' => 'Received and sent',
+    'inbox.dir_in' => 'Received only',
+    'inbox.dir_out' => 'Sent only',
     'inbox.change_filters' => 'Change the phrase or the date range.',
     'inbox.empty' => 'No received messages yet',
     'inbox.empty_text' => 'They will appear here when the modem receives an SMS.',

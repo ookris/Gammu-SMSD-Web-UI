@@ -344,6 +344,10 @@ return [
     // Odebrane
     'inbox.search_ph' => 'nadawca, numer lub treść',
     'inbox.only_unread' => 'Tylko nieprzeczytane',
+    'inbox.dir' => 'Kierunek',
+    'inbox.dir_all' => 'Odebrane i wysłane',
+    'inbox.dir_in' => 'Tylko odebrane',
+    'inbox.dir_out' => 'Tylko wysłane',
     'inbox.change_filters' => 'Zmień frazę albo zakres dat.',
     'inbox.empty' => 'Nie ma jeszcze odebranych wiadomości',
     'inbox.empty_text' => 'Pojawią się tu, gdy modem odbierze SMS.',
