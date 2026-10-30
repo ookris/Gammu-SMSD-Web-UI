@@ -21,11 +21,24 @@ final class Crypto
         $path = self::keyPath();
         $hex = is_file($path) ? trim((string) @file_get_contents($path)) : '';
         if (!preg_match('/^[0-9a-f]{64}$/', $hex)) {
-            $hex = bin2hex(random_bytes(32));
+            // Tryb „x” – plik powstaje tylko raz; przy wyścigu panelu z procesem w tle wygrywa pierwszy, drugi wczytuje jego klucz
             $old = umask(0007);
-            $ok = @file_put_contents($path, $hex . "\n", LOCK_EX);
+            $f = @fopen($path, 'x');
             umask($old);
-            if ($ok === false) {
+            if ($f !== false) {
+                fwrite($f, bin2hex(random_bytes(32)) . "\n");
+                fclose($f);
+            } else {
+                usleep(150000); // drugi proces mógł dopiero co założyć plik i zapisuje klucz
+                if (!is_file($path) || trim((string) @file_get_contents($path)) === '') {
+                    // Plik istnieje, ale jest pusty (np. po przerwanym zapisie) – nadpisujemy
+                    if (@file_put_contents($path, bin2hex(random_bytes(32)) . "\n", LOCK_EX) === false) {
+                        throw new RuntimeException(t('file.no_write', ['path' => $path]));
+                    }
+                }
+            }
+            $hex = trim((string) @file_get_contents($path));
+            if (!preg_match('/^[0-9a-f]{64}$/', $hex)) {
                 throw new RuntimeException(t('file.no_write', ['path' => $path]));
             }
         }

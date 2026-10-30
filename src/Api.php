@@ -69,7 +69,7 @@ final class Api
     {
         $d = self::input();
         $to = $d['to'] ?? '';
-        $to = is_array($to) ? implode(',', array_map('strval', $to)) : (string) $to;
+        $to = is_array($to) ? implode(',', array_filter($to, 'is_scalar')) : (is_scalar($to) ? (string) $to : '');
         $text = $d['text'] ?? '';
         if (!is_string($text)) {
             self::reply(422, ['ok' => false, 'errors' => [t('compose.err_text')]]);
