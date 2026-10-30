@@ -10,8 +10,8 @@ One-command installation: the script installs and configures Gammu SMSD, MariaDB
 the modem and finishes with a health check.
 
 > **Project status:** version 1.0.0-beta.1. The panel is feature-complete and tested on the Gammu simulator and on
-> a clean Ubuntu Server 26.04.1 (installation, diagnostics, panel, automated tests). Tests with a real modem
-> (sending, receiving, USSD, delivery reports) are in progress.
+> a clean Ubuntu Server 26.04.1 (installation, diagnostics, panel, automated tests). Sending and receiving SMS have been
+> verified on a real modem (Huawei E3372 in "stick" mode); USSD, delivery report and call tests are in progress.
 >
 > The user interface is available in Polish and English (switchable in the panel settings). The installer and the
 > console tool currently print messages in Polish.
@@ -143,7 +143,7 @@ external servers.
 |------|-------------|
 | System | **Ubuntu Server 26.04 LTS** (tested on 26.04.1). Older releases do not ship PHP 8.5 |
 | Repositories | `main` and `universe` (`gammu-smsd`, `php-fpm`, `php-mbstring` and others come from `universe`) |
-| Hardware | a USB or serial GSM modem supported by Gammu (AT commands), an active SIM card – PIN disabled or known |
+| Hardware | a USB or serial GSM modem supported by Gammu (AT commands), an active SIM card – PIN disabled or known. The modem must expose serial (AT) ports. A Huawei E3372 with **HiLink** firmware does not work: its own web app captures incoming SMS and Gammu never sees them – use "stick" mode firmware (verified: E3372H) |
 | Packages | `gammu`, `gammu-smsd`, `mariadb-server`, `nginx`, `php-fpm`, `php-cli`, `php-mysql`, `php-mbstring`, `openssl`, `git` |
 | PHP | 8.5 or newer with the `pdo_mysql` and `mbstring` extensions; PHP-FPM of the same version as PHP CLI |
 | Permissions | an account with `sudo`; MariaDB `root` access through the socket (Ubuntu default) |
