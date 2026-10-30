@@ -36,6 +36,7 @@ if (is_post()) {
         foreach (['throttle_per_min', 'session_hours', 'backup_keep', 'cleanup_days'] as $k) {
             Settings::set($k, (int) input($k));
         }
+        Settings::set('validity_default', Outbox::validity(input('validity_default')));
         Settings::set('window_from', $from);
         Settings::set('window_to', $to);
         Settings::set('ussd_codes', $codes);

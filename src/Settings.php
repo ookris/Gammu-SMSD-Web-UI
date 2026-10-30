@@ -7,6 +7,7 @@ final class Settings
     public const DEFAULTS = [
         'report_default' => '1',
         'translit_default' => '0',
+        'validity_default' => '0',
         'throttle_per_min' => '10',
         'window_enabled' => '1',
         'window_from' => '08:00',

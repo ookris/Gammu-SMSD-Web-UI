@@ -327,6 +327,10 @@ final class Db
                     KEY deleted_external_at (deleted_at)
                 ) $t",
             ],
+            // Ważność wiadomości (minuty; NULL = domyślna sieci) – potrzebna też przy ponawianiu
+            3 => [
+                'ALTER TABLE messages ADD COLUMN IF NOT EXISTS validity_min INT UNSIGNED NULL AFTER priority',
+            ],
         ];
     }
 }

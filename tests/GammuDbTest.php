@@ -173,3 +173,24 @@ test('hook połączeń: walidacja numeru', function () {
         assert_same($ok, Calls::validNumber((string) $n), "numer: $n");
     }
 });
+
+test('ważność wiadomości: kodowanie TP-VP względnego', function () {
+    assert_same([-1, -1, 11, 71, 143, 167, 168, 169, 196, 201], array_map([GammuDb::class, 'relativeValidity'],
+        [null, 0, 60, 360, 720, 1440, 1441, 4320, 43200, 86400]));
+});
+
+test('ważność wiadomości trafia do outbox, a ponowienie ją zachowuje', function () {
+    reset_db();
+    $id = Outbox::create(['phone' => '48601234567', 'body' => 'Kod 1234', 'validity' => 60]);
+    $m = Db::row('SELECT gammu_id, validity_min FROM messages WHERE id = ?', [$id]);
+    assert_same([60, 11], [(int) $m['validity_min'], (int) Db::val('SELECT RelativeValidity FROM {g}.outbox WHERE ID = ?', [$m['gammu_id']])]);
+    $none = Outbox::create(['phone' => '48601234567', 'body' => 'Bez']);
+    assert_same([null, -1], [Db::val('SELECT validity_min FROM messages WHERE id = ?', [$none]),
+        (int) Db::val('SELECT RelativeValidity FROM {g}.outbox WHERE ID = (SELECT gammu_id FROM messages WHERE id = ?)', [$none])]);
+    $bad = Outbox::create(['phone' => '48601234567', 'body' => 'Zła', 'validity' => 77]);
+    assert_same(null, Db::val('SELECT validity_min FROM messages WHERE id = ?', [$bad]));
+    Db::update('messages', ['status' => 'failed'], 'id = ?', [$id]);
+    assert_same(true, Outbox::retry($id));
+    $gid = Db::val('SELECT gammu_id FROM messages WHERE id = ?', [$id]);
+    assert_same(11, (int) Db::val('SELECT RelativeValidity FROM {g}.outbox WHERE ID = ?', [$gid]));
+});

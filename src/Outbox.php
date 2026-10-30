@@ -8,9 +8,18 @@ final class Outbox
     public const PRIORITY_SINGLE = 10;
     public const PRIORITY_BULK = 0;
 
+    /** Dozwolone wartości ważności w minutach; 0 = domyślna sieci. */
+    public const VALIDITY_CHOICES = [0, 60, 360, 1440, 4320, 10080];
+
+    /** Wartość z formularza/ustawień sprowadzona do listy dozwolonych. */
+    public static function validity(mixed $v): int
+    {
+        return in_array((int) $v, self::VALIDITY_CHOICES, true) ? (int) $v : 0;
+    }
+
     /**
      * Zapis wiadomości do messages + outbox/outbox_multipart w jednej transakcji. Zwraca messages.id.
-     * @param array{phone:string,body:string,translit?:bool,flash?:bool,report?:bool,send_at?:?string,priority?:int,
+     * @param array{phone:string,body:string,translit?:bool,flash?:bool,report?:bool,send_at?:?string,priority?:int,validity?:int,
      *   window?:?array{0:string,1:string},batch_id?:?string,source?:string,modem?:?string} $o
      */
     public static function create(array $o): int
@@ -44,6 +53,7 @@ final class Outbox
                 'flash' => (int) !empty($o['flash']),
                 'report' => (int) !empty($o['report']),
                 'priority' => $o['priority'] ?? self::PRIORITY_SINGLE,
+                'validity_min' => self::validity($o['validity'] ?? 0) ?: null,
                 'send_window' => (int) ($window !== null),
                 'source' => $o['source'] ?? 'gui',
                 'batch_id' => $o['batch_id'] ?? null,
@@ -64,6 +74,7 @@ final class Outbox
                 'after' => $window[0] ?? null,
                 'before' => $window[1] ?? null,
                 'priority' => $o['priority'] ?? self::PRIORITY_SINGLE,
+                'validity' => self::validity($o['validity'] ?? 0),
                 'sender' => $o['modem'] ?? null,
             ]);
             Db::update('messages', ['gammu_id' => $gid], 'id = ?', [$id]);
@@ -113,6 +124,7 @@ final class Outbox
                 'class' => $m['flash'] ? 0 : -1,
                 'report' => (bool) $m['report'],
                 'priority' => (int) $m['priority'],
+                'validity' => (int) $m['validity_min'],
                 'sender' => $m['modem_requested'],
             ]);
             Db::update('messages', [

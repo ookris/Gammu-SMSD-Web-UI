@@ -17,6 +17,7 @@ final class Compose
             'flash' => isset($_POST['flash']),
             'priority' => isset($_POST['priority']),
             'send_at' => input('send_at'),
+            'validity' => Outbox::validity(input('validity')),
             'skip_window' => isset($_POST['skip_window']),
             'template' => input('template'),
         ];
@@ -25,7 +26,8 @@ final class Compose
     public static function defaults(): array
     {
         return ['groups' => [], 'contacts' => [], 'numbers' => '', 'text' => '', 'translit' => Settings::bool('translit_default'),
-            'report' => Settings::bool('report_default'), 'flash' => false, 'priority' => false, 'send_at' => '', 'skip_window' => false,
+            'report' => Settings::bool('report_default'), 'flash' => false, 'priority' => false, 'send_at' => '',
+            'validity' => Outbox::validity(Settings::get('validity_default')), 'skip_window' => false,
             'template' => ''];
     }
 
@@ -120,6 +122,7 @@ final class Compose
                     'report' => $in['report'],
                     'send_at' => $times[$i] > now_db() ? $times[$i] : null,
                     'priority' => $priority,
+                    'validity' => $in['validity'],
                     'window' => $plan['window'],
                     'batch_id' => $batch,
                 ]);

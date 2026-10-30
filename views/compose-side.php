@@ -41,6 +41,7 @@ $pace = $plan['per_min'] > 0 ? t('compose.pace_value', ['n' => $plan['per_min'],
 <dt><?= e(t('batch.pace')) ?></dt><dd><?= e($pace) ?></dd>
 <dt><?= e(t('compose.start')) ?></dt><dd><?= e(Compose::startLabel($plan)) ?><?= $plan['delayed'] && $plan['send_at'] === null ? ' ' . e(t('compose.window_note')) : '' ?></dd>
 <dt><?= e(t('batch.report')) ?></dt><dd><?= e(t($in['report'] ? 'common.yes' : 'common.no')) ?></dd>
+<?php if ($in['validity'] > 0): ?><dt><?= e(t('compose.validity')) ?></dt><dd><?= e(t('validity.' . $in['validity'])) ?></dd><?php endif ?>
 <?php $notes = [];
 if ($plan['recipients']['blocked']) { $notes[] = t('compose.note_blocked', ['n' => count($plan['recipients']['blocked'])]); }
 if ($plan['vars_missing']) { $notes[] = t('compose.note_vars', ['n' => $plan['vars_missing']]); }

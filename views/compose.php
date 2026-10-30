@@ -68,7 +68,11 @@ $checked = static fn (bool $c) => $c ? ' checked' : '';
 <label><input type="checkbox" name="priority" value="1"<?= $checked($in['priority']) ?>> <span><?= e(t('compose.priority')) ?><span class="check-sub"><?= e(t('compose.priority_hint')) ?></span></span></label>
 </div>
 <div class="field"><label for="send_at"><?= e(t('compose.send_at')) ?></label>
-<input id="send_at" name="send_at" type="datetime-local" value="<?= e($in['send_at']) ?>" min="<?= e(date('Y-m-d\TH:i')) ?>"></div>
+<input id="send_at" name="send_at" type="datetime-local" value="<?= e($in['send_at']) ?>" min="<?= e(date('Y-m-d\TH:i')) ?>">
+<label for="validity"><?= e(t('compose.validity')) ?></label>
+<select id="validity" name="validity" aria-describedby="validity-h">
+<?php foreach (Outbox::VALIDITY_CHOICES as $m): ?><option value="<?= $m ?>"<?= $in['validity'] === $m ? ' selected' : '' ?>><?= e(t('validity.' . $m)) ?></option><?php endforeach ?></select>
+<small id="validity-h"><?= e(t('compose.validity_hint')) ?></small></div>
 </div>
 <?= view('compose-window', ['plan' => $plan, 'in' => $in, 'oob' => false]) ?>
 <label><input type="checkbox" name="skip_window" value="1"<?= $checked($in['skip_window']) ?>> <span><?= e(t('compose.skip_window')) ?></span></label>

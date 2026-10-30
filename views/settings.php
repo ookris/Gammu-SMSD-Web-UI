@@ -18,6 +18,10 @@ $err = static fn (string $k) => isset($errors[$k]) ? '<small class="warn">' . e(
 <div class="grid-2">
 <label><input type="checkbox" name="report_default" value="1"<?= $chk('report_default') ?>> <span><?= e(t('settings.report_default')) ?></span></label>
 <label><input type="checkbox" name="translit_default" value="1"<?= $chk('translit_default') ?>> <span><?= e(t('settings.translit_default')) ?></span></label></div>
+<div class="field"><label for="validity_default"><?= e(t('settings.validity_default')) ?></label>
+<select id="validity_default" name="validity_default" aria-describedby="validity_default-h">
+<?php foreach (Outbox::VALIDITY_CHOICES as $m): ?><option value="<?= $m ?>"<?= (int) $v('validity_default') === $m ? ' selected' : '' ?>><?= e(t('validity.' . $m)) ?></option><?php endforeach ?></select>
+<small id="validity_default-h"><?= e(t('settings.validity_hint')) ?></small></div>
 <div class="grid-2">
 <div class="field"><label for="throttle"><?= e(t('settings.throttle')) ?></label>
 <input id="throttle" aria-describedby="throttle-h" name="throttle_per_min" type="number" value="<?= e($v('throttle_per_min')) ?>" min="0" max="60">
