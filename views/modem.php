@@ -1,4 +1,4 @@
-<?php /** @var array $modems @var ?array $current @var array $codes @var array $history @var ?string $device */ ?>
+<?php /** @var array $modems @var ?array $current @var array $codes @var array $history @var ?string $device @var array $balance */ ?>
 <header class="page-head"><div><h1><?= e(t('nav.modem')) ?></h1><p class="sub"><?= e(t('modem.sub')) ?></p></div>
 <div class="actions"><a href="<?= e(url('modem')) ?>" role="button" class="secondary"><?= icon('refresh') ?><?= e(t('modem.refresh')) ?></a></div></header>
 <?= flashes_html() ?>
@@ -15,6 +15,20 @@
 <p class="muted small gap-lg"><?= e(t('modem.ussd_note')) ?></p>
 </section>
 </div>
+<?php if ($balance['enabled'] || $balance['latest'] !== null): ?>
+<div class="gap-lg"></div>
+<section class="card">
+<header><h2><?= e(t('balance.title')) ?></h2><?php if ($balance['latest'] !== null): ?><span class="muted"><?= e($balance['latest']['amount'] !== null ? number_format($balance['latest']['amount'], 2, lang() === 'pl' ? ',' : '.', ' ') . ' ' . t('balance.currency') : t('balance.unreadable')) ?> · <?= e(fmt_when($balance['latest']['at'])) ?></span><?php endif ?></header>
+<?php if ($balance['series'] === []): ?><p class="muted"><?= e(t($balance['enabled'] ? 'balance.waiting' : 'balance.no_data')) ?></p>
+<?php else: $thr = (float) Settings::get('balance_threshold'); ?>
+<?= Chart::line(t('balance.title'), t('balance.chart_desc'), array_map(static fn ($p) => ['t' => (int) ts($p['at']), 'y' => $p['amount']], $balance['series']), time() - 30 * 86400, time(), $thr > 0 ? $thr : null, ' ' . t('balance.currency')) ?>
+<details class="gap-lg"><summary><?= e(t('stats.as_table')) ?></summary>
+<div class="table-wrap"><table><thead><tr><th scope="col"><?= e(t('common.date')) ?></th><th scope="col"><?= e(t('balance.title')) ?></th></tr></thead>
+<tbody><?php foreach (array_reverse($balance['series']) as $p): ?><tr><td><?= e(fmt_when($p['at'])) ?></td><td><?= e(number_format($p['amount'], 2, lang() === 'pl' ? ',' : '.', ' ')) ?> <?= e(t('balance.currency')) ?></td></tr><?php endforeach ?></tbody></table></div>
+</details>
+<?php endif ?>
+</section>
+<?php endif ?>
 <div class="gap-lg"></div>
 <section class="card flush">
 <header><h2><?= e(t('modem.history')) ?></h2></header>

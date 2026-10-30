@@ -72,7 +72,7 @@ test('Alerty: kolejka, błędy wysyłki, proces w tle, słaby sygnał', function
     alerts_setup();
     $now = now_db();
     $c = Alerts::conditions();
-    assert_same([null, null, null, null, null, null], array_values($c));
+    assert_same(array_fill(0, count(Alerts::TYPES), null), array_values($c));
 
     Db::insert('messages', ['direction' => 'out', 'phone' => '48601234567', 'body' => 'x', 'status' => 'queued', 'retries' => 0, 'created_at' => now_db(-1800), 'updated_at' => $now]);
     assert_same(['n' => 1], Alerts::conditions(['queue'])['queue']);

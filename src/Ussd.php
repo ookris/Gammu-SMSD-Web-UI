@@ -7,13 +7,13 @@ final class Ussd
     public const TIMEOUT = 60;
 
     /** Wysłanie kodu (także odpowiedzi w menu operatora); [id, błąd]. */
-    public static function send(string $code, ?string $modem = null, ?int $parentId = null, string $purpose = 'manual'): array
+    public static function send(string $code, ?string $modem = null, ?int $parentId = null, string $purpose = 'manual', bool $sync = true): array
     {
         $code = str_replace(' ', '', $code);
         if (!preg_match('/^[0-9*#+]{1,20}$/', $code)) {
             return [null, t('modem.err_code')];
         }
-        Sync::run(true); // świeży stan żądań i import odpowiedzi czekających w inbox
+        $sync && Sync::run(true); // świeży stan żądań i import odpowiedzi czekających w inbox
         if (self::pending($modem) !== null) {
             return [null, t('modem.err_pending')];
         }

@@ -28,6 +28,7 @@ if (input('fragment') === 'state') {
     echo view('modem-state', ['modems' => Status::modems()]);
     exit;
 }
-render('modem', ['title' => t('nav.modem'), 'nav' => 'modem', 'modems' => Status::modems(), 'current' => $current,
+$balance = ['latest' => Balance::latest(), 'series' => Balance::series(30), 'enabled' => Balance::enabled()];
+render('modem', ['balance' => $balance,'title' => t('nav.modem'), 'nav' => 'modem', 'modems' => Status::modems(), 'current' => $current,
     'codes' => Settings::json('ussd_codes'), 'history' => Ussd::history(20),
     'device' => GammuConf::load()?->get('gammu', 'device')]);

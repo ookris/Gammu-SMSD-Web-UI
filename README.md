@@ -81,6 +81,8 @@ wiadomości zapisanych w bazie, a przy kodowaniu GSM po cichu zamienia polskie z
 
 **Modem i Gammu**
 - stan modemu: sygnał, operator, ostatnia aktualizacja; wykrywanie niedostępnego modemu
+- cykliczne sprawdzanie salda (USSD co N godzin), wykres z 30 dni i alarm przy niskim saldzie; miesięczny limit SMS z ostrzeżeniem
+- statystyki: SMS dziennie i miesięcznie, odsetek doręczeń, najaktywniejsze numery, odrzucone połączenia
 - USSD na żądanie (np. stan konta) z obsługą menu operatora i szybkimi kodami
 - odrzucanie połączeń przychodzących z listą połączeń i wpisami w rozmowie
 - czarna lista numerów (Gammu odrzuca wiadomości od zablokowanych numerów)
@@ -101,7 +103,7 @@ wiadomości zapisanych w bazie, a przy kodowaniu GSM po cichu zamienia polskie z
 - przekazywanie odebranych SMS i odrzuconych połączeń wg reguł (wszystkie / od numeru / od grupy / treść zawiera)
 - HTTP API z tokenami (`POST /api/send`, `GET /api/status`) dla Zabbixa, Home Assistanta i skryptów
 
-**Planowane (po wersji 1.0):** autoodpowiedzi, cykliczne sprawdzanie salda, statystyki, obsługa kilku modemów.
+**Planowane (po wersji 1.0):** autoodpowiedzi, obsługa kilku modemów.
 
 ## Zrzuty ekranu
 

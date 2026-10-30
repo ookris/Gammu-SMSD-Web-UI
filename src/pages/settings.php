@@ -35,6 +35,25 @@ if (is_post()) {
             $errors[$k] = t('settings.err_range', ['min' => $min, 'max' => $max]);
         }
     }
+    $bcode = str_replace(' ', '', input('balance_code'));
+    if ($bcode !== '' && !preg_match('/^[0-9*#+]{1,20}$/', $bcode)) {
+        $errors['balance_code'] = t('settings.err_ussd', ['code' => $bcode]);
+    }
+    if (!Balance::validRegex(trim(input('balance_regex')))) {
+        $errors['balance_regex'] = t('settings.err_regex');
+    }
+    foreach (['balance_hours' => [0, 720], 'monthly_limit' => [0, 1000000]] as $k => [$min, $max]) {
+        if (!$int($k, $min, $max)) {
+            $errors[$k] = t('settings.err_range', ['min' => $min, 'max' => $max]);
+        }
+    }
+    $threshold = str_replace(',', '.', trim(input('balance_threshold')));
+    if ($threshold === '') {
+        $threshold = '0';
+    }
+    if (!is_numeric($threshold) || (float) $threshold < 0 || (float) $threshold > 100000) {
+        $errors['balance_threshold'] = t('settings.err_range', ['min' => 0, 'max' => 100000]);
+    }
     // Pary nazwa–kod po indeksach z formularza (puste nazwy nie mogą przesunąć kodów)
     $codes = [];
     $names = is_array($_POST['ussd_name'] ?? null) ? $_POST['ussd_name'] : [];
@@ -56,6 +75,11 @@ if (is_post()) {
         foreach (['throttle_per_min', 'session_hours', 'backup_keep', 'cleanup_days'] as $k) {
             Settings::set($k, (int) input($k));
         }
+        Settings::set('balance_code', $bcode);
+        Settings::set('balance_regex', trim(input('balance_regex')));
+        Settings::set('balance_hours', (int) input('balance_hours'));
+        Settings::set('monthly_limit', (int) input('monthly_limit'));
+        Settings::set('balance_threshold', (string) round((float) $threshold, 2));
         Settings::set('validity_default', Outbox::validity(input('validity_default')));
         Settings::set('window_from', $from);
         Settings::set('window_to', $to);

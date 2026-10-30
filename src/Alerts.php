@@ -8,9 +8,9 @@ declare(strict_types=1);
  */
 final class Alerts
 {
-    public const TYPES = ['service', 'modem', 'signal', 'queue', 'failures', 'worker'];
+    public const TYPES = ['service', 'modem', 'signal', 'queue', 'failures', 'worker', 'balance', 'limit'];
     /** Karencja w sekundach: jak długo stan musi trwać, zanim zostanie zgłoszony. */
-    private const GRACE = ['service' => 60, 'modem' => 180, 'signal' => 900, 'queue' => 0, 'failures' => 0, 'worker' => 120];
+    private const GRACE = ['service' => 60, 'modem' => 180, 'signal' => 900, 'queue' => 0, 'failures' => 0, 'worker' => 120, 'balance' => 0, 'limit' => 0];
     private const COOLDOWN = 3600;
     private const REMIND = 21600;
     private const LOW_SIGNAL = 15;
@@ -40,6 +40,12 @@ final class Alerts
         $c['failures'] = count($last) === 3 && array_unique($last) === ['failed'] ? ['n' => 3] : null;
         $seen = ts(Settings::get('worker_seen_at'));
         $c['worker'] = $seen === null || time() - $seen > 120 ? ['ago' => $seen === null ? t('alerts.never') : fmt_ago(Settings::get('worker_seen_at'))] : null;
+        $threshold = (float) Settings::get('balance_threshold');
+        $bal = in_array('balance', $only, true) && $threshold > 0 ? Balance::latest() : null;
+        $c['balance'] = $bal !== null && $bal['amount'] !== null && $bal['amount'] < $threshold
+            ? ['amount' => number_format($bal['amount'], 2, lang() === 'pl' ? ',' : '.', ''), 'threshold' => number_format($threshold, 2, lang() === 'pl' ? ',' : '.', '')] : null;
+        $lim = in_array('limit', $only, true) ? Stats::limit() : null;
+        $c['limit'] = $lim !== null && $lim['pct'] >= 80 ? ['pct' => $lim['pct'], 'used' => $lim['used'], 'limit' => $lim['limit']] : null;
         return array_intersect_key($c, array_flip($only));
     }
 

@@ -18,6 +18,10 @@ $worker = Settings::get('worker_seen_at');
 <a class="tile" href="<?= e(url('contacts')) ?>"><span class="label"><?= e(t('nav.contacts')) ?></span><span class="value"><?= (int) $tiles['contacts']['n'] ?></span><span class="hint"><?= e(tn('dash.in_groups', (int) $tiles['contacts']['groups_n'])) ?></span></a>
 <?php if ($callsEnabled || (int) $tiles['calls']['n'] > 0): ?><a class="tile" href="<?= e(url('calls')) ?>"><span class="label"><?= e(t('dash.calls_today')) ?></span><span class="value"><?= (int) $tiles['calls']['n'] ?></span><span class="hint"><?= e($tiles['calls']['last'] ? t('dash.calls_last', ['time' => date('H:i', (int) ts($tiles['calls']['last']))]) : t('dash.calls_hint')) ?></span></a><?php endif ?>
 </div>
+<?php if (($limit ?? null) !== null && $limit['pct'] >= 50): ?>
+<a class="card limit-bar" href="<?= e(url('stats')) ?>"><strong><?= e(t('stats.limit')) ?></strong> <span class="muted"><?= e(t('stats.limit_of', ['used' => $limit['used'], 'limit' => $limit['limit']])) ?></span>
+<progress class="signal" value="<?= min(100, $limit['pct']) ?>" max="100" aria-label="<?= e(t('stats.limit_label', ['pct' => $limit['pct']])) ?>"></progress> <?= $limit['pct'] ?> %</a>
+<?php endif ?>
 <div class="split">
 <section class="card flush">
 <header><h2><?= e(t('dash.recent')) ?></h2><a href="<?= e(url('inbox')) ?>"><strong><?= e(t('dash.all_threads')) ?></strong></a></header>

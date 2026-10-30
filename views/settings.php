@@ -44,6 +44,16 @@ $err = static fn (string $k) => isset($errors[$k]) ? '<small class="warn">' . e(
 <button type="button" class="icon-btn danger" aria-label="<?= e(t('settings.ussd_remove')) ?>" title="<?= e(t('settings.ussd_remove')) ?>" data-remove-row><?= icon('trash-bin-trash') ?></button></div></template>
 <div class="gap-lg"><button type="button" class="secondary outline btn-sm" data-add-row="ussd-row-tpl" data-target="ussd-rows"><?= icon('add-circle') ?><?= e(t('settings.ussd_add')) ?></button></div>
 </section>
+<section class="card"><header><h2><?= e(t('settings.balance')) ?></h2></header>
+<div class="stack-sm">
+<div class="grid-2">
+<div class="field"><label for="balance_code"><?= e(t('settings.balance_code')) ?></label><input id="balance_code" name="balance_code" class="mono-input" value="<?= e($v('balance_code')) ?>" placeholder="*101#"><?= $err('balance_code') ?></div>
+<div class="field"><label for="balance_hours"><?= e(t('settings.balance_hours')) ?></label><input id="balance_hours" aria-describedby="balance-h" name="balance_hours" type="number" min="0" max="720" value="<?= e($v('balance_hours')) ?>"><small id="balance-h"><?= e(t('settings.balance_hours_hint')) ?></small><?= $err('balance_hours') ?></div></div>
+<div class="grid-2">
+<div class="field"><label for="balance_threshold"><?= e(t('settings.balance_threshold')) ?></label><input id="balance_threshold" aria-describedby="threshold-h" name="balance_threshold" type="text" inputmode="decimal" value="<?= e($v('balance_threshold')) ?>"><small id="threshold-h"><?= e(t('settings.balance_threshold_hint')) ?></small><?= $err('balance_threshold') ?></div>
+<div class="field"><label for="monthly_limit"><?= e(t('settings.monthly_limit')) ?></label><input id="monthly_limit" aria-describedby="limit-h" name="monthly_limit" type="number" min="0" value="<?= e($v('monthly_limit')) ?>"><small id="limit-h"><?= e(t('settings.monthly_limit_hint')) ?></small><?= $err('monthly_limit') ?></div></div>
+<div class="field"><label for="balance_regex"><?= e(t('settings.balance_regex')) ?></label><input id="balance_regex" aria-describedby="regex-h" name="balance_regex" class="mono-input" value="<?= e($v('balance_regex')) ?>" placeholder="<?= e(t('settings.balance_regex_ph')) ?>"><small id="regex-h"><?= e(t('settings.balance_regex_hint')) ?></small><?= $err('balance_regex') ?></div>
+</div></section>
 <section class="card"><header><h2><?= e(t('settings.calls')) ?></h2></header>
 <label><input type="checkbox" name="calls_enabled" value="1"<?= ($callsEnabled && !is_post()) || isset($_POST['calls_enabled']) ? ' checked' : '' ?>> <span><?= e(t('settings.calls_on')) ?><span class="check-sub"><?= e(t('settings.calls_hint')) ?></span></span></label>
 </section>

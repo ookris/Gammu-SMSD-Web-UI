@@ -397,6 +397,18 @@ final class Db
                     revoked_at DATETIME NULL
                 ) $t",
             ],
+            // Historia salda z cyklicznych zapytań USSD (wykres na ekranie Modem)
+            7 => [
+                "CREATE TABLE IF NOT EXISTS balance_log (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    ussd_id INT NOT NULL UNIQUE,
+                    modem VARCHAR(64) NULL,
+                    amount DECIMAL(10,2) NULL,
+                    raw TEXT NOT NULL,
+                    created_at DATETIME NOT NULL,
+                    KEY balance_created (created_at)
+                ) $t",
+            ],
         ];
     }
 }

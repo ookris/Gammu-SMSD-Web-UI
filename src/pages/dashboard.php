@@ -16,6 +16,6 @@ $tiles = [
     'calls' => Db::row('SELECT COUNT(*) AS n, MAX(received_at) AS last FROM calls WHERE received_at >= ?', [$today]),
 ];
 $health = Health::run();
-render('dashboard', ['weekAgo' => $weekAgo, 'title' => t('nav.dashboard'), 'nav' => 'dashboard', 'tiles' => $tiles, 'health' => $health,
+render('dashboard', ['limit' => Stats::limit(), 'weekAgo' => $weekAgo, 'title' => t('nav.dashboard'), 'nav' => 'dashboard', 'tiles' => $tiles, 'health' => $health,
     'recent' => Db::all('SELECT * FROM messages ORDER BY COALESCE(received_at, created_at) DESC, id DESC LIMIT 10'),
     'modem' => Status::modem(), 'service' => Status::service(), 'callsEnabled' => Calls::enabledInConf()]);
